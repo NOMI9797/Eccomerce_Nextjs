@@ -55,19 +55,14 @@ export async function POST(req: Request) {
                 categoryId = categoryList.documents[0].$id;
             }
 
-            // Upload multiple images
-            const uploadedFileIds = await Promise.all(
-                imageFiles.map(async (imageFile) => {
-                    const uploadedFile = await storage.createFile(
-                        '67a32bbf003270b1e15c',  // Bucket ID
-                        ID.unique(),
-                        imageFile
-                    );
-                    return uploadedFile.$id;
-                })
+            // Upload the first image only (maintaining single image compatibility)
+            const uploadedFile = await storage.createFile(
+                '67a32bbf003270b1e15c',  // Bucket ID
+                ID.unique(),
+                imageFiles[0]  // Use only the first image
             );
 
-            // Create product with category reference and multiple images
+            // Create product with category reference
             const product = await databases.createDocument(
                 '679b031a001983d2ec66',  // Database ID
                 '67a2fec400214f3c891b',  // Products Collection ID
@@ -77,7 +72,7 @@ export async function POST(req: Request) {
                     Price: price,
                     CategoryId: categoryId,
                     Description: description,
-                    Images: uploadedFileIds  // Store array of image IDs
+                    Image: uploadedFile.$id  // Store single image ID
                 }
             );
 
