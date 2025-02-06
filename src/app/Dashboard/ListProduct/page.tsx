@@ -6,6 +6,7 @@ import EditProductModal from './components/EditProductModal';
 import { deleteProduct } from './services/productService';
 import { useRouter } from "next/navigation";
 import ViewProductModal from './components/ViewProductModal';
+import { FiPlus } from 'react-icons/fi';
 
 // Initialize Appwrite
 const client = new Client()
@@ -43,26 +44,24 @@ const ListProducts: React.FC = () => {
       try {
         setLoading(true);
         
-        // Fetch all categories
+        // Fetch categories
         const categoriesResponse = await databases.listDocuments(
           '679b031a001983d2ec66',
           '67a2ff0e0029b3db4449'
         );
         
-        // Fetch all products
+        // Fetch products
         const productsResponse = await databases.listDocuments(
           '679b031a001983d2ec66',
           '67a2fec400214f3c891b',
-          [
-            Query.limit(100)
-          ]
+          [Query.limit(100)]
         );
 
-        setCategories(categoriesResponse.documents as Category[]);
+        setCategories(categoriesResponse.documents as unknown as Category[]);
         setProducts(productsResponse.documents as Product[]);
       } catch (err) {
         console.error('Error fetching data:', err);
-        setError('Failed to load products. Please try again later.');
+        setError('Failed to load products');
       } finally {
         setLoading(false);
       }
@@ -89,15 +88,23 @@ const ListProducts: React.FC = () => {
   const handleUpdateSuccess = async () => {
     try {
       setLoading(true);
-      // Fetch all products again to get updated data
-      const productsResponse = await databases.listDocuments(
-        '679b031a001983d2ec66',
-        '67a2fec400214f3c891b',
-        [Query.limit(100)]
-      );
+      // Fetch both products and categories
+      const [productsResponse, categoriesResponse] = await Promise.all([
+        databases.listDocuments(
+          '679b031a001983d2ec66',
+          '67a2fec400214f3c891b',
+          [Query.limit(100)]
+        ),
+        databases.listDocuments(
+          '679b031a001983d2ec66',
+          '67a2ff0e0029b3db4449'
+        )
+      ]);
+
       setProducts(productsResponse.documents as Product[]);
+      setCategories(categoriesResponse.documents as unknown as Category[]);
     } catch (err) {
-      console.error('Error refreshing products:', err);
+      console.error('Error refreshing data:', err);
     } finally {
       setLoading(false);
     }
@@ -146,36 +153,42 @@ const ListProducts: React.FC = () => {
   });
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="flex justify-between items-center mb-8">
-        <h1 className="text-3xl font-bold text-gray-800">Inventory Management</h1>
-        <button 
-          onClick={handleAddProduct}
-          className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg flex items-center"
-        >
-          <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-          </svg>
-          Add New Product
-        </button>
-      </div>
-
-      {/* Search and Filter Section */}
-      <div className="mb-8 space-y-4 md:space-y-0 md:flex md:items-center md:space-x-4">
-        <div className="flex-1">
-          <input
-            type="text"
-            placeholder="Search inventory..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
-          />
+    <div className="w-full">
+      <div className="flex flex-col space-y-3">
+        <div className="flex justify-between items-center">
+          <h1 className="text-2xl font-bold text-gray-800">Inventory Management</h1>
+          <div className="flex items-center space-x-4">
+            <button 
+              onClick={handleAddProduct}
+              className="bg-green-500 hover:bg-green-600 text-white px-6 py-2 rounded-lg flex items-center gap-2"
+            >
+              <FiPlus className="w-5 h-5" />
+              Add New Product
+            </button>
+          </div>
         </div>
-        <div className="flex-shrink-0">
+
+        <div className="flex items-center space-x-3">
+          <div className="flex-1">
+            <div className="relative">
+              <input
+                type="text"
+                placeholder="Search inventory..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
+              />
+              <div className="absolute left-3 top-2.5 text-gray-400">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+              </div>
+            </div>
+          </div>
           <select
             value={selectedCategory}
             onChange={(e) => setSelectedCategory(e.target.value)}
-            className="w-full md:w-48 px-4 py-2 border rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
+            className="w-48 px-4 py-2 border rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
           >
             <option value="all">All Categories</option>
             {categories.map((category) => (
@@ -188,11 +201,18 @@ const ListProducts: React.FC = () => {
       </div>
 
       {/* Inventory Table */}
-      <div className="overflow-x-auto bg-white rounded-lg shadow">
+      <div className="mt-3 bg-white rounded-lg shadow-sm overflow-hidden">
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">
             <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Product</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Product
+                <button className="ml-1 text-gray-400">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </button>
+              </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Price</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Description</th>
