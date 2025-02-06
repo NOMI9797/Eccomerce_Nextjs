@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Client, Databases, Storage, ID, Query } from "appwrite";
+import { useAddProduct } from '@/app/hooks/useProducts';
 
 const client = new Client()
     .setEndpoint('https://cloud.appwrite.io/v1')
@@ -17,6 +18,7 @@ interface Category {
 }
 
 const AddProduct = () => {
+  const addProductMutation = useAddProduct();
   const router = useRouter();
   const [formData, setFormData] = useState({
     name: "",
@@ -85,19 +87,10 @@ const AddProduct = () => {
       });
 
       setLoadingText("Processing your request...");
-      const response = await fetch("/api/products", {
-        method: "POST",
-        body: formDataToSend,
-      });
-
-      if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.details || data.error || "Failed to create product");
-      }
+      await addProductMutation.mutateAsync(formDataToSend);
 
       setLoadingText("Success! Redirecting...");
       router.push("/Dashboard?feature=List Products");
-      router.refresh();
     } catch (err) {
       console.error('Error:', err);
       setError(err instanceof Error ? err.message : "Something went wrong");

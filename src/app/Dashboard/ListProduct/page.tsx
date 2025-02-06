@@ -154,7 +154,7 @@ const ListProducts: React.FC = () => {
 
   return (
     <div className="w-full">
-      <div className="flex flex-col space-y-3">
+      <div className="flex flex-col space-y-4">
         <div className="flex justify-between items-center">
           <h1 className="text-2xl font-bold text-gray-800">Inventory Management</h1>
           <div className="flex items-center space-x-4">
@@ -168,7 +168,7 @@ const ListProducts: React.FC = () => {
           </div>
         </div>
 
-        <div className="flex items-center space-x-3">
+        <div className="flex items-center space-x-4">
           <div className="flex-1">
             <div className="relative">
               <input
@@ -201,7 +201,7 @@ const ListProducts: React.FC = () => {
       </div>
 
       {/* Inventory Table */}
-      <div className="mt-3 bg-white rounded-lg shadow-sm overflow-hidden">
+      <div className="mt-4 bg-white rounded-lg shadow-sm overflow-hidden">
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">
             <tr>
