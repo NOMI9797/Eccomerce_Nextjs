@@ -19,10 +19,10 @@ export async function POST(req: Request) {
         const price = parseFloat(formData.get('price') as string);
         const categoryName = formData.get('category') as string;
         const description = formData.get('description') as string;
-        const imageFile = formData.get('image') as File;
+        const imageFiles = formData.getAll('images') as File[];
 
         // Validate required fields
-        if (!name || !price || !categoryName || !description || !imageFile) {
+        if (!name || !price || !categoryName || !description || imageFiles.length === 0) {
             return NextResponse.json(
                 { error: "All fields are required" },
                 { status: 400 }
@@ -55,14 +55,19 @@ export async function POST(req: Request) {
                 categoryId = categoryList.documents[0].$id;
             }
 
-            // Upload image
-            const uploadedFile = await storage.createFile(
-                '67a32bbf003270b1e15c',  // Bucket ID
-                ID.unique(),
-                imageFile
+            // Upload multiple images
+            const uploadedFileIds = await Promise.all(
+                imageFiles.map(async (imageFile) => {
+                    const uploadedFile = await storage.createFile(
+                        '67a32bbf003270b1e15c',  // Bucket ID
+                        ID.unique(),
+                        imageFile
+                    );
+                    return uploadedFile.$id;
+                })
             );
 
-            // Create product with category reference
+            // Create product with category reference and multiple images
             const product = await databases.createDocument(
                 '679b031a001983d2ec66',  // Database ID
                 '67a2fec400214f3c891b',  // Products Collection ID
@@ -70,9 +75,9 @@ export async function POST(req: Request) {
                 {
                     Name: name,
                     Price: price,
-                    CategoryId: categoryId,  // Store category reference
+                    CategoryId: categoryId,
                     Description: description,
-                    Image: uploadedFile.$id
+                    Images: uploadedFileIds  // Store array of image IDs
                 }
             );
 

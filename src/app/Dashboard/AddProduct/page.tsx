@@ -11,7 +11,7 @@ const AddProduct: React.FC = () => {
     category: "",
     description: "",
   });
-  const [image, setImage] = useState<File | null>(null);
+  const [images, setImages] = useState<File[]>([]);
   const [loading, setLoading] = useState(false);
   const [loadingText, setLoadingText] = useState("");
   const [error, setError] = useState("");
@@ -25,9 +25,14 @@ const AddProduct: React.FC = () => {
   };
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      setImage(e.target.files[0]);
+    if (e.target.files) {
+      const newImages = Array.from(e.target.files);
+      setImages(prev => [...prev, ...newImages]);
     }
+  };
+
+  const removeImage = (index: number) => {
+    setImages(prev => prev.filter((_, i) => i !== index));
   };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -42,9 +47,10 @@ const AddProduct: React.FC = () => {
       formDataToSend.append("price", formData.price);
       formDataToSend.append("category", formData.category);
       formDataToSend.append("description", formData.description);
-      if (image) {
-        formDataToSend.append("image", image);
-      }
+      
+      images.forEach((image, index) => {
+        formDataToSend.append(`images`, image);
+      });
 
       setLoadingText("Processing your request...");
       const response = await fetch("/api/products", {
@@ -67,7 +73,7 @@ const AddProduct: React.FC = () => {
         category: "",
         description: "",
       });
-      setImage(null);
+      setImages([]);
       
       // Navigate to dashboard
       router.push("/Dashboard");
@@ -140,15 +146,38 @@ const AddProduct: React.FC = () => {
         </div>
 
         <div>
-          <label className="block text-sm font-medium mb-1">Product Image</label>
+          <label className="block text-sm font-medium mb-1">Product Images</label>
           <input
             type="file"
             accept="image/*"
             onChange={handleImageChange}
             className="w-full px-4 py-2 border rounded-md focus:ring-2 focus:ring-red-500 focus:border-transparent"
-            required
+            multiple
             disabled={loading}
           />
+          
+          {images.length > 0 && (
+            <div className="mt-4 grid grid-cols-3 gap-4">
+              {images.map((image, index) => (
+                <div key={index} className="relative">
+                  <img
+                    src={URL.createObjectURL(image)}
+                    alt={`Preview ${index + 1}`}
+                    className="w-full h-24 object-cover rounded"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => removeImage(index)}
+                    className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 hover:bg-red-600"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
         <div>
