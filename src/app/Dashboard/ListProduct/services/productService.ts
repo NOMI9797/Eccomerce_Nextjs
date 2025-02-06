@@ -7,17 +7,21 @@ const client = new Client()
 const databases = new Databases(client);
 const storage = new Storage(client);
 
-export const deleteProduct = async (productId: string, imageId: string) => {
+export const deleteProduct = async (productId: string, imageIds: string[]) => {
   try {
     // Delete the product document
     await databases.deleteDocument(
-      '679b031a001983d2ec66',  // Database ID
-      '67a2fec400214f3c891b',  // Products Collection ID
+      '679b031a001983d2ec66',
+      '67a2fec400214f3c891b',
       productId
     );
 
-    // Delete the associated image
-    await storage.deleteFile('67a32bbf003270b1e15c', imageId);
+    // Delete all associated images
+    await Promise.all(
+      imageIds.map(imageId => 
+        storage.deleteFile('67a32bbf003270b1e15c', imageId)
+      )
+    );
 
     return true;
   } catch (error) {

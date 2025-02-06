@@ -5,7 +5,7 @@ import { Client, Storage, Databases, ID, Query } from "node-appwrite";
 const client = new Client()
     .setEndpoint('https://cloud.appwrite.io/v1')
     .setProject('679b0257003b758db270')
-    .setKey('679b0257003b758db270679b0257003b758db270'); // Your API key
+    .setKey('679b0257003b758db270679b0257003b758db270');
 
 const storage = new Storage(client);
 const databases = new Databases(client);
@@ -42,8 +42,8 @@ export async function POST(req: Request) {
             if (categoryList.documents.length === 0) {
                 // Create new category if it doesn't exist
                 const newCategory = await databases.createDocument(
-                    '679b031a001983d2ec66',  // Database ID
-                    '67a2ff0e0029b3db4449',  // Category Collection ID
+                    '679b031a001983d2ec66',
+                    '67a2ff0e0029b3db4449',
                     ID.unique(),
                     {
                         CategoryName: categoryName
@@ -51,18 +51,22 @@ export async function POST(req: Request) {
                 );
                 categoryId = newCategory.$id;
             } else {
-                // Use existing category
                 categoryId = categoryList.documents[0].$id;
             }
 
-            // Upload the first image only (maintaining single image compatibility)
-            const uploadedFile = await storage.createFile(
-                '67a32bbf003270b1e15c',  // Bucket ID
-                ID.unique(),
-                imageFiles[0]  // Use only the first image
+            // Upload all images
+            const uploadedFileIds = await Promise.all(
+                imageFiles.map(async (imageFile) => {
+                    const uploadedFile = await storage.createFile(
+                        '67a32bbf003270b1e15c',  // Bucket ID
+                        ID.unique(),
+                        imageFile
+                    );
+                    return uploadedFile.$id;
+                })
             );
 
-            // Create product with category reference
+            // Create product with multiple images
             const product = await databases.createDocument(
                 '679b031a001983d2ec66',  // Database ID
                 '67a2fec400214f3c891b',  // Products Collection ID
@@ -72,7 +76,8 @@ export async function POST(req: Request) {
                     Price: price,
                     CategoryId: categoryId,
                     Description: description,
-                    Image: uploadedFile.$id  // Store single image ID
+                    Images: uploadedFileIds,  // Store array of image IDs
+                    MainImage: uploadedFileIds[0]  // First image as main image
                 }
             );
 

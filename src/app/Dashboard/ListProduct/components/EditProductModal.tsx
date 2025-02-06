@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Client, Storage, Databases } from 'appwrite';
+import { ID } from 'appwrite';
 
 interface EditProductModalProps {
   product: {
@@ -11,6 +12,7 @@ interface EditProductModalProps {
     CategoryId: string;
     Description: string;
     Image: string;
+    Images: string[];
   };
   categories: Array<{ $id: string; CategoryName: string; }>;
   isOpen: boolean;
@@ -38,7 +40,8 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
     categoryId: product.CategoryId,
     description: product.Description,
   });
-  const [newImage, setNewImage] = useState<File | null>(null);
+  const [existingImages, setExistingImages] = useState<string[]>(product.Images);
+  const [newImages, setNewImages] = useState<File[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -51,43 +54,62 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
     });
   }, [product]);
 
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) {
+      const files = Array.from(e.target.files);
+      setNewImages(prev => [...prev, ...files]);
+    }
+  };
+
+  const removeExistingImage = (imageId: string) => {
+    setExistingImages(prev => prev.filter(id => id !== imageId));
+  };
+
+  const removeNewImage = (index: number) => {
+    setNewImages(prev => prev.filter((_, i) => i !== index));
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError("");
 
     try {
-      let imageId = product.Image;
+      // Delete removed images
+      const removedImages = product.Images.filter(id => !existingImages.includes(id));
+      await Promise.all(
+        removedImages.map(imageId => 
+          storage.deleteFile('67a32bbf003270b1e15c', imageId)
+        )
+      );
 
-      // Upload new image if provided
-      if (newImage) {
-        // Delete old image
-        try {
-          await storage.deleteFile('67a32bbf003270b1e15c', product.Image);
-        } catch (error) {
-          console.error('Error deleting old image:', error);
-        }
+      // Upload new images
+      const newImageIds = await Promise.all(
+        newImages.map(async (image) => {
+          const uploadedFile = await storage.createFile(
+            '67a32bbf003270b1e15c',
+            ID.unique(),
+            image
+          );
+          return uploadedFile.$id;
+        })
+      );
 
-        // Upload new image
-        const uploadedFile = await storage.createFile(
-          '67a32bbf003270b1e15c',
-          'unique()',
-          newImage
-        );
-        imageId = uploadedFile.$id;
-      }
+      // Combine existing and new image IDs
+      const allImageIds = [...existingImages, ...newImageIds];
 
       // Update product
       await databases.updateDocument(
-        '679b031a001983d2ec66',  // Database ID
-        '67a2fec400214f3c891b',  // Products Collection ID
+        '679b031a001983d2ec66',
+        '67a2fec400214f3c891b',
         product.$id,
         {
           Name: formData.name,
           Price: formData.price,
           CategoryId: formData.categoryId,
           Description: formData.description,
-          Image: imageId
+          Images: allImageIds,
+          MainImage: allImageIds[0] // First image becomes main image
         }
       );
 
@@ -172,14 +194,66 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
               />
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700">New Image (Optional)</label>
-              <input
-                type="file"
-                onChange={(e) => setNewImage(e.target.files?.[0] || null)}
-                className="mt-1 block w-full"
-                accept="image/*"
-              />
+            {/* Image Management Section */}
+            <div className="mt-4">
+              <h3 className="text-sm font-medium text-gray-700 mb-2">Current Images</h3>
+              <div className="grid grid-cols-4 gap-4 mb-4">
+                {existingImages.map((imageId) => (
+                  <div key={imageId} className="relative">
+                    <img
+                      src={`https://cloud.appwrite.io/v1/storage/buckets/67a32bbf003270b1e15c/files/${imageId}/view?project=679b0257003b758db270`}
+                      alt="Product"
+                      className="w-full h-24 object-cover rounded"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => removeExistingImage(imageId)}
+                      className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 hover:bg-red-600"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+                  </div>
+                ))}
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Add New Images</label>
+                <input
+                  type="file"
+                  onChange={handleImageChange}
+                  className="mt-1 block w-full"
+                  accept="image/*"
+                  multiple
+                />
+              </div>
+
+              {newImages.length > 0 && (
+                <div className="mt-4">
+                  <h3 className="text-sm font-medium text-gray-700 mb-2">New Images to Add</h3>
+                  <div className="grid grid-cols-4 gap-4">
+                    {newImages.map((image, index) => (
+                      <div key={index} className="relative">
+                        <img
+                          src={URL.createObjectURL(image)}
+                          alt={`New ${index + 1}`}
+                          className="w-full h-24 object-cover rounded"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => removeNewImage(index)}
+                          className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 hover:bg-red-600"
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                          </svg>
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
 
