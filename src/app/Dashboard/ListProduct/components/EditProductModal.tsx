@@ -11,8 +11,8 @@ interface EditProductModalProps {
     Price: number;
     CategoryId: string;
     Description: string;
-    Image: string;
     Images: string[];
+    MainImage: string;
   };
   categories: Array<{ $id: string; CategoryName: string; }>;
   isOpen: boolean;
