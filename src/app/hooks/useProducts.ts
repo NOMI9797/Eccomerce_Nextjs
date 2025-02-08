@@ -18,7 +18,11 @@ export const useProducts = () => {
         [Query.limit(100)]
       );
       return response.documents;
-    }
+    },
+    staleTime: 5 * 60 * 1000, // Data stays fresh for 5 minutes
+    gcTime: 30 * 60 * 1000, // Cache persists for 30 minutes
+    refetchOnWindowFocus: false, // Prevent refetch on window focus
+    refetchOnMount: false // Use cached data when component remounts
   });
 };
 

@@ -1,7 +1,5 @@
 import { motion } from 'framer-motion';
 import Link from 'next/link';
-import { useInView } from 'react-intersection-observer';
-import { useEffect } from 'react';
 
 interface ProductGridProps {
   products: any[];
@@ -10,15 +8,12 @@ interface ProductGridProps {
   onLoadMore?: () => void;
 }
 
-export default function ProductGrid({ products, hasMore, isLoading, onLoadMore }: ProductGridProps) {
-  const { ref, inView } = useInView();
-
-  useEffect(() => {
-    if (inView && hasMore && !isLoading && onLoadMore) {
-      onLoadMore();
-    }
-  }, [inView, hasMore, isLoading, onLoadMore]);
-
+export default function ProductGrid({ 
+  products, 
+  hasMore = false, 
+  isLoading = false, 
+  onLoadMore = () => {} 
+}: ProductGridProps) {
   return (
     <div className="space-y-8">
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
@@ -64,9 +59,8 @@ export default function ProductGrid({ products, hasMore, isLoading, onLoadMore }
         ))}
       </div>
 
-      {/* Load More Section */}
       {hasMore && (
-        <div ref={ref} className="flex justify-center pt-8">
+        <div className="flex justify-center pt-8">
           <motion.button
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
