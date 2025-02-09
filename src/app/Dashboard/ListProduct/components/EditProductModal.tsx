@@ -3,6 +3,11 @@
 import React, { useState, useEffect } from 'react';
 import db from "../../../../appwrite/db";
 import storage from "../../../../appwrite/storage";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { cn } from "@/lib/utils";
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
 
 interface EditProductModalProps {
   product: {
@@ -114,156 +119,183 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg p-6 w-full max-w-2xl">
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="text-xl font-bold">Edit Product</h2>
-          <button onClick={onClose} className="text-gray-500 hover:text-gray-700">
+    <div className="fixed inset-0 bg-background/80 backdrop-blur-sm flex items-center justify-center z-50">
+      <div className="bg-background rounded-lg shadow-lg p-6 w-full max-w-2xl">
+        <div className="flex justify-between items-center mb-6">
+          <div>
+            <h2 className="text-2xl font-semibold">Edit Product</h2>
+            <p className="text-muted-foreground text-sm">Update your product details below.</p>
+          </div>
+          <Button variant="ghost" size="icon" onClick={onClose}>
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
-          </button>
+          </Button>
         </div>
 
         {error && (
-          <div className="mb-4 p-3 bg-red-100 text-red-700 rounded">
+          <div className="bg-destructive/15 text-destructive px-4 py-3 rounded-md mb-6">
             {error}
           </div>
         )}
 
-        <form onSubmit={handleSubmit}>
-          <div className="grid grid-cols-1 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Name</label>
-              <input
-                type="text"
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="name">Product Name</Label>
+              <Input
+                id="name"
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2"
-                required
+                placeholder="Enter product name"
+                disabled={loading}
               />
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Price</label>
-              <input
+            <div className="space-y-2">
+              <Label htmlFor="description">Description</Label>
+              <textarea
+                id="description"
+                value={formData.description}
+                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                className={cn(
+                  "flex min-h-[120px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                )}
+                placeholder="Enter product description"
+                disabled={loading}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="price">Price</Label>
+              <Input
+                id="price"
                 type="number"
                 value={formData.price}
                 onChange={(e) => setFormData({ ...formData, price: parseFloat(e.target.value) })}
-                className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2"
-                required
+                placeholder="Enter product price"
+                disabled={loading}
                 step="0.01"
               />
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Category</label>
-              <select
-                value={formData.categoryId}
-                onChange={(e) => setFormData({ ...formData, categoryId: e.target.value })}
-                className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2"
-                required
+            <div className="space-y-2">
+              <Label htmlFor="category">Category</Label>
+              <Select 
+                value={formData.categoryId} 
+                onValueChange={(value) => setFormData({ ...formData, categoryId: value })}
               >
-                {categories.map((category) => (
-                  <option key={category.$id} value={category.$id}>
-                    {category.CategoryName}
-                  </option>
-                ))}
-              </select>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Select a category" />
+                </SelectTrigger>
+                <SelectContent>
+                  {categories.map((category) => (
+                    <SelectItem key={category.$id} value={category.$id}>
+                      {category.CategoryName}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Description</label>
-              <textarea
-                value={formData.description}
-                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2"
-                required
-                rows={3}
-              />
-            </div>
-
-            {/* Image Management Section */}
-            <div className="mt-4">
-              <h3 className="text-sm font-medium text-gray-700 mb-2">Current Images</h3>
-              <div className="grid grid-cols-4 gap-4 mb-4">
+            <div className="space-y-2">
+              <Label>Current Images</Label>
+              <div className="mt-2 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
                 {existingImages.map((imageId) => (
-                  <div key={imageId} className="relative">
+                  <div key={imageId} className="relative group">
                     <img
                       src={`https://cloud.appwrite.io/v1/storage/buckets/67a32bbf003270b1e15c/files/${imageId}/view?project=679b0257003b758db270`}
                       alt="Product"
-                      className="w-full h-24 object-cover rounded"
+                      className="w-full aspect-square object-cover rounded-lg shadow-md transition-all duration-300 ease-in-out transform hover:scale-105 hover:shadow-lg"
                     />
                     <button
                       type="button"
                       onClick={() => removeExistingImage(imageId)}
-                      className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 hover:bg-red-600"
+                      className="absolute top-2 right-2 bg-destructive/90 text-destructive-foreground rounded-full p-2.5 opacity-0 group-hover:opacity-100 transition-all duration-200 shadow-lg hover:bg-destructive"
                     >
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                       </svg>
                     </button>
                   </div>
                 ))}
               </div>
+            </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Add New Images</label>
-                <input
+            <div className="space-y-2">
+              <Label htmlFor="new-images">Add New Images</Label>
+              <div className="flex items-center gap-4">
+                <Input
+                  id="new-images"
                   type="file"
                   onChange={handleImageChange}
-                  className="mt-1 block w-full"
+                  className="flex-1"
                   accept="image/*"
                   multiple
+                  disabled={loading}
                 />
+                <Button 
+                  type="button" 
+                  variant="outline"
+                  onClick={() => document.getElementById('new-images')?.click()}
+                >
+                  Choose Files
+                </Button>
               </div>
 
               {newImages.length > 0 && (
-                <div className="mt-4">
-                  <h3 className="text-sm font-medium text-gray-700 mb-2">New Images to Add</h3>
-                  <div className="grid grid-cols-4 gap-4">
-                    {newImages.map((image, index) => (
-                      <div key={index} className="relative">
-                        <img
-                          src={URL.createObjectURL(image)}
-                          alt={`New ${index + 1}`}
-                          className="w-full h-24 object-cover rounded"
-                        />
-                        <button
-                          type="button"
-                          onClick={() => removeNewImage(index)}
-                          className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 hover:bg-red-600"
-                        >
-                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                          </svg>
-                        </button>
-                      </div>
-                    ))}
-                  </div>
+                <div className="mt-4 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+                  {newImages.map((image, index) => (
+                    <div key={index} className="relative group">
+                      <img
+                        src={URL.createObjectURL(image)}
+                        alt={`New ${index + 1}`}
+                        className="w-full aspect-square object-cover rounded-lg shadow-md transition-all duration-300 ease-in-out transform hover:scale-105 hover:shadow-lg"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => removeNewImage(index)}
+                        className="absolute top-2 right-2 bg-destructive/90 text-destructive-foreground rounded-full p-2.5 opacity-0 group-hover:opacity-100 transition-all duration-200 shadow-lg hover:bg-destructive"
+                      >
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                      </button>
+                    </div>
+                  ))}
                 </div>
               )}
             </div>
           </div>
 
-          <div className="mt-6 flex justify-end space-x-3">
-            <button
+          <div className="flex justify-end space-x-3">
+            <Button
               type="button"
+              variant="outline"
               onClick={onClose}
-              className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
               disabled={loading}
             >
               Cancel
-            </button>
-            <button
+            </Button>
+            <Button
               type="submit"
-              className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:bg-blue-300"
               disabled={loading}
             >
               {loading ? 'Updating...' : 'Update Product'}
-            </button>
+            </Button>
           </div>
         </form>
+
+        {loading && (
+          <div className="fixed inset-0 bg-background/80 backdrop-blur-sm flex items-center justify-center z-50">
+            <div className="bg-background p-6 rounded-lg shadow-lg max-w-sm w-full">
+              <div className="flex flex-col items-center">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mb-4"></div>
+                <p className="text-foreground text-center">Updating product...</p>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
