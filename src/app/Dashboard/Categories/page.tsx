@@ -1,17 +1,12 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { Client, Databases, ID, Models } from "appwrite";
+import type { Models } from "appwrite";
+import db from "../../../appwrite/db";
 import AddCategoryModal from './components/AddCategoryModal';
 import EditCategoryModal from "./components/EditCategoryModal";
 import { deleteCategory } from './services/categoryService';
 import { FiPlus } from "react-icons/fi";
-
-const client = new Client()
-    .setEndpoint('https://cloud.appwrite.io/v1')
-    .setProject('679b0257003b758db270');
-
-const databases = new Databases(client);
 
 interface Category extends Models.Document {
   CategoryName: string;
@@ -28,7 +23,7 @@ const Categories = () => {
   const fetchCategories = async () => {
     try {
       setLoading(true);
-      const response = await databases.listDocuments(
+      const response = await db.listDocuments(
         '679b031a001983d2ec66',
         '67a2ff0e0029b3db4449'
       );
