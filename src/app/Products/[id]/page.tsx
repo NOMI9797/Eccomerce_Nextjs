@@ -10,8 +10,9 @@ import RelatedProducts from './components/RelatedProducts';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
 
 export default function ProductDetails() {
-  const { id } = useParams();
-  const { data: product, isLoading, error } = useProduct(id as string);
+  const params = useParams();
+  const productId = params?.id as string;
+  const { data: product, isLoading, error } = useProduct(productId);
 
   if (isLoading) {
     return <LoadingSpinner />;
