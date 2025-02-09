@@ -1,18 +1,13 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Client, Databases, Query } from 'appwrite';
+import { Query } from 'appwrite';
+import db from "../../appwrite/db";
 import { deleteProduct } from '../Dashboard/ListProduct/services/productService';
-
-const client = new Client()
-    .setEndpoint('https://cloud.appwrite.io/v1')
-    .setProject('679b0257003b758db270');
-
-const databases = new Databases(client);
 
 export const useProducts = () => {
   return useQuery({
     queryKey: ['products'],
     queryFn: async () => {
-      const response = await databases.listDocuments(
+      const response = await db.listDocuments(
         '679b031a001983d2ec66',
         '67a2fec400214f3c891b',
         [Query.limit(100)]

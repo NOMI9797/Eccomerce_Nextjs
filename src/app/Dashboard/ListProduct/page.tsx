@@ -1,19 +1,14 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { Client, Databases, Query, Models } from "appwrite";
+import db from "../../../appwrite/db";
+import { Query } from "appwrite";
+import type { Models } from "appwrite";
 import EditProductModal from './components/EditProductModal';
 import { deleteProduct } from './services/productService';
 import { useRouter } from "next/navigation";
 import ViewProductModal from './components/ViewProductModal';
 import { FiPlus } from 'react-icons/fi';
-
-// Initialize Appwrite
-const client = new Client()
-    .setEndpoint('https://cloud.appwrite.io/v1')
-    .setProject('679b0257003b758db270');
-
-const databases = new Databases(client);
 
 interface Product extends Models.Document {
   Name: string;
@@ -45,13 +40,13 @@ const ListProducts: React.FC = () => {
         setLoading(true);
         
         // Fetch categories
-        const categoriesResponse = await databases.listDocuments(
+        const categoriesResponse = await db.listDocuments(
           '679b031a001983d2ec66',
           '67a2ff0e0029b3db4449'
         );
         
         // Fetch products
-        const productsResponse = await databases.listDocuments(
+        const productsResponse = await db.listDocuments(
           '679b031a001983d2ec66',
           '67a2fec400214f3c891b',
           [Query.limit(100)]
@@ -90,12 +85,12 @@ const ListProducts: React.FC = () => {
       setLoading(true);
       // Fetch both products and categories
       const [productsResponse, categoriesResponse] = await Promise.all([
-        databases.listDocuments(
+        db.listDocuments(
           '679b031a001983d2ec66',
           '67a2fec400214f3c891b',
           [Query.limit(100)]
         ),
-        databases.listDocuments(
+        db.listDocuments(
           '679b031a001983d2ec66',
           '67a2ff0e0029b3db4449'
         )

@@ -2,15 +2,8 @@
 
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Client, Databases, Storage, ID, Query } from "appwrite";
+import db from "../../../appwrite/db";
 import { useAddProduct } from '@/app/hooks/useProducts';
-
-const client = new Client()
-    .setEndpoint('https://cloud.appwrite.io/v1')
-    .setProject('679b0257003b758db270');
-
-const databases = new Databases(client);
-const storage = new Storage(client);
 
 interface Category {
   $id: string;
@@ -36,7 +29,7 @@ const AddProduct = () => {
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        const response = await databases.listDocuments(
+        const response = await db.listDocuments(
           '679b031a001983d2ec66',
           '67a2ff0e0029b3db4449'
         );

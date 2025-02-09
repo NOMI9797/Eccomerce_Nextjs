@@ -1,13 +1,7 @@
 "use client";
 
 import React, { useState } from 'react';
-import { Client, Databases, ID } from 'appwrite';
-
-const client = new Client()
-    .setEndpoint('https://cloud.appwrite.io/v1')
-    .setProject('679b0257003b758db270');
-
-const databases = new Databases(client);
+import db from "../../../../appwrite/db";
 
 interface AddCategoryModalProps {
   isOpen: boolean;
@@ -26,13 +20,10 @@ const AddCategoryModal: React.FC<AddCategoryModalProps> = ({ isOpen, onClose, on
     setError("");
 
     try {
-      await databases.createDocument(
+      await db.createDocument(
         '679b031a001983d2ec66',
         '67a2ff0e0029b3db4449',
-        ID.unique(),
-        {
-          CategoryName: categoryName
-        }
+        { CategoryName: categoryName }
       );
 
       onAdd();

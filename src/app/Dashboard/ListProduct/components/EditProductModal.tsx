@@ -1,8 +1,8 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { Client, Storage, Databases } from 'appwrite';
-import { ID } from 'appwrite';
+import db from "../../../../appwrite/db";
+import storage from "../../../../appwrite/storage";
 
 interface EditProductModalProps {
   product: {
@@ -19,13 +19,6 @@ interface EditProductModalProps {
   onClose: () => void;
   onUpdate: () => void;
 }
-
-const client = new Client()
-    .setEndpoint('https://cloud.appwrite.io/v1')
-    .setProject('679b0257003b758db270');
-
-const storage = new Storage(client);
-const databases = new Databases(client);
 
 const EditProductModal: React.FC<EditProductModalProps> = ({
   product,
@@ -86,11 +79,7 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
       // Upload new images
       const newImageIds = await Promise.all(
         newImages.map(async (image) => {
-          const uploadedFile = await storage.createFile(
-            '67a32bbf003270b1e15c',
-            ID.unique(),
-            image
-          );
+          const uploadedFile = await storage.createFile('67a32bbf003270b1e15c', image);
           return uploadedFile.$id;
         })
       );
@@ -99,7 +88,7 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
       const allImageIds = [...existingImages, ...newImageIds];
 
       // Update product
-      await databases.updateDocument(
+      await db.updateDocument(
         '679b031a001983d2ec66',
         '67a2fec400214f3c891b',
         product.$id,
