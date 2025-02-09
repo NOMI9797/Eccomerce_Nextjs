@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import Link from 'next/link'
+import { FcGoogle } from "react-icons/fc"
 
 export function SignupForm({
   className,
@@ -33,6 +34,17 @@ export function SignupForm({
           <Label htmlFor="confirmPassword">Confirm Password</Label>
           <Input id="confirmPassword" type="password" placeholder="Confirm your password" required />
         </div>
+        <div className="relative text-center text-sm after:absolute after:inset-0 after:top-1/2 after:z-0 after:flex after:items-center after:border-t after:border-border">
+          <span className="relative z-10 bg-background px-2 text-muted-foreground">
+            Or continue with
+          </span>
+        </div>
+        <Button variant="outline" className="w-full">
+          <div className="rounded-full bg-white p-1 transition-transform hover:scale-110">
+            <FcGoogle className="h-5 w-5" />
+          </div>
+          Login with Google
+        </Button>
         <Button type="submit" className="w-full">
           Sign Up
         </Button>
