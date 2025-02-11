@@ -6,46 +6,59 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import Link from 'next/link'
 import { FcGoogle } from "react-icons/fc"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { registerUser } from "@/appwrite/auth"
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
+import { useAuth } from "@/session/AuthContext"
 
 export function SignupForm({
   className,
   ...props
 }: React.ComponentPropsWithoutRef<"form">) {
-  const [isLoading, setIsLoading] = useState(false)
-  const router = useRouter()
+  // Declare all hooks first
+  const [hasMounted, setHasMounted] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const router = useRouter();
+  const { setUser } = useAuth();
+
+  useEffect(() => {
+    setHasMounted(true);
+  }, []);
+
+  if (!hasMounted) return null;
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault()
-    setIsLoading(true)
+    e.preventDefault();
+    setIsLoading(true);
 
-    const formData = new FormData(e.currentTarget)
-    const email = formData.get('email') as string
-    const password = formData.get('password') as string
-    const confirmPassword = formData.get('confirmPassword') as string
-    const name = formData.get('username') as string
+    const formData = new FormData(e.currentTarget);
+    const email = formData.get('email') as string;
+    const password = formData.get('password') as string;
+    const confirmPassword = formData.get('confirmPassword') as string;
+    const name = formData.get('username') as string;
 
     if (password !== confirmPassword) {
-      toast.error("Passwords do not match")
-      setIsLoading(false)
-      return
+      toast.error("Passwords do not match");
+      setIsLoading(false);
+      return;
     }
 
     try {
-      const response = await registerUser(name, email, password)
+      const response = await registerUser(name, email, password);
       if (response) {
-        toast.success("Account created successfully")
-        router.push('/Homepage')
+        // Persist user in localStorage
+        localStorage.setItem("user", JSON.stringify(response));
+        setUser(response);
+        toast.success("Account created successfully");
+        router.push('/Homepage');
       }
     } catch (error: any) {
-      toast.error(error.message || "Failed to create account")
+      toast.error(error.message || "Failed to create account");
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
   return (
     <form onSubmit={handleSubmit} className={cn("flex flex-col gap-6", className)} {...props}>
@@ -94,5 +107,5 @@ export function SignupForm({
         </Link>
       </div>
     </form>
-  )
+  );
 } 

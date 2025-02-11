@@ -7,9 +7,10 @@ import { Label } from "@/components/ui/label"
 import Link from "next/link"
 import { FcGoogle } from "react-icons/fc"
 import { useState } from "react"
-import { signIn } from "@/appwrite/auth"
+import { signIn, getCurrentUser } from "@/appwrite/auth"
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
+import { useAuth } from "@/session/AuthContext"
 
 export function LoginForm({
   className,
@@ -17,6 +18,7 @@ export function LoginForm({
 }: React.ComponentPropsWithoutRef<"form">) {
   const [isLoading, setIsLoading] = useState(false)
   const router = useRouter()
+  const { setUser } = useAuth()
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -29,6 +31,12 @@ export function LoginForm({
     try {
       const { session } = await signIn(email, password)
       if (session) {
+        // Fetch current user and persist in localStorage and context
+        const currentUser = await getCurrentUser()
+        if (currentUser) {
+          setUser(currentUser)
+          localStorage.setItem("user", JSON.stringify(currentUser))
+        }
         toast.success("Logged in successfully")
         router.push('/Homepage')
       }
