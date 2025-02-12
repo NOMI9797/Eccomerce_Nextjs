@@ -19,7 +19,8 @@ export const handleGoogleSignIn = async (): Promise<void> => {
     } catch (error) {
       // No existing session
     }
-    const redirectUrl = `${window.location.origin}/auth`; // Your callback URL
+    // Use Homepage as callback URL
+    const redirectUrl = `${window.location.origin}/Homepage`;
     await account.createOAuth2Session("google" as any, redirectUrl, redirectUrl);
   } catch (error) {
     console.error("Google Sign-In failed:", error);

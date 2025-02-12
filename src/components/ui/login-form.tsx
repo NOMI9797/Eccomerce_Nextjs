@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label"
 import Link from "next/link"
 import { FcGoogle } from "react-icons/fc"
 import { useState } from "react"
-import { signIn, getCurrentUser } from "@/appwrite/auth"
+import { signIn, getCurrentUser, handleGoogleSignIn } from "@/appwrite/auth"
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
 import { useAuth } from "@/session/AuthContext"
@@ -37,13 +37,21 @@ export function LoginForm({
           setUser(currentUser)
           localStorage.setItem("user", JSON.stringify(currentUser))
         }
-        toast.success("Logged in successfully")
+        await new Promise((resolve) => setTimeout(resolve, 1000))
         router.push('/Homepage')
       }
     } catch (error: any) {
       toast.error(error.message || "Failed to login")
     } finally {
       setIsLoading(false)
+    }
+  }
+
+  const handleGoogleClick = async () => {
+    try {
+      await handleGoogleSignIn()
+    } catch (error: any) {
+      toast.error(error.message || "Google login failed")
     }
   }
 
@@ -80,7 +88,12 @@ export function LoginForm({
             Or continue with
           </span>
         </div>
-        <Button type="button" variant="outline" className="w-full flex items-center justify-center gap-2">
+        <Button 
+          type="button" 
+          variant="outline" 
+          className="w-full flex items-center justify-center gap-2"
+          onClick={handleGoogleClick}
+        >
           <div className="rounded-full bg-white p-1 transition-transform hover:scale-110">
             <FcGoogle className="h-5 w-5" />
           </div>

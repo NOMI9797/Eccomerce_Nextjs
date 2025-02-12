@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label"
 import Link from 'next/link'
 import { FcGoogle } from "react-icons/fc"
 import { useState, useEffect } from "react"
-import { registerUser } from "@/appwrite/auth"
+import { registerUser, handleGoogleSignIn } from "@/appwrite/auth"
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
 import { useAuth } from "@/session/AuthContext"
@@ -50,13 +50,30 @@ export function SignupForm({
         // Persist user in localStorage
         localStorage.setItem("user", JSON.stringify(response));
         setUser(response);
-        toast.success("Account created successfully");
+        toast.success("Account created successfully", {
+          style: {
+            background: "#10B981",
+            color: "#ffffff",
+            fontSize: "16px",
+            padding: "16px",
+            borderRadius: "8px",
+          },
+          duration: 5000,
+        });
         router.push('/Homepage');
       }
     } catch (error: any) {
       toast.error(error.message || "Failed to create account");
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleGoogleClick = async () => {
+    try {
+      await handleGoogleSignIn();
+    } catch (error: any) {
+      toast.error(error.message || "Google sign in failed");
     }
   };
 
@@ -90,7 +107,7 @@ export function SignupForm({
             Or continue with
           </span>
         </div>
-        <Button type="button" variant="outline" className="w-full">
+        <Button type="button" variant="outline" className="w-full" onClick={handleGoogleClick}>
           <div className="rounded-full bg-white p-1 transition-transform hover:scale-110">
             <FcGoogle className="h-5 w-5" />
           </div>
