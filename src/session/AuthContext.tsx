@@ -1,12 +1,13 @@
 "use client";
 import React, { createContext, useContext, useState, ReactNode, useEffect } from "react";
-import { getCurrentUser, signOutUser } from "@/appwrite/auth";
+import { getCurrentUser, signOutUser, isAdmin } from "@/appwrite/auth";
 import { useRouter } from "next/navigation";
 
 interface AuthContextType {
   user: any;
   setUser: (user: any) => void;
   logout: () => Promise<void>;
+  isUserAdmin: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -16,13 +17,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
 
+  const isUserAdmin = isAdmin(user);
+
   useEffect(() => {
     const loadUser = async () => {
       try {
         // Check localStorage first
         const storedUser = localStorage.getItem("user");
         if (storedUser) {
-          setUser(JSON.parse(storedUser));
+          const parsedUser = JSON.parse(storedUser);
+          setUser(parsedUser);
           setIsLoading(false);
           return;
         }
@@ -77,7 +81,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }
 
   return (
-    <AuthContext.Provider value={{ user, setUser, logout }}>
+    <AuthContext.Provider value={{ user, setUser, logout, isUserAdmin }}>
       {children}
     </AuthContext.Provider>
   );

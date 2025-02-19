@@ -1,32 +1,43 @@
 import { account } from "../client";
 import { Query, Models, ID } from "appwrite";
 
-export async function registerUser(username: string, email: string, password: string): Promise<Models.User<Models.Preferences>> {
+// Define user roles
+export const ROLES = {
+  ADMIN: 'admin',
+  USER: 'user'
+} as const;
+
+interface UserWithRole extends Omit<Models.User<Models.Preferences>, 'labels'> {
+  labels: string[];
+}
+
+export async function registerUser(username: string, email: string, password: string): Promise<UserWithRole> {
   try {
-    // Try to create the user
+    // Create the user
     const user = await account.create(
       ID.unique(),
       email,
       password,
       username
-    );
+    ) as UserWithRole;
 
     // Create a session immediately after registration
     await account.createEmailPasswordSession(email, password);
     
-    // Store user data in localStorage
-    localStorage.setItem("user", JSON.stringify(user));
-    localStorage.setItem("userId", user.$id);
+    // Get fresh user data with correct labels from server
+    const freshUser = await getCurrentUser();
     
-    return user;
+    // Store user data in localStorage
+    localStorage.setItem("user", JSON.stringify(freshUser));
+    localStorage.setItem("userId", freshUser.$id);
+    
+    return freshUser;
   } catch (error: any) {
-    // Check if the error is due to email already existing
     if (error.type === 'user_already_exists' || 
         error.message?.includes('unique') || 
         error.code === 409) {
       throw new Error('An account with this email already exists. Please try logging in instead.');
     }
-    // For other errors, throw the original error
     console.error('Registration error:', error);
     throw new Error(error.message || 'Failed to create account. Please try again.');
   }
@@ -70,6 +81,7 @@ export const signIn = async (email: string, password: string): Promise<{
         await account.deleteSession('current');
         localStorage.removeItem("authToken");
         localStorage.removeItem("userId");
+        localStorage.removeItem("user");
       }
     } catch (error) {
       // No existing session
@@ -77,8 +89,17 @@ export const signIn = async (email: string, password: string): Promise<{
 
     // Authenticate the user
     const session = await account.createEmailPasswordSession(email, password);
+    
+    // Get user details including roles
+    const user = await getCurrentUser();
+    
+    // Store session and user data
     localStorage.setItem("authToken", session.$id);
     localStorage.setItem("userId", session.userId);
+    localStorage.setItem("user", JSON.stringify({
+      ...user,
+      labels: Array.isArray(user.labels) ? user.labels : [] // Ensure labels is always an array
+    }));
 
     return {
       session,
@@ -116,9 +137,11 @@ export const signOutUser = async (): Promise<void> => {
   }
 };
 
-export const getCurrentUser = async (): Promise<Models.User<Models.Preferences>> => {
+export const getCurrentUser = async (): Promise<UserWithRole> => {
   try {
-    const user = await account.get();
+    const user = await account.get() as UserWithRole;
+    // Ensure labels array exists and is properly typed
+    user.labels = Array.isArray(user.labels) ? user.labels : [];
     return user;
   } catch (error) {
     throw error;
@@ -159,3 +182,17 @@ export async function resetPassword(
     throw error;
   }
 }
+
+export const isAdmin = (user: UserWithRole | null): boolean => {
+  if (!user || !user.labels) return false;
+  
+  // Log for debugging
+  console.log('Checking admin status:', {
+    user: user.$id,
+    labels: user.labels,
+    isAdmin: user.labels.includes(ROLES.ADMIN)
+  });
+  
+  // Strict check for admin role
+  return Array.isArray(user.labels) && user.labels.includes(ROLES.ADMIN);
+};

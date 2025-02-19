@@ -1,40 +1,52 @@
 // src/components/Header.tsx
-import Link from "next/link";
-import { usePathname } from "next/navigation";
+"use client";
 
-const Header = () => {
-  const pathname = usePathname();
-  
-  const navItems = [
-    { name: "Products", path: "/Products" },
-    { name: "Categories", path: "/Categories" },
-    { name: "Cart", path: "/cart" },
-    { name: "Contact Us", path: "/contact-us" },
-    { name: "About Us", path: "/about-us" }
-  ];
+import Link from "next/link";
+import { useAuth } from "@/session/AuthContext";
+
+export default function Header() {
+  const { user, logout, isUserAdmin } = useAuth();
 
   return (
-    <nav className="p-4">
-      <div className="max-w-7xl mx-auto px-6 py-4">
-        <ul className="flex justify-center space-x-12 items-center text-2xl font-semibold text-white">
-          {navItems.map((item) => (
-            <li key={item.name}>
-              <Link
-                href={item.path}
-                className={`transition-all duration-300 ease-in-out ${
-                  pathname === item.path 
-                    ? "text-teal-400 hover:text-teal-300" 
-                    : "text-white hover:text-teal-500"
-                }`}
-              >
-                {item.name}
-              </Link>
-            </li>
-          ))}
-        </ul>
+    <header className="w-full border-b">
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex h-16 items-center justify-between">
+          <div className="flex items-center">
+            <Link href="/" className="text-xl font-bold">
+              KharedLo
+            </Link>
+          </div>
+          <nav className="flex items-center gap-4">
+            {user ? (
+              <>
+                <Link href="/Homepage" className="text-sm font-medium">
+                  Home
+                </Link>
+                {isUserAdmin && (
+                  <Link href="/Dashboard" className="text-sm font-medium">
+                    Dashboard
+                  </Link>
+                )}
+                <button
+                  onClick={logout}
+                  className="text-sm font-medium text-red-600"
+                >
+                  Logout
+                </button>
+              </>
+            ) : (
+              <>
+                <Link href="/login" className="text-sm font-medium">
+                  Login
+                </Link>
+                <Link href="/signup" className="text-sm font-medium">
+                  Sign Up
+                </Link>
+              </>
+            )}
+          </nav>
+        </div>
       </div>
-    </nav>
+    </header>
   );
-};
-
-export default Header;
+}
