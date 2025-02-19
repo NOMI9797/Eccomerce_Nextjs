@@ -1,10 +1,35 @@
 import { account } from "../client";
-import { Query, Models } from "appwrite";
+import { Query, Models, ID } from "appwrite";
 
 export async function registerUser(username: string, email: string, password: string): Promise<Models.User<Models.Preferences>> {
-  const user = await account.create("unique()", email, password, username);
-  localStorage.setItem("userId", user.$id);
-  return user;
+  try {
+    // Try to create the user
+    const user = await account.create(
+      ID.unique(),
+      email,
+      password,
+      username
+    );
+
+    // Create a session immediately after registration
+    await account.createEmailPasswordSession(email, password);
+    
+    // Store user data in localStorage
+    localStorage.setItem("user", JSON.stringify(user));
+    localStorage.setItem("userId", user.$id);
+    
+    return user;
+  } catch (error: any) {
+    // Check if the error is due to email already existing
+    if (error.type === 'user_already_exists' || 
+        error.message?.includes('unique') || 
+        error.code === 409) {
+      throw new Error('An account with this email already exists. Please try logging in instead.');
+    }
+    // For other errors, throw the original error
+    console.error('Registration error:', error);
+    throw new Error(error.message || 'Failed to create account. Please try again.');
+  }
 }
 
 export const handleGoogleSignIn = async (): Promise<void> => {
@@ -67,12 +92,27 @@ export const signIn = async (email: string, password: string): Promise<{
 
 export const signOutUser = async (): Promise<void> => {
   try {
-    await account.deleteSession('current');
+    // Try to get current session first
+    try {
+      const currentSession = await account.getSession('current');
+      if (currentSession) {
+        await account.deleteSession('current');
+      }
+    } catch (error) {
+      // Session might not exist, which is fine
+      console.log('No active session found');
+    }
+    
+    // Clear all local storage items
     localStorage.removeItem("authToken");
     localStorage.removeItem("userId");
-    localStorage.removeItem("user-storage");
+    localStorage.removeItem("user");
   } catch (error) {
-    throw error;
+    console.error('Logout error:', error);
+    // Still clear storage even if session deletion fails
+    localStorage.removeItem("authToken");
+    localStorage.removeItem("userId");
+    localStorage.removeItem("user");
   }
 };
 

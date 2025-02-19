@@ -38,6 +38,27 @@ export function SignupForm({
     const confirmPassword = formData.get('confirmPassword') as string;
     const name = formData.get('username') as string;
 
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      toast.error("Please enter a valid email address");
+      setIsLoading(false);
+      return;
+    }
+
+    // Validate password length and complexity
+    if (password.length < 8) {
+      toast.error("Password must be at least 8 characters long");
+      setIsLoading(false);
+      return;
+    }
+
+    if (!email || !password || !confirmPassword || !name) {
+      toast.error("All fields are required");
+      setIsLoading(false);
+      return;
+    }
+
     if (password !== confirmPassword) {
       toast.error("Passwords do not match");
       setIsLoading(false);
@@ -45,25 +66,47 @@ export function SignupForm({
     }
 
     try {
-      const response = await registerUser(name, email, password);
-      if (response) {
-        // Persist user in localStorage
-        localStorage.setItem("user", JSON.stringify(response));
-        setUser(response);
-        toast.success("Account created successfully", {
+      const user = await registerUser(name.trim(), email.trim().toLowerCase(), password);
+      if (user) {
+        setUser(user);
+        toast.success("Account created successfully!", {
           style: {
-            background: "#10B981",
-            color: "#ffffff",
-            fontSize: "16px",
-            padding: "16px",
-            borderRadius: "8px",
+            background: '#10B981',
+            color: '#fff',
+            border: 'none',
           },
-          duration: 5000,
+          duration: 4000,
         });
         router.push('/Homepage');
       }
     } catch (error: any) {
-      toast.error(error.message || "Failed to create account");
+      console.error("Signup error:", error);
+      if (error.message.includes('already exists')) {
+        toast.error("Account Already Exists", {
+          description: "An account with this email already exists. Would you like to log in instead?",
+          action: {
+            label: "Login",
+            onClick: () => router.push('/login')
+          },
+          style: {
+            background: '#1e293b',
+            color: '#fff',
+            border: 'none',
+          },
+          icon: '⚠️',
+          duration: 5000,
+        });
+      } else {
+        toast.error("Registration Failed", {
+          description: error.message || "Failed to create account. Please try again.",
+          style: {
+            background: '#991b1b',
+            color: '#fff',
+            border: 'none',
+          },
+          duration: 4000,
+        });
+      }
     } finally {
       setIsLoading(false);
     }
