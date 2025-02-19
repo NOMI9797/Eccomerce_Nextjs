@@ -9,10 +9,12 @@ import SearchBar from './components/SearchBar';
 import ProductSort from './components/ProductSort';
 import { useProducts } from '@/app/hooks/useProducts';
 import { useCategories } from '@/app/hooks/useCategories';
+import { useAuth } from '@/session/AuthContext';
 
 export default function ProductsPage() {
   const { data: products = [], isLoading } = useProducts();
   const { data: categories = [] } = useCategories();
+  const { isUserAdmin } = useAuth();
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [sortBy, setSortBy] = useState<string>("featured");
@@ -62,12 +64,14 @@ export default function ProductsPage() {
               >
                 Products
               </Link>
-              <Link 
-                href="/Dashboard" 
-                className="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium"
-              >
-                Dashboard
-              </Link>
+              {isUserAdmin && (
+                <Link 
+                  href="/Dashboard" 
+                  className="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium"
+                >
+                  Dashboard
+                </Link>
+              )}
             </div>
           </div>
         </div>
