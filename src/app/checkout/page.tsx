@@ -6,12 +6,102 @@ import { Input } from '@/components/ui/input';
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
+import { AddressAutocomplete } from '@/components/ui/address-autocomplete';
+import { useLoadScript, Autocomplete } from '@react-google-maps/api';
 
 import Link from 'next/link';
+import { useState, useEffect } from 'react';
+
+// Add this interface
+interface CountriesWithCities {
+  [key: string]: string[];
+}
 
 export default function CheckoutPage() {
   const { cart } = useCart();
   const deliveryFee = 10.00;
+  const [address, setAddress] = useState({
+    country: '',
+    countryCode: '',
+    city: '',
+    street: '',
+    postalCode: '',
+  });
+  const [countries, setCountries] = useState<string[]>([]);
+  const [streetAutocomplete, setStreetAutocomplete] = useState<google.maps.places.Autocomplete | null>(null);
+
+  const { isLoaded } = useLoadScript({
+    googleMapsApiKey: "AIzaSyBtGLZIMW1fOUVDZREa3Aq3gXfVB_S1PJQ",
+    libraries: ["places"]
+  });
+
+  const handlePlaceSelect = (place: google.maps.places.PlaceResult) => {
+    const addressComponents = place.address_components || [];
+    let newAddress = {
+      ...address,
+      country: '',
+      countryCode: '',
+      city: '',
+      street: place.formatted_address || '',
+      postalCode: '',
+    };
+
+    addressComponents.forEach(component => {
+      const types = component.types;
+      if (types.includes('country')) {
+        newAddress.country = component.long_name;
+        newAddress.countryCode = component.short_name;
+      }
+      if (types.includes('locality') || types.includes('administrative_area_level_2')) {
+        newAddress.city = component.long_name;
+      }
+      if (types.includes('route')) {
+        newAddress.street = place.formatted_address || component.long_name;
+      }
+      if (types.includes('postal_code')) {
+        newAddress.postalCode = component.long_name;
+      }
+    });
+
+    setAddress(newAddress);
+  };
+
+  // Initialize Google Places Autocomplete for countries
+  const countryAutocomplete = (input: HTMLInputElement) => {
+    const autocomplete = new google.maps.places.Autocomplete(input, {
+      types: ['country']
+    });
+    
+    autocomplete.addListener('place_changed', () => {
+      const place = autocomplete.getPlace();
+      if (place.address_components) {
+        const countryComponent = place.address_components[0];
+        setAddress(prev => ({ 
+          ...prev, 
+          country: countryComponent.long_name,
+          countryCode: countryComponent.short_name
+        }));
+      }
+    });
+  };
+
+  // Initialize Google Places Autocomplete for cities
+  const cityAutocomplete = (input: HTMLInputElement) => {
+    const autocomplete = new google.maps.places.Autocomplete(input, {
+      types: ['(cities)'],
+      componentRestrictions: { country: address.countryCode?.toLowerCase() || null }
+    });
+    
+    autocomplete.addListener('place_changed', () => {
+      const place = autocomplete.getPlace();
+      if (place.address_components) {
+        const city = place.address_components[0].long_name;
+        setAddress(prev => ({ ...prev, city }));
+      }
+    });
+  };
+
+  if (!isLoaded) return <div>Loading...</div>;
 
   return (
     <div className="container mx-auto py-8 px-4">
@@ -40,29 +130,79 @@ export default function CheckoutPage() {
               </div>
               <div className="col-span-2">
                 <Label htmlFor="country">Country / Region *</Label>
-                <select className="w-full border rounded-md p-2">
-                  <option>Select...</option>
-                  <option>Pakistan</option>
-                  {/* Add more countries */}
-                </select>
+                <Input
+                  id="country"
+                  type="text"
+                  placeholder="Start typing a country..."
+                  ref={(input) => {
+                    if (input && isLoaded) countryAutocomplete(input);
+                  }}
+                  required
+                />
               </div>
               <div className="col-span-2">
-                <Label htmlFor="address">Delivery address *</Label>
-                <Input id="address" required />
-                <Input className="mt-2" placeholder="Apartment, suite, etc. (optional)" />
+                <Label htmlFor="city">City *</Label>
+                <Input
+                  id="city"
+                  type="text"
+                  placeholder={address.country ? "Start typing a city..." : "Please select a country first"}
+                  ref={(input) => {
+                    if (input && isLoaded && address.country) cityAutocomplete(input);
+                  }}
+                  disabled={!address.country}
+                  required
+                />
               </div>
-              <div>
-                <Label htmlFor="postcode">Postcode / ZIP *</Label>
-                <Input id="postcode" required />
+              <div className="col-span-2">
+                <Label htmlFor="street">Street Address *</Label>
+                <Autocomplete
+                  onLoad={(autocomplete) => {
+                    autocomplete.setFields(['address_components', 'formatted_address']);
+                    if (address.country) {
+                      autocomplete.setComponentRestrictions({
+                        country: address.countryCode?.toLowerCase() || null
+                      });
+                    }
+                    setStreetAutocomplete(autocomplete);
+                  }}
+                  onPlaceChanged={() => {
+                    if (streetAutocomplete) {
+                      const place = streetAutocomplete.getPlace();
+                      handlePlaceSelect(place);
+                    }
+                  }}
+                >
+                  <Input
+                    id="street"
+                    type="text"
+                    placeholder="Start typing your street address..."
+                    required
+                  />
+                </Autocomplete>
               </div>
-              <div>
-                <Label htmlFor="city">Town / City *</Label>
-                <Input id="city" required />
-              </div>
-              <div>
-                <Label htmlFor="region">Region *</Label>
-                <Input id="region" required />
-              </div>
+
+              {/* Display selected address details */}
+              {address.country && (
+                <div className="col-span-2 space-y-4">
+                  <div>
+                    <Label>Country</Label>
+                    <Input value={address.country} disabled />
+                  </div>
+                  <div>
+                    <Label>City</Label>
+                    <Input value={address.city} disabled />
+                  </div>
+                  <div>
+                    <Label>Street</Label>
+                    <Input value={address.street} disabled />
+                  </div>
+                  <div>
+                    <Label>Postal Code</Label>
+                    <Input value={address.postalCode} disabled />
+                  </div>
+                </div>
+              )}
+
               <div>
                 <Label htmlFor="phone">Phone *</Label>
                 <Input id="phone" type="tel" required />
