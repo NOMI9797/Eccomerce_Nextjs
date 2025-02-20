@@ -1,5 +1,8 @@
 import { motion } from 'framer-motion';
 import Link from 'next/link';
+import { useCart } from '@/session/CartContext';
+import { Button } from '@/components/ui/button';
+import { CartItem } from '@/appwrite/db/cart';
 
 interface ProductGridProps {
   products: any[];
@@ -14,6 +17,19 @@ export default function ProductGrid({
   isLoading = false, 
   onLoadMore = () => {} 
 }: ProductGridProps) {
+  const { addToCart } = useCart();
+
+  const handleAddToCart = (product: any) => {
+    const cartItem: CartItem = {
+      productId: product.$id,
+      name: product.Name,
+      price: product.Price,
+      quantity: 1,
+      image: product.MainImage
+    };
+    addToCart(cartItem);
+  };
+
   return (
     <div className="space-y-8">
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
@@ -45,16 +61,20 @@ export default function ProductGrid({
                   <span className="text-xl font-bold text-blue-600">
                     ${product.Price.toFixed(2)}
                   </span>
-                  <motion.button
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors"
-                  >
-                    View Details
-                  </motion.button>
                 </div>
               </div>
             </Link>
+            <div className="px-6 pb-6">
+              <Button
+                onClick={(e) => {
+                  e.preventDefault();
+                  handleAddToCart(product);
+                }}
+                className="w-full bg-blue-500 hover:bg-blue-600"
+              >
+                Add to Cart
+              </Button>
+            </div>
           </motion.div>
         ))}
       </div>

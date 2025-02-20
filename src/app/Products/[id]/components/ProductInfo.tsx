@@ -1,5 +1,8 @@
 import { motion } from 'framer-motion';
 import { useState } from 'react';
+import { useCart } from '@/session/CartContext';
+import { Button } from '@/components/ui/button';
+import { CartItem } from '@/appwrite/db/cart';
 
 interface ProductInfoProps {
   product: any;
@@ -7,6 +10,18 @@ interface ProductInfoProps {
 
 export default function ProductInfo({ product }: ProductInfoProps) {
   const [quantity, setQuantity] = useState(1);
+  const { addToCart } = useCart();
+
+  const handleAddToCart = () => {
+    const cartItem: CartItem = {
+      productId: product.$id,
+      name: product.Name,
+      price: product.Price,
+      quantity: quantity,
+      image: product.MainImage
+    };
+    addToCart(cartItem);
+  };
 
   return (
     <motion.div 
@@ -52,32 +67,33 @@ export default function ProductInfo({ product }: ProductInfoProps) {
         <div className="flex items-center space-x-4">
           <label className="text-gray-700 font-medium">Quantity:</label>
           <div className="flex items-center border rounded-lg">
-            <button
+            <Button
+              variant="ghost"
+              size="sm"
               onClick={() => setQuantity(Math.max(1, quantity - 1))}
-              className="px-3 py-1 hover:bg-gray-100"
             >
               -
-            </button>
+            </Button>
             <span className="px-4 py-1 border-x">{quantity}</span>
-            <button
+            <Button
+              variant="ghost"
+              size="sm"
               onClick={() => setQuantity(quantity + 1)}
-              className="px-3 py-1 hover:bg-gray-100"
             >
               +
-            </button>
+            </Button>
           </div>
         </div>
 
-        <motion.button
-          whileHover={{ scale: 1.02 }}
-          whileTap={{ scale: 0.98 }}
-          className="w-full bg-blue-500 text-white py-4 px-6 rounded-lg hover:bg-blue-600 transition-colors flex items-center justify-center space-x-2"
+        <Button
+          onClick={handleAddToCart}
+          className="w-full bg-blue-500 hover:bg-blue-600 text-white py-4 px-6 rounded-lg flex items-center justify-center space-x-2"
         >
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
           </svg>
           <span>Add to Cart</span>
-        </motion.button>
+        </Button>
       </motion.div>
     </motion.div>
   );

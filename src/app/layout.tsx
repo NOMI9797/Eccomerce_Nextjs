@@ -8,6 +8,7 @@ import { useState } from 'react';
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import { Toaster } from 'sonner';
 import { AuthProvider } from "@/session/AuthContext";
+import { CartProvider } from '@/session/CartContext';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -28,9 +29,11 @@ export default function RootLayout({
       <html lang="en">
         <body>
           <AuthProvider>
-            {children}
+            <CartProvider>
+              {children}
+              <Toaster />
+            </CartProvider>
           </AuthProvider>
-          <Toaster />
           <ReactQueryDevtools initialIsOpen={false} />
         </body>
       </html>
