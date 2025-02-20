@@ -11,6 +11,9 @@ import { useLoadScript, Autocomplete } from '@react-google-maps/api';
 
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
+import { useAuth } from '@/session/AuthContext';
+import { useOrders } from '@/app/hooks/useOrders';
+import { toast } from 'sonner';
 
 // Add this interface
 interface CountriesWithCities {
@@ -26,6 +29,7 @@ export default function CheckoutPage() {
     city: '',
     street: '',
     postalCode: '',
+    isManualPostalCode: false
   });
   const [countries, setCountries] = useState<string[]>([]);
   const [streetAutocomplete, setStreetAutocomplete] = useState<google.maps.places.Autocomplete | null>(null);
@@ -34,6 +38,9 @@ export default function CheckoutPage() {
     googleMapsApiKey: "AIzaSyBtGLZIMW1fOUVDZREa3Aq3gXfVB_S1PJQ",
     libraries: ["places"]
   });
+
+  const { user } = useAuth();
+  const { createOrder } = useOrders();
 
   const handlePlaceSelect = (place: google.maps.places.PlaceResult) => {
     const addressComponents = place.address_components || [];
@@ -44,6 +51,7 @@ export default function CheckoutPage() {
       city: '',
       street: place.formatted_address || '',
       postalCode: '',
+      isManualPostalCode: true
     };
 
     addressComponents.forEach(component => {
@@ -60,6 +68,7 @@ export default function CheckoutPage() {
       }
       if (types.includes('postal_code')) {
         newAddress.postalCode = component.long_name;
+        newAddress.isManualPostalCode = false;
       }
     });
 
@@ -101,6 +110,99 @@ export default function CheckoutPage() {
     });
   };
 
+  // Add these state variables
+  const [formErrors, setFormErrors] = useState({
+    firstName: '',
+    lastName: '',
+    phone: '',
+    email: '',
+    postalCode: ''
+  });
+
+  // Add validation function
+  const validateForm = () => {
+    let isValid = true;
+    const newErrors = {
+      firstName: '',
+      lastName: '',
+      phone: '',
+      email: '',
+      postalCode: ''
+    };
+
+    // First Name validation
+    if (!firstName.trim()) {
+      newErrors.firstName = 'First name is required';
+      isValid = false;
+    } else if (firstName.length < 2) {
+      newErrors.firstName = 'First name must be at least 2 characters';
+      isValid = false;
+    }
+
+    // Last Name validation
+    if (!lastName.trim()) {
+      newErrors.lastName = 'Last name is required';
+      isValid = false;
+    } else if (lastName.length < 2) {
+      newErrors.lastName = 'Last name must be at least 2 characters';
+      isValid = false;
+    }
+
+    // Phone validation
+    const phoneRegex = /^\d{11}$/;
+    if (!phone.trim()) {
+      newErrors.phone = 'Phone number is required';
+      isValid = false;
+    } else if (!phoneRegex.test(phone)) {
+      newErrors.phone = 'Phone number must be exactly 11 digits';
+      isValid = false;
+    }
+
+    // Email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!email.trim()) {
+      newErrors.email = 'Email is required';
+      isValid = false;
+    } else if (!emailRegex.test(email)) {
+      newErrors.email = 'Please enter a valid email address';
+      isValid = false;
+    }
+
+    // Postal Code validation
+    if (address.isManualPostalCode && !address.postalCode.trim()) {
+      newErrors.postalCode = 'Postal code is required';
+      isValid = false;
+    }
+
+    setFormErrors(newErrors);
+    return isValid;
+  };
+
+  // Add form state
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
+  const [phone, setPhone] = useState('');
+  const [email, setEmail] = useState('');
+
+  const handlePlaceOrder = async () => {
+    const orderData = {
+      userId: user.$id,
+      items: cart.items.map(item => item.productId),
+      quantities: cart.items.map(item => item.quantity),
+      totalAmount: cart.total + deliveryFee,
+      shippingAddress: `${address.street}, ${address.city}, ${address.country}`,
+      status: 'pending' as const,
+      paymentStatus: 'pending' as const
+    };
+    
+    try {
+      await createOrder.mutateAsync(orderData);
+      toast.success('Order placed successfully');
+    } catch (error) {
+      toast.error('Failed to place order');
+    }
+  };
+
   if (!isLoaded) return <div>Loading...</div>;
 
   return (
@@ -122,11 +224,30 @@ export default function CheckoutPage() {
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <Label htmlFor="firstName">First name *</Label>
-                <Input id="firstName" required />
+                <Input 
+                  id="firstName"
+                  value={firstName}
+                  onChange={(e) => setFirstName(e.target.value)}
+                  required
+                  className={formErrors.firstName ? 'border-red-500' : ''}
+                />
+                {formErrors.firstName && (
+                  <p className="text-red-500 text-sm mt-1">{formErrors.firstName}</p>
+                )}
               </div>
+
               <div>
                 <Label htmlFor="lastName">Last name *</Label>
-                <Input id="lastName" required />
+                <Input 
+                  id="lastName"
+                  value={lastName}
+                  onChange={(e) => setLastName(e.target.value)}
+                  required
+                  className={formErrors.lastName ? 'border-red-500' : ''}
+                />
+                {formErrors.lastName && (
+                  <p className="text-red-500 text-sm mt-1">{formErrors.lastName}</p>
+                )}
               </div>
               <div className="col-span-2">
                 <Label htmlFor="country">Country / Region *</Label>
@@ -198,18 +319,55 @@ export default function CheckoutPage() {
                   </div>
                   <div>
                     <Label>Postal Code</Label>
-                    <Input value={address.postalCode} disabled />
+                    <Input 
+                      value={address.postalCode}
+                      onChange={(e) => setAddress(prev => ({ ...prev, postalCode: e.target.value }))}
+                      placeholder={address.isManualPostalCode ? "Enter postal code manually" : ""}
+                      disabled={!address.isManualPostalCode}
+                      required
+                    />
+                    {address.isManualPostalCode && (
+                      <p className="text-sm text-gray-500 mt-1">
+                        No postal code found for this address. Please enter it manually.
+                      </p>
+                    )}
                   </div>
                 </div>
               )}
 
               <div>
                 <Label htmlFor="phone">Phone *</Label>
-                <Input id="phone" type="tel" required />
+                <Input 
+                  id="phone" 
+                  type="tel"
+                  value={phone}
+                  onChange={(e) => {
+                    const value = e.target.value.replace(/\D/g, ''); // Only allow digits
+                    if (value.length <= 11) { // Limit to 11 digits
+                      setPhone(value);
+                    }
+                  }}
+                  placeholder="Enter 11 digit phone number"
+                  required
+                  className={formErrors.phone ? 'border-red-500' : ''}
+                />
+                {formErrors.phone && (
+                  <p className="text-red-500 text-sm mt-1">{formErrors.phone}</p>
+                )}
               </div>
               <div className="col-span-2">
-                <Label htmlFor="email">Your Email</Label>
-                <Input id="email" type="email" required />
+                <Label htmlFor="email">Your Email *</Label>
+                <Input 
+                  id="email" 
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                  className={formErrors.email ? 'border-red-500' : ''}
+                />
+                {formErrors.email && (
+                  <p className="text-red-500 text-sm mt-1">{formErrors.email}</p>
+                )}
               </div>
               <div className="col-span-2">
                 <Label htmlFor="notes">Order notes (optional)</Label>
@@ -280,7 +438,16 @@ export default function CheckoutPage() {
                 </Button>
               </div>
 
-              <Button className="w-full mt-6 bg-blue-600 hover:bg-blue-700">
+              <Button 
+                className="w-full mt-6 bg-blue-600 hover:bg-blue-700"
+                onClick={(e) => {
+                  e.preventDefault();
+                  if (validateForm()) {
+                    // Proceed with order placement
+                    handlePlaceOrder();
+                  }
+                }}
+              >
                 Place Order
               </Button>
             </div>
