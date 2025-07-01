@@ -8,6 +8,21 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { AddressAutocomplete } from '@/components/ui/address-autocomplete';
 import { useLoadScript, Autocomplete } from '@react-google-maps/api';
+import { motion, AnimatePresence } from 'framer-motion';
+import { 
+  FiCreditCard, 
+  FiTruck, 
+  FiMapPin, 
+  FiUser, 
+  FiMail, 
+  FiPhone, 
+  FiHome,
+  FiPackage,
+  FiShoppingCart,
+  FiArrowRight,
+  FiCheck,
+  FiDollarSign
+} from 'react-icons/fi';
 
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
@@ -185,6 +200,11 @@ export default function CheckoutPage() {
   const [email, setEmail] = useState('');
 
   const handlePlaceOrder = async () => {
+    if (!validateForm()) {
+      toast.error('Please fix form errors before proceeding');
+      return;
+    }
+
     const orderData = {
       userId: user.$id,
       items: cart.items.map(item => item.productId),
@@ -203,255 +223,487 @@ export default function CheckoutPage() {
     }
   };
 
-  if (!isLoaded) return <div>Loading...</div>;
-
-  return (
-    <div className="container mx-auto py-8 px-4">
-      <div className="flex justify-between items-center mb-8">
-        <h1 className="text-2xl font-bold">Shop Checkout</h1>
-        <div className="flex gap-2">
-          <Link href="/" className="text-gray-600">Home</Link>
-          <span>/</span>
-          <span>Checkout</span>
+  if (!isLoaded) {
+    return (
+      <div className="min-h-screen relative overflow-hidden bg-gradient-to-br from-gray-900 via-black to-gray-900">
+        <div className="absolute inset-0">
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_25%_25%,rgba(56,189,248,0.1),transparent_50%)]" />
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_75%_75%,rgba(147,51,234,0.1),transparent_50%)]" />
+        </div>
+        
+        <div className="relative z-10 flex items-center justify-center min-h-screen">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="text-center"
+          >
+            <motion.div
+              animate={{ rotate: 360 }}
+              transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+              className="w-16 h-16 border-4 border-cyan-400/30 border-t-cyan-400 rounded-full mx-auto mb-4"
+            />
+            <p className="text-gray-400 text-lg">Loading checkout...</p>
+          </motion.div>
         </div>
       </div>
+    );
+  }
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Billing Details Form */}
-        <div className="lg:col-span-2 space-y-6">
-          <div className="bg-white p-6 rounded-lg shadow">
-            <h2 className="text-xl font-semibold mb-6">Billing details</h2>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="firstName">First name *</Label>
-                <Input 
-                  id="firstName"
-                  value={firstName}
-                  onChange={(e) => setFirstName(e.target.value)}
-                  required
-                  className={formErrors.firstName ? 'border-red-500' : ''}
-                />
-                {formErrors.firstName && (
-                  <p className="text-red-500 text-sm mt-1">{formErrors.firstName}</p>
-                )}
-              </div>
+  return (
+    <div className="min-h-screen relative overflow-hidden bg-gradient-to-br from-gray-900 via-black to-gray-900">
+      {/* Animated background */}
+      <div className="absolute inset-0">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_25%_25%,rgba(56,189,248,0.1),transparent_50%)]" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_75%_75%,rgba(147,51,234,0.1),transparent_50%)]" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(236,72,153,0.05),transparent_50%)]" />
+      </div>
 
-              <div>
-                <Label htmlFor="lastName">Last name *</Label>
-                <Input 
-                  id="lastName"
-                  value={lastName}
-                  onChange={(e) => setLastName(e.target.value)}
-                  required
-                  className={formErrors.lastName ? 'border-red-500' : ''}
-                />
-                {formErrors.lastName && (
-                  <p className="text-red-500 text-sm mt-1">{formErrors.lastName}</p>
-                )}
-              </div>
-              <div className="col-span-2">
-                <Label htmlFor="country">Country / Region *</Label>
-                <Input
-                  id="country"
-                  type="text"
-                  placeholder="Start typing a country..."
-                  ref={(input) => {
-                    if (input && isLoaded) countryAutocomplete(input);
-                  }}
-                  required
-                />
-              </div>
-              <div className="col-span-2">
-                <Label htmlFor="city">City *</Label>
-                <Input
-                  id="city"
-                  type="text"
-                  placeholder={address.country ? "Start typing a city..." : "Please select a country first"}
-                  ref={(input) => {
-                    if (input && isLoaded && address.country) cityAutocomplete(input);
-                  }}
-                  disabled={!address.country}
-                  required
-                />
-              </div>
-              <div className="col-span-2">
-                <Label htmlFor="street">Street Address *</Label>
-                <Autocomplete
-                  onLoad={(autocomplete) => {
-                    autocomplete.setFields(['address_components', 'formatted_address']);
-                    if (address.country) {
-                      autocomplete.setComponentRestrictions({
-                        country: address.countryCode?.toLowerCase() || null
-                      });
-                    }
-                    setStreetAutocomplete(autocomplete);
-                  }}
-                  onPlaceChanged={() => {
-                    if (streetAutocomplete) {
-                      const place = streetAutocomplete.getPlace();
-                      handlePlaceSelect(place);
-                    }
-                  }}
-                >
-                  <Input
-                    id="street"
-                    type="text"
-                    placeholder="Start typing your street address..."
-                    required
-                  />
-                </Autocomplete>
-              </div>
+      {/* Grid overlay */}
+      <div className="absolute inset-0 opacity-10">
+        <div className="absolute inset-0 bg-[linear-gradient(rgba(34,211,238,0.1)_1px,transparent_1px),linear-gradient(90deg,rgba(34,211,238,0.1)_1px,transparent_1px)] bg-[size:50px_50px]" />
+      </div>
 
-              {/* Display selected address details */}
-              {address.country && (
-                <div className="col-span-2 space-y-4">
+      {/* Floating particles */}
+      <div className="absolute inset-0 overflow-hidden">
+        {[...Array(15)].map((_, i) => (
+          <motion.div
+            key={i}
+            className="absolute w-1 h-1 bg-cyan-400 rounded-full opacity-60"
+            initial={{ 
+              x: Math.random() * window.innerWidth, 
+              y: Math.random() * window.innerHeight 
+            }}
+            animate={{
+              x: Math.random() * window.innerWidth,
+              y: Math.random() * window.innerHeight,
+            }}
+            transition={{
+              duration: Math.random() * 10 + 10,
+              repeat: Infinity,
+              repeatType: "reverse",
+            }}
+          />
+        ))}
+      </div>
+
+      <div className="relative z-10 container mx-auto py-12 px-4">
+        {/* Header */}
+        <motion.div 
+          className="flex justify-between items-center mb-12"
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+        >
+          <div>
+            <h1 className="text-5xl font-bold bg-gradient-to-r from-cyan-400 via-purple-500 to-pink-500 bg-clip-text text-transparent mb-2">
+              Shop Checkout
+            </h1>
+            <p className="text-gray-400">Complete your purchase securely</p>
+          </div>
+          <div className="flex items-center gap-2 text-gray-400">
+            <Link href="/" className="hover:text-cyan-400 transition-colors">Home</Link>
+            <span>/</span>
+            <span className="text-cyan-400">Checkout</span>
+          </div>
+        </motion.div>
+
+        <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
+          {/* Billing Details Form */}
+          <div className="xl:col-span-2 space-y-8">
+            {/* Personal Information */}
+            <motion.div
+              initial={{ opacity: 0, x: -50 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.2 }}
+              className="relative group"
+            >
+              <div className="absolute -inset-0.5 bg-gradient-to-r from-cyan-500/20 to-purple-500/20 rounded-2xl blur opacity-50 group-hover:opacity-100 transition duration-500" />
+              <div className="relative bg-black/60 backdrop-blur-xl border border-cyan-500/20 rounded-2xl p-8
+                            hover:border-cyan-400/40 transition-all duration-500 hover:shadow-[0_0_30px_rgba(34,211,238,0.2)]">
+                <div className="flex items-center gap-3 mb-8">
+                  <FiUser className="text-2xl text-cyan-400" />
+                  <h2 className="text-2xl font-bold text-white">Personal Information</h2>
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
-                    <Label>Country</Label>
-                    <Input value={address.country} disabled />
-                  </div>
-                  <div>
-                    <Label>City</Label>
-                    <Input value={address.city} disabled />
-                  </div>
-                  <div>
-                    <Label>Street</Label>
-                    <Input value={address.street} disabled />
-                  </div>
-                  <div>
-                    <Label>Postal Code</Label>
+                    <Label htmlFor="firstName" className="text-gray-300 flex items-center gap-2 mb-2">
+                      <FiUser className="text-cyan-400" />
+                      First name *
+                    </Label>
                     <Input 
-                      value={address.postalCode}
-                      onChange={(e) => setAddress(prev => ({ ...prev, postalCode: e.target.value }))}
-                      placeholder={address.isManualPostalCode ? "Enter postal code manually" : ""}
-                      disabled={!address.isManualPostalCode}
+                      id="firstName"
+                      value={firstName}
+                      onChange={(e) => setFirstName(e.target.value)}
                       required
+                      className={`bg-black/60 border-gray-600 text-white placeholder-gray-400 focus:border-cyan-400 
+                               transition-colors ${formErrors.firstName ? 'border-red-500' : ''}`}
+                      placeholder="Enter your first name"
                     />
-                    {address.isManualPostalCode && (
-                      <p className="text-sm text-gray-500 mt-1">
-                        No postal code found for this address. Please enter it manually.
-                      </p>
+                    {formErrors.firstName && (
+                      <motion.p 
+                        initial={{ opacity: 0, y: -10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="text-red-400 text-sm mt-2"
+                      >
+                        {formErrors.firstName}
+                      </motion.p>
+                    )}
+                  </div>
+
+                  <div>
+                    <Label htmlFor="lastName" className="text-gray-300 flex items-center gap-2 mb-2">
+                      <FiUser className="text-cyan-400" />
+                      Last name *
+                    </Label>
+                    <Input 
+                      id="lastName"
+                      value={lastName}
+                      onChange={(e) => setLastName(e.target.value)}
+                      required
+                      className={`bg-black/60 border-gray-600 text-white placeholder-gray-400 focus:border-cyan-400 
+                               transition-colors ${formErrors.lastName ? 'border-red-500' : ''}`}
+                      placeholder="Enter your last name"
+                    />
+                    {formErrors.lastName && (
+                      <motion.p 
+                        initial={{ opacity: 0, y: -10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="text-red-400 text-sm mt-2"
+                      >
+                        {formErrors.lastName}
+                      </motion.p>
+                    )}
+                  </div>
+
+                  <div>
+                    <Label htmlFor="phone" className="text-gray-300 flex items-center gap-2 mb-2">
+                      <FiPhone className="text-cyan-400" />
+                      Phone *
+                    </Label>
+                    <Input 
+                      id="phone" 
+                      type="tel"
+                      value={phone}
+                      onChange={(e) => {
+                        const value = e.target.value.replace(/\D/g, '');
+                        if (value.length <= 11) {
+                          setPhone(value);
+                        }
+                      }}
+                      placeholder="Enter 11 digit phone number"
+                      required
+                      className={`bg-black/60 border-gray-600 text-white placeholder-gray-400 focus:border-cyan-400 
+                               transition-colors ${formErrors.phone ? 'border-red-500' : ''}`}
+                    />
+                    {formErrors.phone && (
+                      <motion.p 
+                        initial={{ opacity: 0, y: -10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="text-red-400 text-sm mt-2"
+                      >
+                        {formErrors.phone}
+                      </motion.p>
+                    )}
+                  </div>
+
+                  <div>
+                    <Label htmlFor="email" className="text-gray-300 flex items-center gap-2 mb-2">
+                      <FiMail className="text-cyan-400" />
+                      Your Email *
+                    </Label>
+                    <Input 
+                      id="email" 
+                      type="email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      required
+                      className={`bg-black/60 border-gray-600 text-white placeholder-gray-400 focus:border-cyan-400 
+                               transition-colors ${formErrors.email ? 'border-red-500' : ''}`}
+                      placeholder="Enter your email address"
+                    />
+                    {formErrors.email && (
+                      <motion.p 
+                        initial={{ opacity: 0, y: -10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="text-red-400 text-sm mt-2"
+                      >
+                        {formErrors.email}
+                      </motion.p>
                     )}
                   </div>
                 </div>
-              )}
+              </div>
+            </motion.div>
 
-              <div>
-                <Label htmlFor="phone">Phone *</Label>
-                <Input 
-                  id="phone" 
-                  type="tel"
-                  value={phone}
-                  onChange={(e) => {
-                    const value = e.target.value.replace(/\D/g, ''); // Only allow digits
-                    if (value.length <= 11) { // Limit to 11 digits
-                      setPhone(value);
-                    }
-                  }}
-                  placeholder="Enter 11 digit phone number"
-                  required
-                  className={formErrors.phone ? 'border-red-500' : ''}
-                />
-                {formErrors.phone && (
-                  <p className="text-red-500 text-sm mt-1">{formErrors.phone}</p>
-                )}
-              </div>
-              <div className="col-span-2">
-                <Label htmlFor="email">Your Email *</Label>
-                <Input 
-                  id="email" 
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                  className={formErrors.email ? 'border-red-500' : ''}
-                />
-                {formErrors.email && (
-                  <p className="text-red-500 text-sm mt-1">{formErrors.email}</p>
-                )}
-              </div>
-              <div className="col-span-2">
-                <Label htmlFor="notes">Order notes (optional)</Label>
-                <textarea 
-                  id="notes"
-                  className="w-full border rounded-md p-2 h-32"
-                  placeholder="Notes about your order, e.g. special notes for delivery"
-                />
-              </div>
-            </div>
-          </div>
-        </div>
+            {/* Shipping Address */}
+            <motion.div
+              initial={{ opacity: 0, x: -50 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.4 }}
+              className="relative group"
+            >
+              <div className="absolute -inset-0.5 bg-gradient-to-r from-purple-500/20 to-pink-500/20 rounded-2xl blur opacity-50 group-hover:opacity-100 transition duration-500" />
+              <div className="relative bg-black/60 backdrop-blur-xl border border-purple-500/20 rounded-2xl p-8
+                            hover:border-purple-400/40 transition-all duration-500 hover:shadow-[0_0_30px_rgba(147,51,234,0.2)]">
+                <div className="flex items-center gap-3 mb-8">
+                  <FiMapPin className="text-2xl text-purple-400" />
+                  <h2 className="text-2xl font-bold text-white">Shipping Address</h2>
+                </div>
+                
+                <div className="space-y-6">
+                  <div>
+                    <Label htmlFor="country" className="text-gray-300 flex items-center gap-2 mb-2">
+                      <FiHome className="text-purple-400" />
+                      Country / Region *
+                    </Label>
+                    <Input
+                      id="country"
+                      type="text"
+                      placeholder="Start typing a country..."
+                      ref={(input) => {
+                        if (input && isLoaded) countryAutocomplete(input);
+                      }}
+                      required
+                      className="bg-black/60 border-gray-600 text-white placeholder-gray-400 focus:border-purple-400 transition-colors"
+                    />
+                  </div>
 
-        {/* Order Summary */}
-        <div className="lg:col-span-1">
-          <div className="bg-white p-6 rounded-lg shadow">
-            <h2 className="text-xl font-semibold mb-6">Your Order</h2>
-            <div className="space-y-4">
-              <div className="flex justify-between font-semibold">
-                <span>Product</span>
-                <span>Subtotal</span>
-              </div>
-              {cart.items.map((item) => (
-                <div key={item.productId} className="flex justify-between">
-                  <span>{item.name} x{item.quantity}</span>
-                  <span>${(item.price * item.quantity).toFixed(2)}</span>
-                </div>
-              ))}
-              <div className="border-t pt-4">
-                <div className="flex justify-between">
-                  <span>Subtotal</span>
-                  <span>${cart.total.toFixed(2)}</span>
-                </div>
-                <div className="flex justify-between mt-2">
-                  <span>Delivery Fee</span>
-                  <span>${deliveryFee.toFixed(2)}</span>
-                </div>
-                <div className="flex justify-between mt-2 font-bold">
-                  <span>Total</span>
-                  <span>${(cart.total + deliveryFee).toFixed(2)}</span>
-                </div>
-              </div>
+                  <div>
+                    <Label htmlFor="city" className="text-gray-300 flex items-center gap-2 mb-2">
+                      <FiMapPin className="text-purple-400" />
+                      City *
+                    </Label>
+                    <Input
+                      id="city"
+                      type="text"
+                      placeholder={address.country ? "Start typing a city..." : "Please select a country first"}
+                      ref={(input) => {
+                        if (input && isLoaded && address.country) cityAutocomplete(input);
+                      }}
+                      disabled={!address.country}
+                      required
+                      className="bg-black/60 border-gray-600 text-white placeholder-gray-400 focus:border-purple-400 transition-colors disabled:opacity-50"
+                    />
+                  </div>
 
-              <div className="mt-6">
-                <div className="space-y-4">
-                  <div className="flex items-center space-x-2">
-                    <RadioGroup defaultValue="stripe">
-                      <div className="flex items-center space-x-2 mb-2">
-                        <RadioGroupItem value="stripe" id="stripe" />
-                        <Label htmlFor="stripe">Stripe</Label>
+                  <div>
+                    <Label htmlFor="street" className="text-gray-300 flex items-center gap-2 mb-2">
+                      <FiHome className="text-purple-400" />
+                      Street Address *
+                    </Label>
+                    <Autocomplete
+                      onLoad={(autocomplete) => {
+                        autocomplete.setFields(['address_components', 'formatted_address']);
+                        if (address.country) {
+                          autocomplete.setComponentRestrictions({
+                            country: address.countryCode?.toLowerCase() || null
+                          });
+                        }
+                        setStreetAutocomplete(autocomplete);
+                      }}
+                      onPlaceChanged={() => {
+                        if (streetAutocomplete) {
+                          const place = streetAutocomplete.getPlace();
+                          handlePlaceSelect(place);
+                        }
+                      }}
+                    >
+                      <Input
+                        id="street"
+                        type="text"
+                        placeholder="Start typing your street address..."
+                        required
+                        className="bg-black/60 border-gray-600 text-white placeholder-gray-400 focus:border-purple-400 transition-colors"
+                      />
+                    </Autocomplete>
+                  </div>
+
+                  {/* Display selected address details */}
+                  {address.country && (
+                    <motion.div 
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: 'auto' }}
+                      className="space-y-6 border-t border-gray-700/50 pt-6"
+                    >
+                      <div>
+                        <Label className="text-gray-300 mb-2 block">Selected Country</Label>
+                        <Input value={address.country} disabled className="bg-gray-800/60 border-gray-700 text-gray-300" />
                       </div>
-                      <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="cod" id="cod" />
-                        <Label htmlFor="cod">Cash on Delivery</Label>
+                      <div>
+                        <Label className="text-gray-300 mb-2 block">Selected City</Label>
+                        <Input value={address.city} disabled className="bg-gray-800/60 border-gray-700 text-gray-300" />
                       </div>
-                    </RadioGroup>
+                      <div>
+                        <Label className="text-gray-300 mb-2 block">Street Address</Label>
+                        <Input value={address.street} disabled className="bg-gray-800/60 border-gray-700 text-gray-300" />
+                      </div>
+                      <div>
+                        <Label className="text-gray-300 mb-2 block">Postal Code</Label>
+                        <Input 
+                          value={address.postalCode}
+                          onChange={(e) => setAddress(prev => ({ ...prev, postalCode: e.target.value }))}
+                          placeholder={address.isManualPostalCode ? "Enter postal code manually" : ""}
+                          disabled={!address.isManualPostalCode}
+                          required
+                          className="bg-black/60 border-gray-600 text-white placeholder-gray-400 focus:border-purple-400 transition-colors disabled:bg-gray-800/60 disabled:border-gray-700 disabled:text-gray-300"
+                        />
+                        {address.isManualPostalCode && (
+                          <p className="text-sm text-yellow-400 mt-2">
+                            No postal code found for this address. Please enter it manually.
+                          </p>
+                        )}
+                      </div>
+                    </motion.div>
+                  )}
+
+                  <div>
+                    <Label htmlFor="notes" className="text-gray-300 mb-2 block">Order notes (optional)</Label>
+                    <textarea 
+                      id="notes"
+                      className="w-full bg-black/60 border border-gray-600 rounded-lg p-4 text-white placeholder-gray-400 
+                               focus:border-purple-400 transition-colors h-32 resize-none"
+                      placeholder="Notes about your order, e.g. special notes for delivery"
+                    />
                   </div>
                 </div>
               </div>
-
-              <div className="mt-6">
-                <Input 
-                  placeholder="Enter your magic code here..."
-                  className="mb-2"
-                />
-                <Button className="w-full bg-yellow-400 hover:bg-yellow-500">
-                  Apply
-                </Button>
-              </div>
-
-              <Button 
-                className="w-full mt-6 bg-blue-600 hover:bg-blue-700"
-                onClick={(e) => {
-                  e.preventDefault();
-                  if (validateForm()) {
-                    // Proceed with order placement
-                    handlePlaceOrder();
-                  }
-                }}
-              >
-                Place Order
-              </Button>
-            </div>
+            </motion.div>
           </div>
+
+          {/* Order Summary */}
+          <motion.div
+            initial={{ opacity: 0, x: 50 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.3 }}
+            className="relative group"
+          >
+            <div className="absolute -inset-0.5 bg-gradient-to-r from-pink-500/20 to-cyan-500/20 rounded-2xl blur opacity-50" />
+            <div className="relative bg-black/60 backdrop-blur-xl border border-pink-500/30 rounded-2xl p-8 h-fit
+                          hover:shadow-[0_0_40px_rgba(236,72,153,0.3)] transition-all duration-500 sticky top-8">
+              <div className="flex items-center gap-3 mb-8">
+                <FiShoppingCart className="text-2xl text-pink-400" />
+                <h2 className="text-2xl font-bold text-white">Your Order</h2>
+              </div>
+              
+              <div className="space-y-6">
+                {/* Order Items */}
+                <div className="space-y-4 max-h-64 overflow-y-auto pr-2">
+                  {cart.items.map((item) => (
+                    <motion.div 
+                      key={item.productId} 
+                      className="flex justify-between items-center p-4 bg-gray-800/30 rounded-xl border border-gray-700/50"
+                      whileHover={{ scale: 1.02 }}
+                    >
+                      <div className="flex items-center gap-3">
+                        <img
+                          src={`https://cloud.appwrite.io/v1/storage/buckets/67a32bbf003270b1e15c/files/${item.image}/view?project=679b0257003b758db270`}
+                          alt={item.name}
+                          className="w-12 h-12 object-cover rounded-lg border border-gray-600"
+                        />
+                        <div>
+                          <p className="text-white font-medium text-sm">{item.name}</p>
+                          <p className="text-gray-400 text-xs">Qty: {item.quantity}</p>
+                        </div>
+                      </div>
+                      <span className="text-cyan-400 font-bold">${(item.price * item.quantity).toFixed(2)}</span>
+                    </motion.div>
+                  ))}
+                </div>
+
+                {/* Summary Totals */}
+                <div className="border-t border-gray-700/50 pt-6 space-y-4">
+                  <div className="flex justify-between text-lg">
+                    <span className="text-gray-300">Subtotal</span>
+                    <span className="text-white font-semibold">${cart.total.toFixed(2)}</span>
+                  </div>
+                  <div className="flex justify-between text-lg">
+                    <span className="text-gray-300">Delivery Fee</span>
+                    <span className="text-cyan-400 font-semibold">${deliveryFee.toFixed(2)}</span>
+                  </div>
+                  <div className="border-t border-gray-700/50 pt-4">
+                    <div className="flex justify-between text-2xl font-bold">
+                      <span className="text-white">Total</span>
+                      <span className="bg-gradient-to-r from-cyan-400 to-pink-400 bg-clip-text text-transparent">
+                        ${(cart.total + deliveryFee).toFixed(2)}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Payment Options */}
+                <div className="border-t border-gray-700/50 pt-6">
+                  <h3 className="text-white font-semibold mb-4 flex items-center gap-2">
+                    <FiCreditCard className="text-purple-400" />
+                    Payment Method
+                  </h3>
+                  <RadioGroup defaultValue="stripe" className="space-y-3">
+                    <motion.div 
+                      className="flex items-center space-x-3 p-3 bg-gray-800/30 rounded-lg border border-gray-700/50 hover:border-purple-400/40 transition-colors"
+                      whileHover={{ scale: 1.02 }}
+                    >
+                      <RadioGroupItem value="stripe" id="stripe" className="border-purple-400 text-purple-400" />
+                      <Label htmlFor="stripe" className="text-white flex items-center gap-2">
+                        <FiCreditCard className="text-purple-400" />
+                        Stripe (Credit/Debit Card)
+                      </Label>
+                    </motion.div>
+                    <motion.div 
+                      className="flex items-center space-x-3 p-3 bg-gray-800/30 rounded-lg border border-gray-700/50 hover:border-green-400/40 transition-colors"
+                      whileHover={{ scale: 1.02 }}
+                    >
+                      <RadioGroupItem value="cod" id="cod" className="border-green-400 text-green-400" />
+                      <Label htmlFor="cod" className="text-white flex items-center gap-2">
+                        <FiDollarSign className="text-green-400" />
+                        Cash on Delivery
+                      </Label>
+                    </motion.div>
+                  </RadioGroup>
+                </div>
+
+                {/* Promo Code */}
+                <div className="border-t border-gray-700/50 pt-6">
+                  <h3 className="text-white font-semibold mb-4">Promo Code</h3>
+                  <div className="flex gap-2">
+                    <Input 
+                      placeholder="Enter your magic code here..."
+                      className="bg-black/60 border-gray-600 text-white placeholder-gray-400 focus:border-yellow-400 transition-colors"
+                    />
+                    <motion.button
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      className="px-6 py-2 bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-400 hover:to-orange-400 
+                               text-black font-semibold rounded-lg transition-all duration-300 hover:shadow-[0_0_20px_rgba(245,158,11,0.4)]"
+                    >
+                      Apply
+                    </motion.button>
+                  </div>
+                </div>
+
+                {/* Place Order Button */}
+                <motion.div
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  className="pt-6"
+                >
+                  <Button 
+                    onClick={(e) => {
+                      e.preventDefault();
+                      handlePlaceOrder();
+                    }}
+                    className="w-full bg-gradient-to-r from-cyan-500 via-purple-600 to-pink-600 
+                             hover:from-cyan-400 hover:via-purple-500 hover:to-pink-500 
+                             text-white py-4 rounded-xl font-bold text-lg shadow-[0_0_30px_rgba(34,211,238,0.3)] 
+                             hover:shadow-[0_0_40px_rgba(34,211,238,0.5)] transform hover:scale-105 transition-all duration-300
+                             border border-cyan-400/20 backdrop-blur-sm"
+                  >
+                    <FiCheck className="mr-2" />
+                    Place Order
+                    <FiArrowRight className="ml-2" />
+                  </Button>
+                </motion.div>
+              </div>
+            </div>
+          </motion.div>
         </div>
       </div>
     </div>

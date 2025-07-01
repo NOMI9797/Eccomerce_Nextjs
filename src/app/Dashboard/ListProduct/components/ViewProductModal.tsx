@@ -62,11 +62,13 @@ const ViewProductModal: React.FC<ViewProductModalProps> = ({
             {/* Main Image */}
             <div className="col-span-1 lg:col-span-2">
               <img
-                src={`https://cloud.appwrite.io/v1/storage/buckets/67a32bbf003270b1e15c/files/${selectedImage}/view?project=679b0257003b758db270`}
-                alt={product.Name}
-                className="w-full h-[500px] object-contain bg-gray-50 rounded-lg shadow-lg"
+                src={selectedImage ? 
+                  `https://cloud.appwrite.io/v1/storage/buckets/67a32bbf003270b1e15c/files/${selectedImage}/view?project=679b0257003b758db270` :
+                  "/images/pexels-shattha-pilabut-38930-135620.jpg"}
+                alt="Product Image"
+                className="w-full h-96 object-cover rounded-lg"
                 onError={(e) => {
-                  e.currentTarget.src = "https://via.placeholder.com/800x600?text=Product+Image";
+                  e.currentTarget.src = "/images/pexels-shattha-pilabut-38930-135620.jpg";
                 }}
               />
             </div>
@@ -82,11 +84,13 @@ const ViewProductModal: React.FC<ViewProductModalProps> = ({
                       ${selectedImage === imageId ? 'border-blue-500' : 'border-transparent'}`}
                   >
                     <img
-                      src={`https://cloud.appwrite.io/v1/storage/buckets/67a32bbf003270b1e15c/files/${imageId}/view?project=679b0257003b758db270`}
-                      alt={`${product.Name} ${index + 1}`}
-                      className="w-full h-full object-cover"
+                      src={imageId ? 
+                        `https://cloud.appwrite.io/v1/storage/buckets/67a32bbf003270b1e15c/files/${imageId}/view?project=679b0257003b758db270` :
+                        "/images/pexels-shattha-pilabut-38930-135620.jpg"}
+                      alt={`Product ${index + 1}`}
+                      className="w-16 h-16 object-cover rounded-lg cursor-pointer border-2 border-transparent hover:border-blue-500 transition-colors"
                       onError={(e) => {
-                        e.currentTarget.src = "https://via.placeholder.com/150?text=Product";
+                        e.currentTarget.src = "/images/pexels-shattha-pilabut-38930-135620.jpg";
                       }}
                     />
                   </button>

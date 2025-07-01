@@ -1,6 +1,6 @@
 "use client";
 import React, { createContext, useContext, useState, ReactNode, useEffect } from "react";
-import { getCurrentUser, signOutUser, isAdmin } from "@/appwrite/auth";
+import { getCurrentUser, signOutUser, isAdmin, checkAuth } from "@/appwrite/auth";
 import { useRouter } from "next/navigation";
 
 interface AuthContextType {
@@ -31,16 +31,23 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           return;
         }
 
-        // If no stored user, check Appwrite session
-        const currentUser = await getCurrentUser();
-        if (currentUser) {
-          setUser(currentUser);
-          localStorage.setItem("user", JSON.stringify(currentUser));
+        // Check if there's an active session before trying to get user details
+        const hasActiveSession = await checkAuth();
+        if (hasActiveSession) {
+          // Only call getCurrentUser if we have an active session
+          const currentUser = await getCurrentUser();
+          if (currentUser) {
+            setUser(currentUser);
+            localStorage.setItem("user", JSON.stringify(currentUser));
+          } else {
+            setUser(null);
+          }
         } else {
+          // No active session, user is a guest
           setUser(null);
           // Only redirect if not already on auth pages
           const path = window.location.pathname;
-          if (path !== '/signup' && path !== '/login') {
+          if (path !== '/signup' && path !== '/login' && path !== '/Homepage' && path !== '/Products') {
             router.push('/signup');
           }
         }
@@ -48,7 +55,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         console.error("Error loading user:", error);
         setUser(null);
         const path = window.location.pathname;
-        if (path !== '/signup' && path !== '/login') {
+        if (path !== '/signup' && path !== '/login' && path !== '/Homepage' && path !== '/Products') {
           router.push('/signup');
         }
       } finally {
