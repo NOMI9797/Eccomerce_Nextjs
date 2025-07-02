@@ -12,36 +12,12 @@ export const useOrders = () => {
     queryKey: ['orders', user?.$id],
     queryFn: async () => {
       if (isUserAdmin) {
-        const response = await ordersService.getAllOrders();
-        return response.documents.map(doc => ({
-          $id: doc.$id,
-          userId: doc.userId,
-          orderNumber: doc.orderNumber,
-          status: doc.status,
-          items: doc.items,
-          quantities: doc.quantities,
-          totalAmount: doc.totalAmount,
-          shippingAddress: doc.shippingAddress,
-          paymentStatus: doc.paymentStatus,
-          createdAt: doc.createdAt,
-          updatedAt: doc.updatedAt
-        })) as Order[];
+        const response = await ordersService.getOrders();
+        return response.documents;
       }
       if (user?.$id) {
         const response = await ordersService.getUserOrders(user.$id);
-        return response.documents.map(doc => ({
-          $id: doc.$id,
-          userId: doc.userId,
-          orderNumber: doc.orderNumber,
-          status: doc.status,
-          items: doc.items,
-          quantities: doc.quantities,
-          totalAmount: doc.totalAmount,
-          shippingAddress: doc.shippingAddress,
-          paymentStatus: doc.paymentStatus,
-          createdAt: doc.createdAt,
-          updatedAt: doc.updatedAt
-        })) as Order[];
+        return response.documents;
       }
       return [];
     },

@@ -89,7 +89,7 @@ export default function ProductsPage() {
             ease: "linear"
           }}
         />
-      </div>
+            </div>
 
       {/* Floating Particles */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
@@ -115,12 +115,12 @@ export default function ProductsPage() {
             }}
           />
         ))}
-      </div>
+          </div>
 
       {/* Header */}
       <div className="relative z-20">
         <Header />
-      </div>
+        </div>
 
       {/* Hero Section */}
       <motion.section 

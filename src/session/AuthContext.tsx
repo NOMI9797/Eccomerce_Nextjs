@@ -35,11 +35,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         const hasActiveSession = await checkAuth();
         if (hasActiveSession) {
           // Only call getCurrentUser if we have an active session
-          const currentUser = await getCurrentUser();
-          if (currentUser) {
-            setUser(currentUser);
-            localStorage.setItem("user", JSON.stringify(currentUser));
-          } else {
+        const currentUser = await getCurrentUser();
+        if (currentUser) {
+          setUser(currentUser);
+          localStorage.setItem("user", JSON.stringify(currentUser));
+        } else {
             setUser(null);
           }
         } else {

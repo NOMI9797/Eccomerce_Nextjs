@@ -111,9 +111,9 @@ export default function CartPage() {
                          border border-cyan-400/20 backdrop-blur-sm"
               >
                 <FiShoppingBag className="mr-2" />
-                Continue Shopping
+          Continue Shopping
                 <FiArrowRight className="ml-2" />
-              </Button>
+        </Button>
             </motion.div>
           </motion.div>
         </div>
@@ -174,7 +174,7 @@ export default function CartPage() {
             <span>{cart.items.length} item{cart.items.length !== 1 ? 's' : ''} in your cart</span>
           </div>
         </motion.div>
-        
+      
         <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
           {/* Cart Items */}
           <div className="xl:col-span-2 space-y-6">
@@ -197,16 +197,16 @@ export default function CartPage() {
                         className="relative group-hover:scale-105 transition-transform duration-300"
                         whileHover={{ scale: 1.1 }}
                       >
-                        <img
-                          src={`https://cloud.appwrite.io/v1/storage/buckets/67a32bbf003270b1e15c/files/${item.image}/view?project=679b0257003b758db270`}
-                          alt={item.name}
+              <img
+                src={`https://cloud.appwrite.io/v1/storage/buckets/67a32bbf003270b1e15c/files/${item.image}/view?project=679b0257003b758db270`}
+                alt={item.name}
                           className="w-24 h-24 object-cover rounded-xl border border-cyan-400/20"
-                        />
+              />
                         <div className="absolute inset-0 bg-gradient-to-t from-cyan-500/20 to-transparent rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                       </motion.div>
                       
                       {/* Product Details */}
-                      <div className="flex-1">
+              <div className="flex-1">
                         <h3 className="font-semibold text-xl text-white mb-2">{item.name}</h3>
                         <p className="text-cyan-400 text-lg font-bold">${item.price.toFixed(2)}</p>
                         

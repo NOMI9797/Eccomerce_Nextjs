@@ -213,16 +213,16 @@ const ListProducts: React.FC = () => {
         </div>
         
         <motion.button 
-          onClick={handleAddProduct}
+              onClick={handleAddProduct}
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
           className="bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-400 hover:to-emerald-500 
                    text-white px-6 py-3 rounded-xl flex items-center gap-3 font-semibold
                    shadow-[0_0_30px_rgba(34,197,94,0.3)] hover:shadow-[0_0_40px_rgba(34,197,94,0.5)] 
                    transition-all duration-300 border border-green-400/20"
-        >
-          <FiPlus className="w-5 h-5" />
-          Add New Product
+            >
+              <FiPlus className="w-5 h-5" />
+              Add New Product
         </motion.button>
       </motion.div>
 
@@ -269,7 +269,7 @@ const ListProducts: React.FC = () => {
             <FiGrid className="text-3xl text-pink-400 mx-auto mb-3" />
             <div className="text-2xl font-bold text-white">{stats.categoriesCount}</div>
             <div className="text-gray-400 text-sm">Categories</div>
-          </div>
+        </div>
         </motion.div>
       </motion.div>
 
@@ -300,21 +300,21 @@ const ListProducts: React.FC = () => {
             {/* Category Filter */}
             <div className="relative">
               <FiFilter className="absolute left-4 top-1/2 transform -translate-y-1/2 text-purple-400 w-5 h-5" />
-              <select
-                value={selectedCategory}
-                onChange={(e) => setSelectedCategory(e.target.value)}
+          <select
+            value={selectedCategory}
+            onChange={(e) => setSelectedCategory(e.target.value)}
                 className="w-full lg:w-64 pl-12 pr-10 py-3 bg-black/60 border border-gray-600 rounded-xl text-white 
                          focus:border-purple-400 focus:ring-2 focus:ring-purple-400/20 transition-all duration-300 appearance-none"
-              >
-                <option value="all">All Categories</option>
-                {categories.map((category) => (
-                  <option key={category.$id} value={category.$id}>
-                    {category.CategoryName}
-                  </option>
-                ))}
-              </select>
-            </div>
-          </div>
+          >
+            <option value="all">All Categories</option>
+            {categories.map((category) => (
+              <option key={category.$id} value={category.$id}>
+                {category.CategoryName}
+              </option>
+            ))}
+          </select>
+        </div>
+      </div>
         </div>
       </motion.div>
 
@@ -341,9 +341,9 @@ const ListProducts: React.FC = () => {
           <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-gray-700/50">
               <thead className="bg-gray-800/30">
-                <tr>
+            <tr>
                   <th className="px-6 py-4 text-left text-xs font-semibold text-cyan-400 uppercase tracking-wider">
-                    Product
+                Product
                   </th>
                   <th className="px-6 py-4 text-left text-xs font-semibold text-cyan-400 uppercase tracking-wider">
                     Category
@@ -356,9 +356,9 @@ const ListProducts: React.FC = () => {
                   </th>
                   <th className="px-6 py-4 text-left text-xs font-semibold text-cyan-400 uppercase tracking-wider">
                     Actions
-                  </th>
-                </tr>
-              </thead>
+              </th>
+            </tr>
+          </thead>
               <tbody className="divide-y divide-gray-700/30">
                 <AnimatePresence>
                   {filteredProducts.map((product, index) => (
@@ -371,101 +371,101 @@ const ListProducts: React.FC = () => {
                       className="hover:bg-gray-800/30 transition-colors group/row"
                     >
                       {/* Product Info */}
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex items-center">
+                <td className="px-6 py-4 whitespace-nowrap">
+                  <div className="flex items-center">
                           <div className="h-12 w-12 flex-shrink-0 relative group">
-                            <img
+                      <img
                               className="h-12 w-12 rounded-xl object-cover border border-cyan-400/20 
                                        group-hover:border-cyan-400/60 transition-colors"
                               src={product.MainImage ? 
                                 `https://cloud.appwrite.io/v1/storage/buckets/67a32bbf003270b1e15c/files/${product.MainImage}/view?project=679b0257003b758db270` : 
                                 "/images/pexels-shattha-pilabut-38930-135620.jpg"}
-                              alt={product.Name}
-                              onError={(e) => {
+                        alt={product.Name}
+                        onError={(e) => {
                                 e.currentTarget.src = "/images/pexels-shattha-pilabut-38930-135620.jpg";
-                              }}
-                            />
+                        }}
+                      />
                             <div className="absolute inset-0 bg-gradient-to-t from-cyan-500/20 to-transparent rounded-xl 
                                           opacity-0 group-hover:opacity-100 transition-opacity" />
-                          </div>
-                          <div className="ml-4">
+                    </div>
+                    <div className="ml-4">
                             <div className="text-sm font-semibold text-white group-hover/row:text-cyan-400 transition-colors">
                               {product.Name}
                             </div>
-                          </div>
-                        </div>
-                      </td>
+                    </div>
+                  </div>
+                </td>
                       
                       {/* Category */}
-                      <td className="px-6 py-4 whitespace-nowrap">
+                <td className="px-6 py-4 whitespace-nowrap">
                         <span className="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full 
                                        bg-green-500/20 text-green-400 border border-green-500/30">
-                          {getCategoryName(product.CategoryId)}
-                        </span>
-                      </td>
+                    {getCategoryName(product.CategoryId)}
+                  </span>
+                </td>
                       
                       {/* Price */}
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm font-bold text-white">
                           <span className="bg-gradient-to-r from-green-400 to-emerald-400 bg-clip-text text-transparent">
-                            ${product.Price.toFixed(2)}
+                  ${product.Price.toFixed(2)}
                           </span>
                         </div>
-                      </td>
+                </td>
                       
                       {/* Description */}
                       <td className="px-6 py-4 max-w-xs">
                         <div className="text-sm text-gray-300 truncate">
                           {product.Description}
                         </div>
-                      </td>
+                </td>
                       
                       {/* Actions */}
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex space-x-2">
+                  <div className="flex space-x-2">
                           <motion.button 
-                            onClick={() => handleView(product)}
+                      onClick={() => handleView(product)}
                             whileHover={{ scale: 1.1 }}
                             whileTap={{ scale: 0.9 }}
                             className="p-2 bg-blue-500/20 hover:bg-blue-500/30 border border-blue-500/30 text-blue-400 
                                      rounded-lg transition-all duration-300 hover:shadow-[0_0_20px_rgba(59,130,246,0.3)]"
-                            title="View Details"
-                          >
+                      title="View Details"
+                    >
                             <FiEye className="w-4 h-4" />
                           </motion.button>
                           
                           <motion.button 
-                            onClick={() => handleEdit(product)}
+                      onClick={() => handleEdit(product)}
                             whileHover={{ scale: 1.1 }}
                             whileTap={{ scale: 0.9 }}
                             className="p-2 bg-purple-500/20 hover:bg-purple-500/30 border border-purple-500/30 text-purple-400 
                                      rounded-lg transition-all duration-300 hover:shadow-[0_0_20px_rgba(147,51,234,0.3)]"
-                            title="Edit Product"
-                          >
+                      title="Edit Product"
+                    >
                             <FiEdit className="w-4 h-4" />
                           </motion.button>
                           
                           <motion.button 
-                            onClick={() => handleDelete(product.$id, product.MainImage)}
+                      onClick={() => handleDelete(product.$id, product.MainImage)}
                             whileHover={{ scale: 1.1 }}
                             whileTap={{ scale: 0.9 }}
                             className="p-2 bg-red-500/20 hover:bg-red-500/30 border border-red-500/30 text-red-400 
                                      rounded-lg transition-all duration-300 hover:shadow-[0_0_20px_rgba(239,68,68,0.3)]"
-                            title="Delete Product"
-                          >
+                      title="Delete Product"
+                    >
                             <FiTrash2 className="w-4 h-4" />
                           </motion.button>
-                        </div>
-                      </td>
+                  </div>
+                </td>
                     </motion.tr>
-                  ))}
+            ))}
                 </AnimatePresence>
-              </tbody>
-            </table>
-          </div>
+          </tbody>
+        </table>
+      </div>
 
-          {/* No results message */}
-          {filteredProducts.length === 0 && (
+      {/* No results message */}
+      {filteredProducts.length === 0 && (
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}

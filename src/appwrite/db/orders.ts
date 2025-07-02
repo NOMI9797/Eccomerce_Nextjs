@@ -1,108 +1,207 @@
-import { databases, ID } from "../client";
-import { Query } from "appwrite";
+import { ID, Query } from 'appwrite';
+import { databases } from '../client';
 
-const DATABASE_ID = '679b0257003b758db270'; // Your database ID
-const COLLECTION_ID = 'orders'; // Your orders collection ID
+const databaseId = process.env.NEXT_PUBLIC_APPWRITE_DATABASE_ID!;
+const ordersCollectionId = '686506050032acd2d80e';
 
 export interface OrderItem {
   productId: string;
+  name: string;
+  price: number;
   quantity: number;
+  image?: string;
 }
 
-export interface Order {
+// Type for data as stored in Appwrite
+export interface OrderDocument {
   $id?: string;
   userId: string;
   orderNumber: string;
+  items: string; // Stored as stringified JSON of OrderItem[]
+  total: number;
   status: 'pending' | 'processing' | 'shipped' | 'delivered' | 'cancelled';
-  items: string[]; // Array of product IDs
-  quantities: number[]; // Array of quantities
-  totalAmount: number;
-  shippingAddress: string;
   paymentStatus: 'pending' | 'paid' | 'failed';
+  shippingFirstName: string;
+  shippingLastName: string;
+  shippingEmail: string;
+  shippingPhone: string;
+  shippingStreet: string;
+  shippingCity: string;
+  shippingRegion: string;
+  shippingCountry: string;
+  shippingPostalCode: string;
   createdAt?: string;
   updatedAt?: string;
 }
 
+// Type for order in our application
+export interface Order extends Omit<OrderDocument, 'items'> {
+  items: OrderItem[]; // In our app, we work with the parsed array
+}
+
 export const ordersService = {
-  // Create a new order
   async createOrder(orderData: Omit<Order, '$id' | 'orderNumber' | 'createdAt' | 'updatedAt'>) {
-    const orderNumber = `ORD-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
-    
-    return await databases.createDocument(
-      DATABASE_ID,
-      COLLECTION_ID,
-      ID.unique(),
-      {
-        ...orderData,
+    try {
+      const orderNumber = `ORD-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+      
+      // Transform the data to match Appwrite schema
+      const transformedData = {
+        userId: orderData.userId,
+        items: JSON.stringify(orderData.items), // Convert items array to string
+        total: orderData.total,
+        status: orderData.status,
+        paymentStatus: orderData.paymentStatus,
+        shippingFirstName: orderData.shippingFirstName,
+        shippingLastName: orderData.shippingLastName,
+        shippingEmail: orderData.shippingEmail,
+        shippingPhone: orderData.shippingPhone,
+        shippingStreet: orderData.shippingStreet,
+        shippingCity: orderData.shippingCity,
+        shippingRegion: orderData.shippingRegion,
+        shippingCountry: orderData.shippingCountry,
+        shippingPostalCode: orderData.shippingPostalCode,
         orderNumber,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      }
-    );
+      };
+
+      const response = await databases.createDocument(
+        databaseId,
+        ordersCollectionId,
+        ID.unique(),
+        transformedData
+      ) as unknown as OrderDocument;
+
+      // Parse items back to array when returning
+      return {
+        ...response,
+        items: JSON.parse(response.items) as OrderItem[]
+      };
+    } catch (error) {
+      console.error('Appwrite service :: createOrder :: error', error);
+      throw error;
+    }
   },
 
-  // Get all orders for a user
-  async getUserOrders(userId: string) {
-    return await databases.listDocuments(
-      DATABASE_ID,
-      COLLECTION_ID,
-      [
-        Query.equal('userId', userId),
-        Query.orderDesc('$createdAt'),
-      ]
-    );
+  async getOrders() {
+    try {
+      const response = await databases.listDocuments(
+        databaseId,
+        ordersCollectionId,
+        [Query.orderDesc('$createdAt')]
+      );
+
+      // Parse items for each order
+      return {
+        ...response,
+        documents: response.documents.map(doc => ({
+          ...(doc as unknown as OrderDocument),
+          items: JSON.parse(doc.items) as OrderItem[]
+        })) as Order[]
+      };
+    } catch (error) {
+      console.error('Appwrite service :: getOrders :: error', error);
+      throw error;
+    }
   },
 
-  // Get all orders (admin only)
-  async getAllOrders() {
-    return await databases.listDocuments(
-      DATABASE_ID,
-      COLLECTION_ID,
-      [Query.orderDesc('$createdAt')]
-    );
-  },
-
-  // Get a single order by ID
   async getOrder(orderId: string) {
-    return await databases.getDocument(
-      DATABASE_ID,
-      COLLECTION_ID,
-      orderId
-    );
+    try {
+      const response = await databases.getDocument(
+        databaseId,
+        ordersCollectionId,
+        orderId
+      ) as unknown as OrderDocument;
+
+      // Parse items when returning
+      return {
+        ...response,
+        items: JSON.parse(response.items) as OrderItem[]
+      };
+    } catch (error) {
+      console.error('Appwrite service :: getOrder :: error', error);
+      throw error;
+    }
   },
 
-  // Update order status
+  async getUserOrders(userId: string) {
+    try {
+      const response = await databases.listDocuments(
+        databaseId,
+        ordersCollectionId,
+        [
+          Query.equal('userId', userId),
+          Query.orderDesc('$createdAt')
+        ]
+      );
+
+      // Parse items for each order
+      return {
+        ...response,
+        documents: response.documents.map(doc => ({
+          ...(doc as unknown as OrderDocument),
+          items: JSON.parse(doc.items) as OrderItem[]
+        })) as Order[]
+      };
+    } catch (error) {
+      console.error('Appwrite service :: getUserOrders :: error', error);
+      throw error;
+    }
+  },
+
   async updateOrderStatus(orderId: string, status: Order['status']) {
-    return await databases.updateDocument(
-      DATABASE_ID,
-      COLLECTION_ID,
-      orderId,
-      {
-        status,
-        updatedAt: new Date().toISOString(),
-      }
-    );
+    try {
+      const response = await databases.updateDocument(
+        databaseId,
+        ordersCollectionId,
+        orderId,
+        {
+          status,
+          updatedAt: new Date().toISOString()
+        }
+      ) as unknown as OrderDocument;
+
+      return {
+        ...response,
+        items: JSON.parse(response.items) as OrderItem[]
+      };
+    } catch (error) {
+      console.error('Appwrite service :: updateOrderStatus :: error', error);
+      throw error;
+    }
   },
 
-  // Update payment status
   async updatePaymentStatus(orderId: string, paymentStatus: Order['paymentStatus']) {
-    return await databases.updateDocument(
-      DATABASE_ID,
-      COLLECTION_ID,
-      orderId,
-      {
-        paymentStatus,
-        updatedAt: new Date().toISOString(),
-      }
-    );
+    try {
+      const response = await databases.updateDocument(
+        databaseId,
+        ordersCollectionId,
+        orderId,
+        {
+          paymentStatus,
+          updatedAt: new Date().toISOString()
+        }
+      ) as unknown as OrderDocument;
+
+      return {
+        ...response,
+        items: JSON.parse(response.items) as OrderItem[]
+      };
+    } catch (error) {
+      console.error('Appwrite service :: updatePaymentStatus :: error', error);
+      throw error;
+    }
   },
 
-  // Delete an order (admin only)
   async deleteOrder(orderId: string) {
-    return await databases.deleteDocument(
-      DATABASE_ID,
-      COLLECTION_ID,
-      orderId
-    );
+    try {
+      await databases.deleteDocument(
+        databaseId,
+        ordersCollectionId,
+        orderId
+      );
+      return true;
+    } catch (error) {
+      console.error('Appwrite service :: deleteOrder :: error', error);
+      throw error;
+    }
   }
 };

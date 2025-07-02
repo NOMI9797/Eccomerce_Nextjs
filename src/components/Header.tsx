@@ -51,8 +51,8 @@ export default function Header() {
                       size="icon" 
                       className="relative text-cyan-300 hover:text-cyan-100 hover:bg-cyan-400/10 transition-all duration-300"
                     >
-                      <ShoppingCart className="h-5 w-5" />
-                      {cartItemsCount > 0 && (
+                    <ShoppingCart className="h-5 w-5" />
+                    {cartItemsCount > 0 && (
                         <motion.span 
                           className="absolute -top-2 -right-2 bg-gradient-to-r from-pink-500 to-purple-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-bold"
                           initial={{ scale: 0 }}
@@ -61,10 +61,10 @@ export default function Header() {
                             boxShadow: '0 0 10px rgba(236, 72, 153, 0.6)'
                           }}
                         >
-                          {cartItemsCount}
+                        {cartItemsCount}
                         </motion.span>
-                      )}
-                    </Button>
+                    )}
+                  </Button>
                   </motion.div>
                 </Link>
                 <motion.button

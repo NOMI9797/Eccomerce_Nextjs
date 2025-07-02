@@ -212,7 +212,7 @@ export default function LandingPage() {
               variants={itemVariants}
               className="flex flex-col sm:flex-row gap-6 items-center"
             >
-              <Link href="/Products">
+                <Link href="/Products">
                 <motion.div
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
@@ -228,10 +228,10 @@ export default function LandingPage() {
                     Shop Now
                   </Button>
                 </motion.div>
-              </Link>
+                </Link>
 
-              {isUserAdmin && (
-                <Link href="/Dashboard">
+                {isUserAdmin && (
+                  <Link href="/Dashboard">
                   <motion.div
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
@@ -247,8 +247,8 @@ export default function LandingPage() {
                       Dashboard
                     </Button>
                   </motion.div>
-                </Link>
-              )}
+                  </Link>
+                )}
 
               {user && (
                 <motion.div

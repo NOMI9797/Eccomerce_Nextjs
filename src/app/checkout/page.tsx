@@ -6,8 +6,6 @@ import { Input } from '@/components/ui/input';
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
-import { AddressAutocomplete } from '@/components/ui/address-autocomplete';
-import { useLoadScript, Autocomplete } from '@react-google-maps/api';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   FiCreditCard, 
@@ -28,110 +26,62 @@ import Link from 'next/link';
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/session/AuthContext';
 import { useOrders } from '@/app/hooks/useOrders';
+import { useLocation } from '@/app/hooks/useLocation';
 import { toast } from 'sonner';
-
-// Add this interface
-interface CountriesWithCities {
-  [key: string]: string[];
-}
+import { LocationAutocomplete } from '@/components/ui/location-autocomplete';
+import { countries, citiesByCountry, regionsByCountry } from '@/lib/location-data';
+import Invoice from '@/components/ui/invoice';
+import { useRouter } from 'next/navigation';
+import { ordersService } from '@/appwrite/db/orders';
 
 export default function CheckoutPage() {
-  const { cart } = useCart();
+  const { user } = useAuth();
+  const { cart, clearCart } = useCart();
+  const router = useRouter();
   const deliveryFee = 10.00;
+  const [showInvoice, setShowInvoice] = useState(false);
+  const [orderDetails, setOrderDetails] = useState<any>(null);
+  const [paymentMethod, setPaymentMethod] = useState<'stripe' | 'cod'>('cod');
+  const { locationData, loading: locationLoading } = useLocation();
   const [address, setAddress] = useState({
     country: '',
     countryCode: '',
     city: '',
+    region: '',
     street: '',
     postalCode: '',
-    isManualPostalCode: false
-  });
-  const [countries, setCountries] = useState<string[]>([]);
-  const [streetAutocomplete, setStreetAutocomplete] = useState<google.maps.places.Autocomplete | null>(null);
-
-  const { isLoaded } = useLoadScript({
-    googleMapsApiKey: "AIzaSyBtGLZIMW1fOUVDZREa3Aq3gXfVB_S1PJQ",
-    libraries: ["places"]
   });
 
-  const { user } = useAuth();
+  // Update address when location data is available
+  useEffect(() => {
+    if (locationData) {
+      setAddress({
+        country: locationData.country_name || '',
+        countryCode: locationData.country_code || '',
+        city: locationData.city || '',
+        region: locationData.region || '',
+        street: '',
+        postalCode: locationData.postal || '',
+      });
+    }
+  }, [locationData]);
+
   const { createOrder } = useOrders();
 
-  const handlePlaceSelect = (place: google.maps.places.PlaceResult) => {
-    const addressComponents = place.address_components || [];
-    let newAddress = {
-      ...address,
-      country: '',
-      countryCode: '',
-      city: '',
-      street: place.formatted_address || '',
-      postalCode: '',
-      isManualPostalCode: true
-    };
+  // Add form state
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
+  const [phone, setPhone] = useState('');
+  const [email, setEmail] = useState('');
+  const [streetAddress, setStreetAddress] = useState('');
 
-    addressComponents.forEach(component => {
-      const types = component.types;
-      if (types.includes('country')) {
-        newAddress.country = component.long_name;
-        newAddress.countryCode = component.short_name;
-      }
-      if (types.includes('locality') || types.includes('administrative_area_level_2')) {
-        newAddress.city = component.long_name;
-      }
-      if (types.includes('route')) {
-        newAddress.street = place.formatted_address || component.long_name;
-      }
-      if (types.includes('postal_code')) {
-        newAddress.postalCode = component.long_name;
-        newAddress.isManualPostalCode = false;
-      }
-    });
-
-    setAddress(newAddress);
-  };
-
-  // Initialize Google Places Autocomplete for countries
-  const countryAutocomplete = (input: HTMLInputElement) => {
-    const autocomplete = new google.maps.places.Autocomplete(input, {
-      types: ['country']
-    });
-    
-    autocomplete.addListener('place_changed', () => {
-      const place = autocomplete.getPlace();
-      if (place.address_components) {
-        const countryComponent = place.address_components[0];
-        setAddress(prev => ({ 
-          ...prev, 
-          country: countryComponent.long_name,
-          countryCode: countryComponent.short_name
-        }));
-      }
-    });
-  };
-
-  // Initialize Google Places Autocomplete for cities
-  const cityAutocomplete = (input: HTMLInputElement) => {
-    const autocomplete = new google.maps.places.Autocomplete(input, {
-      types: ['(cities)'],
-      componentRestrictions: { country: address.countryCode?.toLowerCase() || null }
-    });
-    
-    autocomplete.addListener('place_changed', () => {
-      const place = autocomplete.getPlace();
-      if (place.address_components) {
-        const city = place.address_components[0].long_name;
-        setAddress(prev => ({ ...prev, city }));
-      }
-    });
-  };
-
-  // Add these state variables
+  // Add form errors state
   const [formErrors, setFormErrors] = useState({
     firstName: '',
     lastName: '',
     phone: '',
     email: '',
-    postalCode: ''
+    street: ''
   });
 
   // Add validation function
@@ -142,7 +92,7 @@ export default function CheckoutPage() {
       lastName: '',
       phone: '',
       email: '',
-      postalCode: ''
+      street: ''
     };
 
     // First Name validation
@@ -183,9 +133,9 @@ export default function CheckoutPage() {
       isValid = false;
     }
 
-    // Postal Code validation
-    if (address.isManualPostalCode && !address.postalCode.trim()) {
-      newErrors.postalCode = 'Postal code is required';
+    // Street address validation
+    if (!streetAddress.trim()) {
+      newErrors.street = 'Street address is required';
       isValid = false;
     }
 
@@ -193,37 +143,85 @@ export default function CheckoutPage() {
     return isValid;
   };
 
-  // Add form state
-  const [firstName, setFirstName] = useState('');
-  const [lastName, setLastName] = useState('');
-  const [phone, setPhone] = useState('');
-  const [email, setEmail] = useState('');
-
   const handlePlaceOrder = async () => {
-    if (!validateForm()) {
-      toast.error('Please fix form errors before proceeding');
+    if (!user) {
+      toast.error('Please login to place an order');
       return;
     }
 
-    const orderData = {
-      userId: user.$id,
-      items: cart.items.map(item => item.productId),
-      quantities: cart.items.map(item => item.quantity),
-      totalAmount: cart.total + deliveryFee,
-      shippingAddress: `${address.street}, ${address.city}, ${address.country}`,
-      status: 'pending' as const,
-      paymentStatus: 'pending' as const
-    };
-    
     try {
-      await createOrder.mutateAsync(orderData);
-      toast.success('Order placed successfully');
+      // Create order data
+      const orderData = {
+        userId: user.$id,
+        items: cart.items.map(item => ({
+          productId: item.productId,
+          name: item.name,
+          price: item.price,
+          quantity: item.quantity,
+          image: item.image,
+        })),
+        total: cart.total + deliveryFee,
+        status: 'pending' as 'pending' | 'processing' | 'shipped' | 'delivered' | 'cancelled',
+        paymentStatus: (paymentMethod === 'stripe' ? 'pending' : 'paid') as 'pending' | 'paid' | 'failed',
+        shippingFirstName: firstName,
+        shippingLastName: lastName,
+        shippingEmail: email,
+        shippingPhone: phone,
+        shippingStreet: streetAddress,
+        shippingCity: address.city,
+        shippingRegion: address.region,
+        shippingCountry: address.country,
+        shippingPostalCode: address.postalCode,
+      };
+
+      // Create the order using ordersService
+      const order = await ordersService.createOrder(orderData);
+
+      // Prepare invoice data
+      const invoiceData = {
+        orderDetails: {
+          orderId: order.$id,
+          date: new Date().toLocaleDateString('en-US', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric',
+          }),
+          items: order.items, // This will already be parsed back to an array by the service
+          subtotal: cart.total,
+          deliveryFee,
+          total: orderData.total,
+          paymentMethod: paymentMethod === 'stripe' ? 'Credit/Debit Card' : 'Cash on Delivery',
+        },
+        customerDetails: {
+          firstName,
+          lastName,
+          email,
+          phone,
+          address: {
+            street: streetAddress,
+            city: address.city,
+            region: address.region,
+            country: address.country,
+            postalCode: address.postalCode,
+          },
+        },
+      };
+
+      // Show invoice
+      setOrderDetails(invoiceData);
+      setShowInvoice(true);
+
+      // Clear cart
+      clearCart();
+
+      toast.success('Order placed successfully!');
     } catch (error) {
-      toast.error('Failed to place order');
+      console.error('Error placing order:', error);
+      toast.error('Failed to place order. Please try again.');
     }
   };
 
-  if (!isLoaded) {
+  if (locationLoading) {
     return (
       <div className="min-h-screen relative overflow-hidden bg-gradient-to-br from-gray-900 via-black to-gray-900">
         <div className="absolute inset-0">
@@ -242,7 +240,7 @@ export default function CheckoutPage() {
               transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
               className="w-16 h-16 border-4 border-cyan-400/30 border-t-cyan-400 rounded-full mx-auto mb-4"
             />
-            <p className="text-gray-400 text-lg">Loading checkout...</p>
+            <p className="text-gray-400 text-lg">Loading location data...</p>
           </motion.div>
         </div>
       </div>
@@ -251,60 +249,20 @@ export default function CheckoutPage() {
 
   return (
     <div className="min-h-screen relative overflow-hidden bg-gradient-to-br from-gray-900 via-black to-gray-900">
-      {/* Animated background */}
+      {/* Background effects */}
       <div className="absolute inset-0">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_25%_25%,rgba(56,189,248,0.1),transparent_50%)]" />
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_75%_75%,rgba(147,51,234,0.1),transparent_50%)]" />
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(236,72,153,0.05),transparent_50%)]" />
       </div>
 
-      {/* Grid overlay */}
-      <div className="absolute inset-0 opacity-10">
-        <div className="absolute inset-0 bg-[linear-gradient(rgba(34,211,238,0.1)_1px,transparent_1px),linear-gradient(90deg,rgba(34,211,238,0.1)_1px,transparent_1px)] bg-[size:50px_50px]" />
-      </div>
-
-      {/* Floating particles */}
-      <div className="absolute inset-0 overflow-hidden">
-        {[...Array(15)].map((_, i) => (
-          <motion.div
-            key={i}
-            className="absolute w-1 h-1 bg-cyan-400 rounded-full opacity-60"
-            initial={{ 
-              x: Math.random() * window.innerWidth, 
-              y: Math.random() * window.innerHeight 
-            }}
-            animate={{
-              x: Math.random() * window.innerWidth,
-              y: Math.random() * window.innerHeight,
-            }}
-            transition={{
-              duration: Math.random() * 10 + 10,
-              repeat: Infinity,
-              repeatType: "reverse",
-            }}
-          />
-        ))}
-      </div>
-
-      <div className="relative z-10 container mx-auto py-12 px-4">
-        {/* Header */}
-        <motion.div 
-          className="flex justify-between items-center mb-12"
+      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <motion.h1 
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
+          className="text-4xl font-bold text-center mb-12 bg-gradient-to-r from-cyan-400 via-purple-400 to-pink-400 bg-clip-text text-transparent"
         >
-          <div>
-            <h1 className="text-5xl font-bold bg-gradient-to-r from-cyan-400 via-purple-500 to-pink-500 bg-clip-text text-transparent mb-2">
-              Shop Checkout
-            </h1>
-            <p className="text-gray-400">Complete your purchase securely</p>
-          </div>
-          <div className="flex items-center gap-2 text-gray-400">
-            <Link href="/" className="hover:text-cyan-400 transition-colors">Home</Link>
-            <span>/</span>
-            <span className="text-cyan-400">Checkout</span>
-          </div>
-        </motion.div>
+          Checkout
+        </motion.h1>
 
         <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
           {/* Billing Details Form */}
@@ -451,110 +409,103 @@ export default function CheckoutPage() {
                 </div>
                 
                 <div className="space-y-6">
-                  <div>
-                    <Label htmlFor="country" className="text-gray-300 flex items-center gap-2 mb-2">
-                      <FiHome className="text-purple-400" />
-                      Country / Region *
-                    </Label>
-                    <Input
-                      id="country"
-                      type="text"
-                      placeholder="Start typing a country..."
-                      ref={(input) => {
-                        if (input && isLoaded) countryAutocomplete(input);
-                      }}
-                      required
-                      className="bg-black/60 border-gray-600 text-white placeholder-gray-400 focus:border-purple-400 transition-colors"
-                    />
+                  {/* Location Details */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                      <Label className="text-gray-300 flex items-center gap-2 mb-2">
+                        <FiHome className="text-purple-400" />
+                        Country *
+                      </Label>
+                      <LocationAutocomplete
+                        value={address.country}
+                        onChange={(value) => setAddress(prev => ({ 
+                          ...prev, 
+                          country: value,
+                          // Reset dependent fields when country changes
+                          city: '',
+                          region: ''
+                        }))}
+                        placeholder="Enter your country"
+                        suggestions={countries}
+                        required
+                        className="bg-black/60 border-gray-600 text-white placeholder-gray-400 focus:border-purple-400 
+                                 transition-colors hover:border-purple-400/50"
+                      />
+                    </div>
+
+                    <div>
+                      <Label className="text-gray-300 flex items-center gap-2 mb-2">
+                        <FiMapPin className="text-purple-400" />
+                        City *
+                      </Label>
+                      <LocationAutocomplete
+                        value={address.city}
+                        onChange={(value) => setAddress(prev => ({ ...prev, city: value }))}
+                        placeholder={address.country ? "Enter your city" : "Please select a country first"}
+                        suggestions={address.country ? (citiesByCountry[address.country] || []) : []}
+                        required
+                        className="bg-black/60 border-gray-600 text-white placeholder-gray-400 focus:border-purple-400 
+                                 transition-colors hover:border-purple-400/50"
+                      />
+                    </div>
+
+                    <div>
+                      <Label className="text-gray-300 flex items-center gap-2 mb-2">
+                        <FiMapPin className="text-purple-400" />
+                        Region/State *
+                      </Label>
+                      <LocationAutocomplete
+                        value={address.region}
+                        onChange={(value) => setAddress(prev => ({ ...prev, region: value }))}
+                        placeholder={address.country ? "Enter your region/state" : "Please select a country first"}
+                        suggestions={address.country ? (regionsByCountry[address.country] || []) : []}
+                        required
+                        className="bg-black/60 border-gray-600 text-white placeholder-gray-400 focus:border-purple-400 
+                                 transition-colors hover:border-purple-400/50"
+                      />
+                    </div>
+
+                    <div>
+                      <Label className="text-gray-300 flex items-center gap-2 mb-2">
+                        <FiMapPin className="text-purple-400" />
+                        Postal Code *
+                      </Label>
+                      <Input
+                        value={address.postalCode}
+                        onChange={(e) => setAddress(prev => ({ ...prev, postalCode: e.target.value }))}
+                        placeholder="Enter your postal code"
+                        required
+                        className="bg-black/60 border-gray-600 text-white placeholder-gray-400 focus:border-purple-400 
+                                 transition-colors hover:border-purple-400/50"
+                      />
+                    </div>
                   </div>
 
-                  <div>
-                    <Label htmlFor="city" className="text-gray-300 flex items-center gap-2 mb-2">
-                      <FiMapPin className="text-purple-400" />
-                      City *
-                    </Label>
-                    <Input
-                      id="city"
-                      type="text"
-                      placeholder={address.country ? "Start typing a city..." : "Please select a country first"}
-                      ref={(input) => {
-                        if (input && isLoaded && address.country) cityAutocomplete(input);
-                      }}
-                      disabled={!address.country}
-                      required
-                      className="bg-black/60 border-gray-600 text-white placeholder-gray-400 focus:border-purple-400 transition-colors disabled:opacity-50"
-                    />
-                  </div>
-
+                  {/* Street Address Input */}
                   <div>
                     <Label htmlFor="street" className="text-gray-300 flex items-center gap-2 mb-2">
                       <FiHome className="text-purple-400" />
                       Street Address *
                     </Label>
-                    <Autocomplete
-                      onLoad={(autocomplete) => {
-                        autocomplete.setFields(['address_components', 'formatted_address']);
-                        if (address.country) {
-                          autocomplete.setComponentRestrictions({
-                            country: address.countryCode?.toLowerCase() || null
-                          });
-                        }
-                        setStreetAutocomplete(autocomplete);
-                      }}
-                      onPlaceChanged={() => {
-                        if (streetAutocomplete) {
-                          const place = streetAutocomplete.getPlace();
-                          handlePlaceSelect(place);
-                        }
-                      }}
-                    >
-                      <Input
-                        id="street"
-                        type="text"
-                        placeholder="Start typing your street address..."
-                        required
-                        className="bg-black/60 border-gray-600 text-white placeholder-gray-400 focus:border-purple-400 transition-colors"
-                      />
-                    </Autocomplete>
+                    <Input
+                      id="street"
+                      value={streetAddress}
+                      onChange={(e) => setStreetAddress(e.target.value)}
+                      placeholder="Enter your street address"
+                      required
+                      className={`bg-black/60 border-gray-600 text-white placeholder-gray-400 focus:border-purple-400 
+                               transition-colors ${formErrors.street ? 'border-red-500' : ''}`}
+                    />
+                    {formErrors.street && (
+                      <motion.p 
+                        initial={{ opacity: 0, y: -10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="text-red-400 text-sm mt-2"
+                      >
+                        {formErrors.street}
+                      </motion.p>
+                    )}
                   </div>
-
-                  {/* Display selected address details */}
-                  {address.country && (
-                    <motion.div 
-                      initial={{ opacity: 0, height: 0 }}
-                      animate={{ opacity: 1, height: 'auto' }}
-                      className="space-y-6 border-t border-gray-700/50 pt-6"
-                    >
-                      <div>
-                        <Label className="text-gray-300 mb-2 block">Selected Country</Label>
-                        <Input value={address.country} disabled className="bg-gray-800/60 border-gray-700 text-gray-300" />
-                      </div>
-                      <div>
-                        <Label className="text-gray-300 mb-2 block">Selected City</Label>
-                        <Input value={address.city} disabled className="bg-gray-800/60 border-gray-700 text-gray-300" />
-                      </div>
-                      <div>
-                        <Label className="text-gray-300 mb-2 block">Street Address</Label>
-                        <Input value={address.street} disabled className="bg-gray-800/60 border-gray-700 text-gray-300" />
-                      </div>
-                      <div>
-                        <Label className="text-gray-300 mb-2 block">Postal Code</Label>
-                        <Input 
-                          value={address.postalCode}
-                          onChange={(e) => setAddress(prev => ({ ...prev, postalCode: e.target.value }))}
-                          placeholder={address.isManualPostalCode ? "Enter postal code manually" : ""}
-                          disabled={!address.isManualPostalCode}
-                          required
-                          className="bg-black/60 border-gray-600 text-white placeholder-gray-400 focus:border-purple-400 transition-colors disabled:bg-gray-800/60 disabled:border-gray-700 disabled:text-gray-300"
-                        />
-                        {address.isManualPostalCode && (
-                          <p className="text-sm text-yellow-400 mt-2">
-                            No postal code found for this address. Please enter it manually.
-                          </p>
-                        )}
-                      </div>
-                    </motion.div>
-                  )}
 
                   <div>
                     <Label htmlFor="notes" className="text-gray-300 mb-2 block">Order notes (optional)</Label>
@@ -630,52 +581,51 @@ export default function CheckoutPage() {
                   </div>
                 </div>
 
-                {/* Payment Options */}
-                <div className="border-t border-gray-700/50 pt-6">
-                  <h3 className="text-white font-semibold mb-4 flex items-center gap-2">
-                    <FiCreditCard className="text-purple-400" />
-                    Payment Method
-                  </h3>
-                  <RadioGroup defaultValue="stripe" className="space-y-3">
-                    <motion.div 
-                      className="flex items-center space-x-3 p-3 bg-gray-800/30 rounded-lg border border-gray-700/50 hover:border-purple-400/40 transition-colors"
-                      whileHover={{ scale: 1.02 }}
+                {/* Payment Method Selection */}
+                <div className="space-y-4 mb-6">
+                  <h3 className="text-xl font-semibold text-white">Payment Method</h3>
+                  <div className="grid grid-cols-2 gap-4">
+                    <button
+                      type="button"
+                      onClick={() => setPaymentMethod('cod')}
+                      className={`p-4 rounded-xl border ${
+                        paymentMethod === 'cod'
+                          ? 'border-cyan-500 bg-cyan-500/10'
+                          : 'border-gray-700 hover:border-cyan-500/50'
+                      } transition-all duration-300`}
                     >
-                      <RadioGroupItem value="stripe" id="stripe" className="border-purple-400 text-purple-400" />
-                      <Label htmlFor="stripe" className="text-white flex items-center gap-2">
-                        <FiCreditCard className="text-purple-400" />
-                        Stripe (Credit/Debit Card)
-                      </Label>
-                    </motion.div>
-                    <motion.div 
-                      className="flex items-center space-x-3 p-3 bg-gray-800/30 rounded-lg border border-gray-700/50 hover:border-green-400/40 transition-colors"
-                      whileHover={{ scale: 1.02 }}
+                      <div className="flex items-center gap-3">
+                        <div className={`w-5 h-5 rounded-full border-2 ${
+                          paymentMethod === 'cod' ? 'border-cyan-500' : 'border-gray-500'
+                        } flex items-center justify-center`}>
+                          {paymentMethod === 'cod' && (
+                            <div className="w-3 h-3 rounded-full bg-cyan-500" />
+                          )}
+                        </div>
+                        <span className="text-white">Cash on Delivery</span>
+                      </div>
+                    </button>
+                    
+                    <button
+                      type="button"
+                      onClick={() => setPaymentMethod('stripe')}
+                      className={`p-4 rounded-xl border ${
+                        paymentMethod === 'stripe'
+                          ? 'border-cyan-500 bg-cyan-500/10'
+                          : 'border-gray-700 hover:border-cyan-500/50'
+                      } transition-all duration-300`}
                     >
-                      <RadioGroupItem value="cod" id="cod" className="border-green-400 text-green-400" />
-                      <Label htmlFor="cod" className="text-white flex items-center gap-2">
-                        <FiDollarSign className="text-green-400" />
-                        Cash on Delivery
-                      </Label>
-                    </motion.div>
-                  </RadioGroup>
-                </div>
-
-                {/* Promo Code */}
-                <div className="border-t border-gray-700/50 pt-6">
-                  <h3 className="text-white font-semibold mb-4">Promo Code</h3>
-                  <div className="flex gap-2">
-                    <Input 
-                      placeholder="Enter your magic code here..."
-                      className="bg-black/60 border-gray-600 text-white placeholder-gray-400 focus:border-yellow-400 transition-colors"
-                    />
-                    <motion.button
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
-                      className="px-6 py-2 bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-400 hover:to-orange-400 
-                               text-black font-semibold rounded-lg transition-all duration-300 hover:shadow-[0_0_20px_rgba(245,158,11,0.4)]"
-                    >
-                      Apply
-                    </motion.button>
+                      <div className="flex items-center gap-3">
+                        <div className={`w-5 h-5 rounded-full border-2 ${
+                          paymentMethod === 'stripe' ? 'border-cyan-500' : 'border-gray-500'
+                        } flex items-center justify-center`}>
+                          {paymentMethod === 'stripe' && (
+                            <div className="w-3 h-3 rounded-full bg-cyan-500" />
+                          )}
+                        </div>
+                        <span className="text-white">Credit/Debit Card</span>
+                      </div>
+                    </button>
                   </div>
                 </div>
 
@@ -706,6 +656,19 @@ export default function CheckoutPage() {
           </motion.div>
         </div>
       </div>
+
+      {/* Invoice Modal */}
+      <AnimatePresence>
+        {showInvoice && orderDetails && (
+          <Invoice
+            {...orderDetails}
+            onClose={() => {
+              setShowInvoice(false);
+              router.push('/'); // Redirect to home after closing invoice
+            }}
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 } 

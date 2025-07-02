@@ -5,7 +5,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import AddProduct from "./AddProduct/page";
 import ListProducts from "./ListProduct/page";
 import Categories from "./Categories/page";
-import { FiMenu, FiPackage, FiList, FiGrid, FiX, FiHome, FiBarChart, FiUsers, FiTrendingUp } from 'react-icons/fi';
+import Orders from "./Orders/page";
+import { FiMenu, FiPackage, FiList, FiGrid, FiX, FiHome, FiBarChart, FiUsers, FiTrendingUp, FiTruck } from 'react-icons/fi';
 
 const Dashboard: React.FC = () => {
   const [selectedFeature, setSelectedFeature] = useState<string>("Dashboard Overview");
@@ -28,6 +29,10 @@ const Dashboard: React.FC = () => {
       name: "Categories",
       icon: <FiGrid className="w-5 h-5" />,
     },
+    {
+      name: "Orders",
+      icon: <FiTruck className="w-5 h-5" />,
+    }
   ];
 
   return (
@@ -82,29 +87,29 @@ const Dashboard: React.FC = () => {
                       hover:border-cyan-400/40 transition-all duration-500 flex flex-col">
           {/* Header */}
           <div className="flex items-center justify-between p-8 border-b border-gray-700/50 flex-shrink-0">
-            <AnimatePresence>
-              {isSidebarOpen && (
-                <motion.h2 
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
+          <AnimatePresence>
+            {isSidebarOpen && (
+              <motion.h2 
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
                   className="text-3xl font-bold bg-gradient-to-r from-cyan-400 to-purple-400 bg-clip-text text-transparent"
-                >
-                  Dashboard
-                </motion.h2>
-              )}
-            </AnimatePresence>
-            <motion.button 
+              >
+                Dashboard
+              </motion.h2>
+            )}
+          </AnimatePresence>
+          <motion.button 
               whileHover={{ scale: 1.05, rotate: 90 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+            whileTap={{ scale: 0.95 }}
+            onClick={() => setIsSidebarOpen(!isSidebarOpen)}
               className="p-3 rounded-xl bg-cyan-500/10 hover:bg-cyan-500/20 border border-cyan-500/30 
                        text-cyan-400 transition-all duration-300 hover:shadow-[0_0_20px_rgba(34,211,238,0.3)]"
-            >
-              {isSidebarOpen ? <FiX className="w-5 h-5" /> : <FiMenu className="w-5 h-5" />}
-            </motion.button>
-          </div>
-          
+          >
+            {isSidebarOpen ? <FiX className="w-5 h-5" /> : <FiMenu className="w-5 h-5" />}
+          </motion.button>
+        </div>
+        
           {/* Menu Items */}
           <div className="flex-1 p-6 space-y-3 overflow-y-auto">
             {menuItems.map((item, index) => (
@@ -114,34 +119,34 @@ const Dashboard: React.FC = () => {
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: index * 0.1 }}
               >
-                <motion.button
+              <motion.button
                   whileHover={{ x: 5, scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                   className={`w-full flex items-center space-x-5 px-6 py-5 rounded-xl transition-all duration-300 group/item
                     ${selectedFeature === item.name 
                       ? "bg-gradient-to-r from-cyan-500/20 to-purple-500/20 border border-cyan-400/40 text-white shadow-[0_0_20px_rgba(34,211,238,0.2)]" 
                       : "hover:bg-gray-800/50 text-gray-300 hover:text-white border border-transparent hover:border-gray-600"
-                    }`}
-                  onClick={() => setSelectedFeature(item.name)}
-                >
+                }`}
+                onClick={() => setSelectedFeature(item.name)}
+              >
                   <div className={`${selectedFeature === item.name ? 'text-cyan-400' : 'text-gray-400 group-hover/item:text-cyan-400'} transition-colors text-xl`}>
-                    {item.icon}
+                {item.icon}
                   </div>
-                  <AnimatePresence>
-                    {isSidebarOpen && (
-                      <motion.span 
-                        initial={{ opacity: 0, x: -10 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        exit={{ opacity: 0, x: -10 }}
+                <AnimatePresence>
+                  {isSidebarOpen && (
+                    <motion.span 
+                      initial={{ opacity: 0, x: -10 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      exit={{ opacity: 0, x: -10 }}
                         className="font-semibold text-base flex-1 text-left"
-                      >
-                        {item.name}
-                      </motion.span>
-                    )}
-                  </AnimatePresence>
-                </motion.button>
+                    >
+                      {item.name}
+                    </motion.span>
+                  )}
+                </AnimatePresence>
+              </motion.button>
               </motion.div>
-            ))}
+          ))}
           </div>
 
           {/* Sidebar Footer */}
@@ -180,6 +185,7 @@ const Dashboard: React.FC = () => {
               {selectedFeature === "Add Product" && <AddProduct />}
               {selectedFeature === "List Products" && <ListProducts />}
               {selectedFeature === "Categories" && <Categories />}
+              {selectedFeature === "Orders" && <Orders />}
               {selectedFeature === "Dashboard Overview" && (
                 <div className="space-y-8">
                   {/* Header */}
