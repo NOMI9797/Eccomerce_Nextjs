@@ -1,7 +1,8 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useSearchParams, useRouter } from 'next/navigation';
 import AddProduct from "./AddProduct/page";
 import ListProducts from "./ListProduct/page";
 import Categories from "./Categories/page";
@@ -9,8 +10,22 @@ import Orders from "./Orders/page";
 import { FiMenu, FiPackage, FiList, FiGrid, FiX, FiHome, FiBarChart, FiUsers, FiTrendingUp, FiTruck } from 'react-icons/fi';
 
 const Dashboard: React.FC = () => {
+  const searchParams = useSearchParams();
+  const router = useRouter();
   const [selectedFeature, setSelectedFeature] = useState<string>("Dashboard Overview");
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+
+  // Update selected feature based on URL parameter
+  useEffect(() => {
+    const feature = searchParams.get('feature');
+    if (feature) {
+      setSelectedFeature(feature);
+    }
+  }, [searchParams]);
+
+  const handleFeatureSelect = (featureName: string) => {
+    router.push(`/Dashboard?feature=${encodeURIComponent(featureName)}`);
+  };
 
   const menuItems = [
     {
@@ -127,7 +142,7 @@ const Dashboard: React.FC = () => {
                       ? "bg-gradient-to-r from-cyan-500/20 to-purple-500/20 border border-cyan-400/40 text-white shadow-[0_0_20px_rgba(34,211,238,0.2)]" 
                       : "hover:bg-gray-800/50 text-gray-300 hover:text-white border border-transparent hover:border-gray-600"
                 }`}
-                onClick={() => setSelectedFeature(item.name)}
+                onClick={() => handleFeatureSelect(item.name)}
               >
                   <div className={`${selectedFeature === item.name ? 'text-cyan-400' : 'text-gray-400 group-hover/item:text-cyan-400'} transition-colors text-xl`}>
                 {item.icon}
@@ -295,7 +310,7 @@ const Dashboard: React.FC = () => {
                             key={item.name}
                             whileHover={{ scale: 1.05 }}
                             whileTap={{ scale: 0.95 }}
-                            onClick={() => setSelectedFeature(item.name)}
+                            onClick={() => handleFeatureSelect(item.name)}
                             className="p-6 bg-gradient-to-r from-gray-800/50 to-gray-700/50 rounded-xl border border-gray-600
                                      hover:border-cyan-400/50 transition-all duration-300 hover:shadow-[0_0_20px_rgba(34,211,238,0.2)]
                                      text-left group/action"
