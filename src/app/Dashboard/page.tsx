@@ -8,7 +8,7 @@ import ListProducts from "./ListProduct/page";
 import Categories from "./Categories/page";
 import Orders from "./Orders/page";
 import AdminRoute from "@/components/AdminRoute";
-import { FiMenu, FiPackage, FiList, FiGrid, FiX, FiHome, FiBarChart, FiUsers, FiTrendingUp, FiTruck } from 'react-icons/fi';
+import { FiMenu, FiPackage, FiList, FiGrid, FiX, FiHome, FiBarChart, FiUsers, FiTrendingUp, FiTruck, FiExternalLink } from 'react-icons/fi';
 
 const DashboardContent: React.FC = () => {
   const searchParams = useSearchParams();
@@ -26,6 +26,10 @@ const DashboardContent: React.FC = () => {
 
   const handleFeatureSelect = (featureName: string) => {
     router.push(`/Dashboard?feature=${encodeURIComponent(featureName)}`);
+  };
+
+  const handleHomeNavigation = () => {
+    router.push('/');
   };
 
   const menuItems = [
@@ -90,6 +94,32 @@ const DashboardContent: React.FC = () => {
             >
               {isSidebarOpen ? <FiX className="w-5 h-5 text-gray-600 dark:text-gray-400" /> : <FiMenu className="w-5 h-5 text-gray-600 dark:text-gray-400" />}
             </button>
+          </div>
+          
+          {/* Home Button */}
+          <div className="p-4 border-b border-gray-200 dark:border-gray-700">
+            <motion.button
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              className="w-full flex items-center gap-3 px-3 py-3 rounded-lg transition-all duration-200 text-left bg-gray-50 dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white border border-gray-200 dark:border-gray-600"
+              onClick={handleHomeNavigation}
+            >
+              <div className="flex-shrink-0 text-gray-500 dark:text-gray-400">
+                <FiExternalLink className="w-5 h-5" />
+              </div>
+              <AnimatePresence>
+                {isSidebarOpen && (
+                  <motion.span 
+                    initial={{ opacity: 0, x: -10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: -10 }}
+                    className="font-medium"
+                  >
+                    Go to Homepage
+                  </motion.span>
+                )}
+              </AnimatePresence>
+            </motion.button>
           </div>
           
           {/* Menu Items */}
