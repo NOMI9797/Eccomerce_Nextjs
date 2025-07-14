@@ -4,6 +4,7 @@ import React, { createContext, useContext, useState, useEffect, ReactNode } from
 import { Notification } from '@/types/notification';
 import { notificationService } from '@/appwrite/db/notifications';
 import { ToastProps } from '@/components/ui/toast';
+import { useAuth } from './AuthContext';
 
 interface NotificationContextType {
   // Notifications state
@@ -41,6 +42,7 @@ interface NotificationProviderProps {
 }
 
 export const NotificationProvider: React.FC<NotificationProviderProps> = ({ children }) => {
+  const { user, isUserAdmin } = useAuth();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
@@ -48,12 +50,26 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
 
   // Fetch notifications
   const fetchNotifications = async () => {
+    if (!user) return;
+    
     try {
       setIsLoading(true);
-      const [notificationsList, unreadCountData] = await Promise.all([
-        notificationService.getNotifications(),
-        notificationService.getUnreadCount()
-      ]);
+      let notificationsList: Notification[];
+      let unreadCountData: number;
+
+      if (isUserAdmin) {
+        // Admin sees all notifications (no userId filter)
+        [notificationsList, unreadCountData] = await Promise.all([
+          notificationService.getNotifications(),
+          notificationService.getUnreadCount()
+        ]);
+      } else {
+        // Regular users see only their notifications
+        [notificationsList, unreadCountData] = await Promise.all([
+          notificationService.getUserNotifications(user.$id),
+          notificationService.getUserUnreadCount(user.$id)
+        ]);
+      }
       
       setNotifications(notificationsList);
       setUnreadCount(unreadCountData);

@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { FiBell, FiPackage, FiUser, FiSettings, FiCheck, FiX } from 'react-icons/fi';
 import { Notification } from '@/types/notification';
 import { formatDistanceToNow } from 'date-fns';
+import { useAuth } from '@/session/AuthContext';
 
 interface NotificationDropdownProps {
   notifications: Notification[];
@@ -23,6 +24,7 @@ const NotificationDropdown: React.FC<NotificationDropdownProps> = ({
   onDeleteNotification,
   onNotificationClick
 }) => {
+  const { isUserAdmin } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -182,7 +184,7 @@ const NotificationDropdown: React.FC<NotificationDropdownProps> = ({
                 <button
                   onClick={() => {
                     setIsOpen(false);
-                    window.location.href = '/Dashboard?feature=Notifications';
+                    window.location.href = isUserAdmin ? '/notifications/admin' : '/notifications/customer';
                   }}
                   className="w-full text-center text-sm text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 font-medium"
                 >

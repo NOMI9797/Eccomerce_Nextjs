@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useOrders } from '@/app/hooks/useOrders';
 import { Order, OrderItem } from '@/appwrite/db/orders';
+import { notificationService } from '@/appwrite/db/notifications';
 import { Button } from '@/components/ui/button';
 import {
   Table,
@@ -253,7 +254,25 @@ export default function OrdersPage() {
 
   const handleStatusChange = async (orderId: string, newStatus: 'pending' | 'processing' | 'shipped' | 'delivered' | 'cancelled') => {
     try {
+      // Find the order to get customer info
+      const order = orders.find(o => o.$id === orderId);
+      if (!order) return;
+
       await updateOrderStatus.mutateAsync({ orderId, status: newStatus });
+      
+      // Create customer notification for status change
+      try {
+        await notificationService.createOrderStatusNotification(
+          order.userId, // We need to add this to the order schema
+          orderId,
+          order.orderNumber,
+          newStatus
+        );
+      } catch (notificationError) {
+        console.error('Failed to create customer notification:', notificationError);
+        // Don't fail the status update if notification fails
+      }
+
       toast.success('Order status updated successfully');
     } catch (error) {
       console.error('Failed to update order status:', error);
@@ -263,7 +282,25 @@ export default function OrdersPage() {
 
   const handlePaymentStatusChange = async (orderId: string, newStatus: Order['paymentStatus']) => {
     try {
+      // Find the order to get customer info
+      const order = orders.find(o => o.$id === orderId);
+      if (!order) return;
+
       await updatePaymentStatus.mutateAsync({ orderId, status: newStatus });
+      
+      // Create customer notification for payment status change
+      try {
+        await notificationService.createPaymentStatusNotification(
+          order.userId, // We need to add this to the order schema
+          orderId,
+          order.orderNumber,
+          newStatus
+        );
+      } catch (notificationError) {
+        console.error('Failed to create customer notification:', notificationError);
+        // Don't fail the payment update if notification fails
+      }
+
       toast.success('Payment status updated successfully');
     } catch (error) {
       console.error('Failed to update payment status:', error);

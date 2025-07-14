@@ -129,14 +129,23 @@ export default function CheckoutPage() {
       // Save order to database
       const result = await ordersService.createOrder(orderData);
 
-      // Create notification for admin
+      // Create notifications for both admin and customer
       try {
-        if (result.$id) {
+        if (result.$id && user?.$id) {
+          // Create admin notification
           await notificationService.createOrderNotification(
             result.$id,
             result.orderNumber,
             `${firstName} ${lastName}`
           );
+
+          // Create customer notification
+          await notificationService.createCustomerOrderNotification(
+            user.$id,
+            result.$id,
+            result.orderNumber
+          );
+
           // Refresh notifications to show the new one
           await fetchNotifications();
         }

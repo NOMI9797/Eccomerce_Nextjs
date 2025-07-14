@@ -17,7 +17,11 @@ export const notificationService = {
           title: data.title,
           isRead: false,
           isCreated: new Date().toISOString(),
-          priority: data.priority || 'medium'
+          priority: data.priority || 'medium',
+          userId: data.userId || '',
+          orderId: data.orderId || '',
+          orderNumber: data.orderNumber || '',
+          actionType: data.actionType || 'none'
         }
       );
       return notification as unknown as Notification;
@@ -41,6 +45,43 @@ export const notificationService = {
       return response.documents as unknown as Notification[];
     } catch (error) {
       console.error('Error fetching notifications:', error);
+      throw error;
+    }
+  },
+
+  // Get notifications for a specific user (for customers)
+  async getUserNotifications(userId: string, limit = 50): Promise<Notification[]> {
+    try {
+      const response = await db.listDocuments(
+        DATABASE_ID,
+        NOTIFICATIONS_COLLECTION_ID,
+        [
+          Query.equal('userId', userId),
+          Query.orderDesc('isCreated'),
+          Query.limit(limit)
+        ]
+      );
+      return response.documents as unknown as Notification[];
+    } catch (error) {
+      console.error('Error fetching user notifications:', error);
+      throw error;
+    }
+  },
+
+  // Get unread count for specific user
+  async getUserUnreadCount(userId: string): Promise<number> {
+    try {
+      const response = await db.listDocuments(
+        DATABASE_ID,
+        NOTIFICATIONS_COLLECTION_ID,
+        [
+          Query.equal('userId', userId),
+          Query.equal('isRead', false)
+        ]
+      );
+      return response.total;
+    } catch (error) {
+      console.error('Error fetching user unread count:', error);
       throw error;
     }
   },
@@ -110,12 +151,67 @@ export const notificationService = {
     }
   },
 
-  // Create order notification
+  // Create admin order notification
   async createOrderNotification(orderId: string, orderNumber: string, customerName: string): Promise<Notification> {
     return this.createNotification({
       type: 'order',
       title: `New Order #${orderNumber} from ${customerName}`,
-      priority: 'high'
+      priority: 'high',
+      orderId,
+      orderNumber,
+      actionType: 'view_order'
+    });
+  },
+
+  // Create customer order placed notification
+  async createCustomerOrderNotification(userId: string, orderId: string, orderNumber: string): Promise<Notification> {
+    return this.createNotification({
+      type: 'order',
+      title: `Order #${orderNumber} placed successfully!`,
+      priority: 'high',
+      userId,
+      orderId,
+      orderNumber,
+      actionType: 'view_invoice'
+    });
+  },
+
+  // Create customer order status update notification
+  async createOrderStatusNotification(userId: string, orderId: string, orderNumber: string, newStatus: string): Promise<Notification> {
+    const statusMessages = {
+      'processing': 'is being prepared',
+      'shipped': 'has been shipped',
+      'delivered': 'has been delivered',
+      'cancelled': 'has been cancelled'
+    };
+    
+    return this.createNotification({
+      type: 'order',
+      title: `Order #${orderNumber} ${statusMessages[newStatus as keyof typeof statusMessages] || `status updated to ${newStatus}`}`,
+      priority: newStatus === 'delivered' ? 'high' : 'medium',
+      userId,
+      orderId,
+      orderNumber,
+      actionType: 'view_order'
+    });
+  },
+
+  // Create customer payment status notification
+  async createPaymentStatusNotification(userId: string, orderId: string, orderNumber: string, paymentStatus: string): Promise<Notification> {
+    const statusMessages = {
+      'paid': 'Payment confirmed',
+      'failed': 'Payment failed',
+      'pending': 'Payment is pending'
+    };
+
+    return this.createNotification({
+      type: 'order',
+      title: `${statusMessages[paymentStatus as keyof typeof statusMessages] || 'Payment status updated'} for Order #${orderNumber}`,
+      priority: paymentStatus === 'failed' ? 'high' : 'medium',
+      userId,
+      orderId,
+      orderNumber,
+      actionType: 'view_order'
     });
   },
 

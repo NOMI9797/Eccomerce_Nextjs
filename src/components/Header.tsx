@@ -12,6 +12,8 @@ import { useState } from "react";
 import ThemeToggle from "./ui/ThemeToggle";
 import NotificationDropdown from "./ui/notification-dropdown";
 import ToastContainer from "./ui/toast-container";
+import CustomerInvoiceModal from "./ui/customer-invoice-modal";
+import { ordersService, Order } from "@/appwrite/db/orders";
 
 export default function Header() {
   const { user, logout, isUserAdmin } = useAuth();
@@ -19,8 +21,20 @@ export default function Header() {
   const { toasts, notifications, unreadCount, markAsRead, markAllAsRead, deleteNotification, removeToast } = useNotifications();
   const [isSearchFocused, setIsSearchFocused] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+  const [isInvoiceModalOpen, setIsInvoiceModalOpen] = useState(false);
 
   const cartItemsCount = cart.items.reduce((total, item) => total + item.quantity, 0);
+
+  const handleShowInvoice = async (orderId: string) => {
+    try {
+      const order = await ordersService.getOrder(orderId);
+      setSelectedOrder(order);
+      setIsInvoiceModalOpen(true);
+    } catch (error) {
+      console.error('Failed to fetch order details:', error);
+    }
+  };
 
   return (
     <motion.header 
@@ -72,7 +86,7 @@ export default function Header() {
                     Dashboard
                   </Link>
                 )}
-                {isUserAdmin && (
+                {user && (
                   <NotificationDropdown 
                     notifications={notifications}
                     unreadCount={unreadCount}
@@ -80,10 +94,19 @@ export default function Header() {
                     onMarkAllAsRead={markAllAsRead}
                     onDeleteNotification={deleteNotification}
                     onNotificationClick={(notification) => {
-                      // Navigate to dashboard for order notifications
-                      if (notification.type === 'order') {
-                        window.location.href = '/Dashboard?feature=Orders';
-                      } else if (notification.type === 'product') {
+                      // Handle different action types
+                      if (notification.actionType === 'view_invoice' && notification.orderId) {
+                        // Show invoice modal for customers
+                        handleShowInvoice(notification.orderId);
+                      } else if (notification.actionType === 'view_order' && notification.orderId) {
+                        if (isUserAdmin) {
+                          // Admin goes to dashboard
+                          window.location.href = '/Dashboard?feature=Orders';
+                        } else {
+                          // Customer sees order details in modal
+                          handleShowInvoice(notification.orderId);
+                        }
+                      } else if (notification.type === 'product' && isUserAdmin) {
                         window.location.href = '/Dashboard?feature=List Products';
                       }
                     }}
@@ -201,6 +224,14 @@ export default function Header() {
         )}
       </div>
       <ToastContainer toasts={toasts} onRemoveToast={removeToast} />
+      <CustomerInvoiceModal 
+        order={selectedOrder}
+        isOpen={isInvoiceModalOpen}
+        onClose={() => {
+          setIsInvoiceModalOpen(false);
+          setSelectedOrder(null);
+        }}
+      />
     </motion.header>
   );
 }
