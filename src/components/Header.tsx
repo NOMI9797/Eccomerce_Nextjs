@@ -4,15 +4,19 @@
 import Link from "next/link";
 import { useAuth } from "@/session/AuthContext";
 import { useCart } from "@/session/CartContext";
+import { useNotifications } from "@/session/NotificationContext";
 import { Button } from "./ui/button";
 import { ShoppingCart, Search, Menu } from "lucide-react";
 import { motion } from "framer-motion";
 import { useState } from "react";
 import ThemeToggle from "./ui/ThemeToggle";
+import NotificationDropdown from "./ui/notification-dropdown";
+import ToastContainer from "./ui/toast-container";
 
 export default function Header() {
   const { user, logout, isUserAdmin } = useAuth();
   const { cart } = useCart();
+  const { toasts, notifications, unreadCount, markAsRead, markAllAsRead, deleteNotification, removeToast } = useNotifications();
   const [isSearchFocused, setIsSearchFocused] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
@@ -67,6 +71,23 @@ export default function Header() {
                   <Link href="/Dashboard" className="text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors">
                     Dashboard
                   </Link>
+                )}
+                {isUserAdmin && (
+                  <NotificationDropdown 
+                    notifications={notifications}
+                    unreadCount={unreadCount}
+                    onMarkAsRead={markAsRead}
+                    onMarkAllAsRead={markAllAsRead}
+                    onDeleteNotification={deleteNotification}
+                    onNotificationClick={(notification) => {
+                      // Navigate to dashboard for order notifications
+                      if (notification.type === 'order') {
+                        window.location.href = '/Dashboard?feature=Orders';
+                      } else if (notification.type === 'product') {
+                        window.location.href = '/Dashboard?feature=List Products';
+                      }
+                    }}
+                  />
                 )}
                 <Link href="/cart" className="relative">
                     <Button 
@@ -179,6 +200,7 @@ export default function Header() {
           </motion.div>
         )}
       </div>
+      <ToastContainer toasts={toasts} onRemoveToast={removeToast} />
     </motion.header>
   );
 }

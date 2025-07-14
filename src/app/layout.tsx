@@ -10,6 +10,7 @@ import { Toaster } from 'sonner';
 import { AuthProvider } from "@/session/AuthContext";
 import { CartProvider } from '@/session/CartContext';
 import { ThemeProvider } from '@/session/ThemeContext';
+import { NotificationProvider } from '@/session/NotificationContext';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -32,8 +33,10 @@ export default function RootLayout({
           <ThemeProvider>
             <AuthProvider>
               <CartProvider>
-                {children}
-                <Toaster />
+                <NotificationProvider>
+                  {children}
+                  <Toaster />
+                </NotificationProvider>
               </CartProvider>
             </AuthProvider>
           </ThemeProvider>

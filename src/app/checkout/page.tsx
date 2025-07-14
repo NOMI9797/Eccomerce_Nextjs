@@ -35,10 +35,13 @@ import { countries, citiesByCountry, regionsByCountry } from '@/lib/location-dat
 import Invoice from '@/components/ui/invoice';
 import { useRouter } from 'next/navigation';
 import { ordersService } from '@/appwrite/db/orders';
+import { notificationService } from '@/appwrite/db/notifications';
+import { useNotifications } from '@/session/NotificationContext';
 
 export default function CheckoutPage() {
   const { user } = useAuth();
   const { cart, clearCart } = useCart();
+  const { fetchNotifications } = useNotifications();
   const router = useRouter();
   const deliveryFee = 10.00;
   const [showInvoice, setShowInvoice] = useState(false);
@@ -125,6 +128,22 @@ export default function CheckoutPage() {
 
       // Save order to database
       const result = await ordersService.createOrder(orderData);
+
+      // Create notification for admin
+      try {
+        if (result.$id) {
+          await notificationService.createOrderNotification(
+            result.$id,
+            result.orderNumber,
+            `${firstName} ${lastName}`
+          );
+          // Refresh notifications to show the new one
+          await fetchNotifications();
+        }
+      } catch (notificationError) {
+        console.error('Failed to create notification:', notificationError);
+        // Don't fail the order if notification fails
+      }
 
       // Prepare invoice data
       const invoiceData = {
