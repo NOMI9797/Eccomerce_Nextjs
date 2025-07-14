@@ -20,19 +20,14 @@ export default function SearchBar({ value, onChange }: SearchBarProps) {
           value={value}
           onChange={(e) => onChange(e.target.value)}
           placeholder="Search products..."
-          className="w-full pl-12 pr-4 py-3 bg-black/60 backdrop-blur-sm border border-cyan-400/30 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/50 transition-all duration-300"
-          style={{
-            background: 'linear-gradient(145deg, rgba(0,0,0,0.8), rgba(30,30,30,0.6))',
-            boxShadow: '0 0 20px rgba(0, 255, 255, 0.1)'
-          }}
+          className="w-full pl-12 pr-4 py-3 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:border-blue-500 dark:focus:border-blue-400 focus:ring-2 focus:ring-blue-500/20 dark:focus:ring-blue-400/20 transition-all duration-300"
           whileFocus={{
-            boxShadow: '0 0 30px rgba(0, 255, 255, 0.3), 0 0 60px rgba(0, 255, 255, 0.1)',
             scale: 1.02
           }}
           transition={{ duration: 0.2 }}
         />
         <motion.div 
-          className="absolute left-4 top-1/2 transform -translate-y-1/2 text-cyan-400"
+          className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500"
           whileHover={{ scale: 1.1 }}
         >
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -44,8 +39,6 @@ export default function SearchBar({ value, onChange }: SearchBarProps) {
             />
           </svg>
         </motion.div>
-        {/* Glowing border effect */}
-        <div className="absolute inset-0 rounded-lg border border-transparent bg-gradient-to-r from-cyan-500/20 via-purple-500/20 to-pink-500/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 -z-10 blur-sm" />
       </div>
       <div className="ml-3">
         <VoiceSearch onSearchResult={onChange} />

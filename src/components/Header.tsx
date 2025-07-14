@@ -5,92 +5,179 @@ import Link from "next/link";
 import { useAuth } from "@/session/AuthContext";
 import { useCart } from "@/session/CartContext";
 import { Button } from "./ui/button";
-import { ShoppingCart } from "lucide-react";
+import { ShoppingCart, Search, Menu } from "lucide-react";
 import { motion } from "framer-motion";
+import { useState } from "react";
+import ThemeToggle from "./ui/ThemeToggle";
 
 export default function Header() {
   const { user, logout, isUserAdmin } = useAuth();
   const { cart } = useCart();
+  const [isSearchFocused, setIsSearchFocused] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const cartItemsCount = cart.items.reduce((total, item) => total + item.quantity, 0);
 
   return (
     <motion.header 
-      className="w-full border-b border-cyan-400/20 bg-black/80 backdrop-blur-md"
+      className="fixed top-0 left-0 right-0 z-50 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 shadow-sm"
       initial={{ y: -100, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
-      transition={{ duration: 0.6, ease: "easeOut" }}
+      transition={{ duration: 0.3 }}
     >
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex h-16 items-center justify-between">
+        <div className="flex h-16 items-center justify-between gap-4">
+          {/* Logo */}
           <div className="flex items-center">
-            <Link href="/" className="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-purple-400 hover:from-cyan-300 hover:to-purple-300 transition-all duration-300">
+            <Link href="/" className="text-xl font-bold text-gray-900 dark:text-white hover:text-gray-700 dark:hover:text-gray-300 transition-colors">
               KharedLo
             </Link>
           </div>
-          <nav className="flex items-center gap-4">
+
+          {/* Search Bar - Hidden on mobile */}
+          <div className="hidden md:flex flex-1 max-w-md mx-4">
+            <div className="relative w-full">
+              <input
+                type="text"
+                placeholder="Search products..."
+                className="w-full h-10 pl-10 pr-4 rounded-md border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-transparent"
+                onFocus={() => setIsSearchFocused(true)}
+                onBlur={() => setIsSearchFocused(false)}
+              />
+              <Search className={`absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 ${isSearchFocused ? 'text-blue-500 dark:text-blue-400' : 'text-gray-400'}`} />
+            </div>
+          </div>
+
+          {/* Mobile Menu Button */}
+          <div className="md:hidden">
+            <Button variant="ghost" size="icon" onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}>
+              <Menu className="h-5 w-5" />
+            </Button>
+          </div>
+
+          {/* Navigation - Desktop */}
+          <nav className="hidden md:flex items-center gap-4">
+            <ThemeToggle />
             {user ? (
               <>
-                <Link href="/Homepage" className="text-sm font-medium text-cyan-300 hover:text-cyan-100 transition-colors duration-300 relative group">
+                <Link href="/Homepage" className="text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors">
                   Home
-                  <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-cyan-400 group-hover:w-full transition-all duration-300"></span>
                 </Link>
                 {isUserAdmin && (
-                  <Link href="/Dashboard" className="text-sm font-medium text-purple-300 hover:text-purple-100 transition-colors duration-300 relative group">
+                  <Link href="/Dashboard" className="text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors">
                     Dashboard
-                    <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-purple-400 group-hover:w-full transition-all duration-300"></span>
                   </Link>
                 )}
                 <Link href="/cart" className="relative">
-                  <motion.div
-                    whileHover={{ scale: 1.1 }}
-                    whileTap={{ scale: 0.95 }}
-                  >
                     <Button 
-                      variant="ghost" 
+                    variant="white" 
                       size="icon" 
-                      className="relative text-cyan-300 hover:text-cyan-100 hover:bg-cyan-400/10 transition-all duration-300"
+                    className="relative"
                     >
                     <ShoppingCart className="h-5 w-5" />
                     {cartItemsCount > 0 && (
                         <motion.span 
-                          className="absolute -top-2 -right-2 bg-gradient-to-r from-pink-500 to-purple-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-bold"
+                        className="absolute -top-2 -right-2 bg-blue-600 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-bold"
                           initial={{ scale: 0 }}
                           animate={{ scale: 1 }}
-                          style={{
-                            boxShadow: '0 0 10px rgba(236, 72, 153, 0.6)'
-                          }}
                         >
                         {cartItemsCount}
                         </motion.span>
                     )}
                   </Button>
-                  </motion.div>
                 </Link>
-                <motion.button
+                <Button
                   onClick={logout}
-                  className="text-sm font-medium text-red-400 hover:text-red-300 transition-colors duration-300 relative group"
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
+                  variant="subtle"
+                  className="text-sm font-medium"
                 >
                   Logout
-                  <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-red-400 group-hover:w-full transition-all duration-300"></span>
-                </motion.button>
+                </Button>
               </>
             ) : (
               <>
-                <Link href="/login" className="text-sm font-medium text-cyan-300 hover:text-cyan-100 transition-colors duration-300 relative group">
+                <Link href="/login">
+                  <Button variant="white">
                   Login
-                  <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-cyan-400 group-hover:w-full transition-all duration-300"></span>
+                  </Button>
                 </Link>
-                <Link href="/signup" className="text-sm font-medium text-purple-300 hover:text-purple-100 transition-colors duration-300 relative group">
+                <Link href="/signup">
+                  <Button variant="primary">
                   Sign Up
-                  <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-purple-400 group-hover:w-full transition-all duration-300"></span>
+                  </Button>
                 </Link>
               </>
             )}
           </nav>
         </div>
+
+        {/* Mobile Menu */}
+        {isMobileMenuOpen && (
+          <motion.div 
+            className="md:hidden border-t border-gray-200 dark:border-gray-800 py-4"
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+          >
+            <div className="flex flex-col gap-4">
+              {/* Mobile Search */}
+              <div className="relative">
+                <input
+                  type="text"
+                  placeholder="Search products..."
+                  className="w-full h-10 pl-10 pr-4 rounded-md border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-transparent"
+                />
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+              </div>
+
+              {/* Theme Toggle */}
+              <div className="flex items-center justify-between px-2 py-1">
+                <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Theme</span>
+                <ThemeToggle />
+              </div>
+
+              {/* Mobile Navigation Links */}
+              {user ? (
+                <>
+                  <Link href="/Homepage" className="text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors px-2 py-1">
+                    Home
+                  </Link>
+                  {isUserAdmin && (
+                    <Link href="/Dashboard" className="text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors px-2 py-1">
+                      Dashboard
+                    </Link>
+                  )}
+                  <Link href="/cart" className="flex items-center justify-between px-2 py-1">
+                    <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Cart</span>
+                    {cartItemsCount > 0 && (
+                      <span className="bg-blue-600 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-bold">
+                        {cartItemsCount}
+                      </span>
+                    )}
+                  </Link>
+                  <button
+                    onClick={logout}
+                    className="text-sm font-medium text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 transition-colors px-2 py-1 text-left"
+                  >
+                    Logout
+                  </button>
+                </>
+              ) : (
+                <div className="flex flex-col gap-2 px-2">
+                  <Link href="/login">
+                    <Button variant="white" className="w-full">
+                      Login
+                    </Button>
+                  </Link>
+                  <Link href="/signup">
+                    <Button variant="primary" className="w-full">
+                      Sign Up
+                    </Button>
+                  </Link>
+                </div>
+              )}
+            </div>
+          </motion.div>
+        )}
       </div>
     </motion.header>
   );

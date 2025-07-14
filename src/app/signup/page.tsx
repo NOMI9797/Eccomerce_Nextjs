@@ -18,7 +18,7 @@ export default function SignupPage() {
   if (user === undefined) return null;
 
   return (
-    <div className="container mx-auto flex items-center justify-center min-h-screen">
+    <div className="container mx-auto flex items-center justify-center min-h-screen bg-white dark:bg-gray-900">
       <div className="w-full max-w-md">
         <SignupForm />
       </div>

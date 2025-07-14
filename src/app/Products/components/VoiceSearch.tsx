@@ -45,29 +45,10 @@ export default function VoiceSearch({ onSearchResult }: VoiceSearchProps) {
         onClick={handleVoiceSearch}
         className={`p-3 rounded-full transition-all duration-300 ${
           isListening 
-            ? 'bg-gradient-to-r from-red-500 to-pink-500 shadow-lg' 
-            : 'bg-gradient-to-r from-cyan-500 to-blue-500 shadow-lg'
-        } text-white backdrop-blur-sm border border-white/20`}
-        style={{
-          boxShadow: isListening 
-            ? '0 0 30px rgba(239, 68, 68, 0.6), 0 0 60px rgba(239, 68, 68, 0.3)' 
-            : '0 0 30px rgba(6, 182, 212, 0.6), 0 0 60px rgba(6, 182, 212, 0.3)'
-        }}
+            ? 'bg-red-500 hover:bg-red-600 shadow-lg' 
+            : 'bg-blue-500 hover:bg-blue-600 shadow-lg'
+        } text-white border border-gray-200 dark:border-gray-600`}
         title="Search by voice"
-        animate={{
-          boxShadow: isListening
-            ? [
-                '0 0 30px rgba(239, 68, 68, 0.6), 0 0 60px rgba(239, 68, 68, 0.3)',
-                '0 0 40px rgba(239, 68, 68, 0.8), 0 0 80px rgba(239, 68, 68, 0.4)',
-                '0 0 30px rgba(239, 68, 68, 0.6), 0 0 60px rgba(239, 68, 68, 0.3)'
-              ]
-            : '0 0 30px rgba(6, 182, 212, 0.6), 0 0 60px rgba(6, 182, 212, 0.3)'
-        }}
-        transition={{
-          duration: isListening ? 0.8 : 0.3,
-          repeat: isListening ? Infinity : 0,
-          ease: "easeInOut"
-        }}
       >
         <motion.svg
           className="w-5 h-5"
@@ -98,11 +79,7 @@ export default function VoiceSearch({ onSearchResult }: VoiceSearchProps) {
             initial={{ opacity: 0, scale: 0.5, y: 10 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.5, y: 10 }}
-            className="absolute top-16 right-0 bg-black/80 backdrop-blur-sm border border-cyan-400/30 p-4 rounded-lg shadow-lg w-48"
-            style={{
-              background: 'linear-gradient(145deg, rgba(0,0,0,0.9), rgba(30,30,30,0.8))',
-              boxShadow: '0 0 30px rgba(0, 255, 255, 0.3)'
-            }}
+            className="absolute top-16 right-0 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 p-4 rounded-lg shadow-lg w-48"
           >
             <div className="flex items-center space-x-3">
               <motion.div 
@@ -116,23 +93,20 @@ export default function VoiceSearch({ onSearchResult }: VoiceSearchProps) {
                   repeat: Infinity,
                   ease: "easeInOut"
                 }}
-                style={{
-                  boxShadow: '0 0 10px rgba(239, 68, 68, 0.8)'
-                }}
               />
-              <motion.span 
-                className="text-sm text-cyan-300 font-medium"
-                animate={{
-                  opacity: [0.7, 1, 0.7]
-                }}
-                transition={{
-                  duration: 1.5,
-                  repeat: Infinity,
-                  ease: "easeInOut"
-                }}
-              >
-                Listening...
-              </motion.span>
+                              <motion.span 
+                  className="text-sm text-gray-700 dark:text-gray-300 font-medium"
+                  animate={{
+                    opacity: [0.7, 1, 0.7]
+                  }}
+                  transition={{
+                    duration: 1.5,
+                    repeat: Infinity,
+                    ease: "easeInOut"
+                  }}
+                >
+                  Listening...
+                </motion.span>
             </div>
             
             {/* Audio wave visualization */}
@@ -140,7 +114,7 @@ export default function VoiceSearch({ onSearchResult }: VoiceSearchProps) {
               {[...Array(5)].map((_, i) => (
                 <motion.div
                   key={i}
-                  className="w-1 bg-gradient-to-t from-cyan-500 to-blue-500 rounded-full"
+                  className="w-1 bg-blue-500 dark:bg-blue-400 rounded-full"
                   animate={{
                     height: [4, 16, 4]
                   }}

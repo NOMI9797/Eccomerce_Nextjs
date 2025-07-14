@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
+import Header from '@/components/Header';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   FiCreditCard, 
@@ -19,7 +20,8 @@ import {
   FiShoppingCart,
   FiArrowRight,
   FiCheck,
-  FiDollarSign
+  FiDollarSign,
+  FiChevronLeft
 } from 'react-icons/fi';
 
 import Link from 'next/link';
@@ -48,9 +50,10 @@ export default function CheckoutPage() {
     countryCode: '',
     city: '',
     region: '',
-    street: '',
     postalCode: '',
   });
+  
+
 
   // Update address when location data is available
   useEffect(() => {
@@ -60,7 +63,6 @@ export default function CheckoutPage() {
         countryCode: locationData.country_code || '',
         city: locationData.city || '',
         region: locationData.region || '',
-        street: '',
         postalCode: locationData.postal || '',
       });
     }
@@ -86,73 +88,20 @@ export default function CheckoutPage() {
 
   // Add validation function
   const validateForm = () => {
-    let isValid = true;
-    const newErrors = {
-      firstName: '',
-      lastName: '',
-      phone: '',
-      email: '',
-      street: ''
-    };
-
-    // First Name validation
-    if (!firstName.trim()) {
-      newErrors.firstName = 'First name is required';
-      isValid = false;
-    } else if (firstName.length < 2) {
-      newErrors.firstName = 'First name must be at least 2 characters';
-      isValid = false;
+    if (!firstName || !lastName || !email || !phone || !streetAddress || !address.city || !address.region || !address.country || !address.postalCode) {
+      toast.error('Please fill in all required fields');
+      return false;
     }
-
-    // Last Name validation
-    if (!lastName.trim()) {
-      newErrors.lastName = 'Last name is required';
-      isValid = false;
-    } else if (lastName.length < 2) {
-      newErrors.lastName = 'Last name must be at least 2 characters';
-      isValid = false;
-    }
-
-    // Phone validation
-    const phoneRegex = /^\d{11}$/;
-    if (!phone.trim()) {
-      newErrors.phone = 'Phone number is required';
-      isValid = false;
-    } else if (!phoneRegex.test(phone)) {
-      newErrors.phone = 'Phone number must be exactly 11 digits';
-      isValid = false;
-    }
-
-    // Email validation
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!email.trim()) {
-      newErrors.email = 'Email is required';
-      isValid = false;
-    } else if (!emailRegex.test(email)) {
-      newErrors.email = 'Please enter a valid email address';
-      isValid = false;
-    }
-
-    // Street address validation
-    if (!streetAddress.trim()) {
-      newErrors.street = 'Street address is required';
-      isValid = false;
-    }
-
-    setFormErrors(newErrors);
-    return isValid;
+    return true;
   };
 
   const handlePlaceOrder = async () => {
-    if (!user) {
-      toast.error('Please login to place an order');
-      return;
-    }
+    if (!validateForm()) return;
 
     try {
       // Create order data
       const orderData = {
-        userId: user.$id,
+        userId: user?.$id || '',
         items: cart.items.map(item => ({
           productId: item.productId,
           name: item.name,
@@ -160,9 +109,9 @@ export default function CheckoutPage() {
           quantity: item.quantity,
           image: item.image,
         })),
-        total: cart.total + deliveryFee,
-        status: 'pending' as 'pending' | 'processing' | 'shipped' | 'delivered' | 'cancelled',
-        paymentStatus: (paymentMethod === 'stripe' ? 'pending' : 'paid') as 'pending' | 'paid' | 'failed',
+        total: cart.items.reduce((total, item) => total + (item.price * item.quantity), 0) + deliveryFee,
+        status: 'pending' as const,
+        paymentStatus: 'pending' as const,
         shippingFirstName: firstName,
         shippingLastName: lastName,
         shippingEmail: email,
@@ -174,23 +123,19 @@ export default function CheckoutPage() {
         shippingPostalCode: address.postalCode,
       };
 
-      // Create the order using ordersService
-      const order = await ordersService.createOrder(orderData);
+      // Save order to database
+      const result = await ordersService.createOrder(orderData);
 
       // Prepare invoice data
       const invoiceData = {
         orderDetails: {
-          orderId: order.$id,
-          date: new Date().toLocaleDateString('en-US', {
-            year: 'numeric',
-            month: 'long',
-            day: 'numeric',
-          }),
-          items: order.items, // This will already be parsed back to an array by the service
-          subtotal: cart.total,
+          orderId: result.$id,
+          date: new Date().toLocaleDateString(),
+          items: cart.items,
+          subtotal: cart.items.reduce((total, item) => total + (item.price * item.quantity), 0),
           deliveryFee,
-          total: orderData.total,
-          paymentMethod: paymentMethod === 'stripe' ? 'Credit/Debit Card' : 'Cash on Delivery',
+          total: cart.items.reduce((total, item) => total + (item.price * item.quantity), 0) + deliveryFee,
+          paymentMethod: paymentMethod === 'cod' ? 'Cash on Delivery' : 'Credit/Debit Card',
         },
         customerDetails: {
           firstName,
@@ -223,452 +168,315 @@ export default function CheckoutPage() {
 
   if (locationLoading) {
     return (
-      <div className="min-h-screen relative overflow-hidden bg-gradient-to-br from-gray-900 via-black to-gray-900">
-        <div className="absolute inset-0">
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_25%_25%,rgba(56,189,248,0.1),transparent_50%)]" />
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_75%_75%,rgba(147,51,234,0.1),transparent_50%)]" />
-        </div>
-        
-        <div className="relative z-10 flex items-center justify-center min-h-screen">
-          <motion.div
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="text-center"
-          >
+      <>
+        <Header />
+        <div className="min-h-screen bg-gray-50 dark:bg-gray-900 pt-20">
+          <div className="flex items-center justify-center min-h-screen">
             <motion.div
-              animate={{ rotate: 360 }}
-              transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
-              className="w-16 h-16 border-4 border-cyan-400/30 border-t-cyan-400 rounded-full mx-auto mb-4"
-            />
-            <p className="text-gray-400 text-lg">Loading location data...</p>
-          </motion.div>
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="text-center"
+            >
+              <motion.div
+                animate={{ rotate: 360 }}
+                transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+                className="w-16 h-16 border-4 border-blue-200 dark:border-blue-600 border-t-blue-600 dark:border-t-blue-400 rounded-full mx-auto mb-4"
+              />
+              <p className="text-gray-600 dark:text-gray-400 text-lg">Loading location data...</p>
+            </motion.div>
+          </div>
         </div>
-      </div>
+      </>
     );
   }
 
   return (
-    <div className="min-h-screen relative overflow-hidden bg-gradient-to-br from-gray-900 via-black to-gray-900">
-      {/* Background effects */}
-      <div className="absolute inset-0">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_25%_25%,rgba(56,189,248,0.1),transparent_50%)]" />
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_75%_75%,rgba(147,51,234,0.1),transparent_50%)]" />
-      </div>
-
-      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <motion.h1 
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="text-4xl font-bold text-center mb-12 bg-gradient-to-r from-cyan-400 via-purple-400 to-pink-400 bg-clip-text text-transparent"
-        >
-          Checkout
-        </motion.h1>
-
-        <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
-          {/* Billing Details Form */}
-          <div className="xl:col-span-2 space-y-8">
-            {/* Personal Information */}
-            <motion.div
-              initial={{ opacity: 0, x: -50 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.2 }}
-              className="relative group"
+    <>
+      <Header />
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 pt-20">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          {/* Breadcrumb */}
+          <nav className="mb-6">
+            <Link 
+              href="/cart" 
+              className="inline-flex items-center text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400"
             >
-              <div className="absolute -inset-0.5 bg-gradient-to-r from-cyan-500/20 to-purple-500/20 rounded-2xl blur opacity-50 group-hover:opacity-100 transition duration-500" />
-              <div className="relative bg-black/60 backdrop-blur-xl border border-cyan-500/20 rounded-2xl p-8
-                            hover:border-cyan-400/40 transition-all duration-500 hover:shadow-[0_0_30px_rgba(34,211,238,0.2)]">
-                <div className="flex items-center gap-3 mb-8">
-                  <FiUser className="text-2xl text-cyan-400" />
-                  <h2 className="text-2xl font-bold text-white">Personal Information</h2>
+              <FiChevronLeft className="w-4 h-4 mr-1" />
+              Back to Cart
+            </Link>
+          </nav>
+
+          {/* Page Header */}
+          <div className="text-center mb-8">
+            <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
+              Checkout
+            </h1>
+            <p className="text-gray-600 dark:text-gray-400">Complete your order details below</p>
+          </div>
+
+          <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
+            {/* Billing Details Form */}
+            <div className="xl:col-span-2 space-y-6">
+              {/* Personal Information */}
+              <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+                <div className="flex items-center gap-3 mb-6">
+                  <div className="w-8 h-8 bg-blue-100 dark:bg-blue-900/50 rounded-full flex items-center justify-center">
+                    <FiUser className="text-blue-600 dark:text-blue-400 w-4 h-4" />
+                  </div>
+                  <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Personal Information</h2>
                 </div>
                 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <Label htmlFor="firstName" className="text-gray-300 flex items-center gap-2 mb-2">
-                      <FiUser className="text-cyan-400" />
+                    <Label htmlFor="firstName" className="text-gray-700 dark:text-gray-300 font-medium mb-2 block">
                       First name *
                     </Label>
-                    <Input 
+                    <Input
                       id="firstName"
+                      type="text"
                       value={firstName}
                       onChange={(e) => setFirstName(e.target.value)}
-                      required
-                      className={`bg-black/60 border-gray-600 text-white placeholder-gray-400 focus:border-cyan-400 
-                               transition-colors ${formErrors.firstName ? 'border-red-500' : ''}`}
+                      className="w-full"
                       placeholder="Enter your first name"
                     />
-                    {formErrors.firstName && (
-                      <motion.p 
-                        initial={{ opacity: 0, y: -10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        className="text-red-400 text-sm mt-2"
-                      >
-                        {formErrors.firstName}
-                      </motion.p>
-                    )}
                   </div>
-
+                  
                   <div>
-                    <Label htmlFor="lastName" className="text-gray-300 flex items-center gap-2 mb-2">
-                      <FiUser className="text-cyan-400" />
+                    <Label htmlFor="lastName" className="text-gray-700 font-medium mb-2 block">
                       Last name *
                     </Label>
-                    <Input 
+                    <Input
                       id="lastName"
+                      type="text"
                       value={lastName}
                       onChange={(e) => setLastName(e.target.value)}
-                      required
-                      className={`bg-black/60 border-gray-600 text-white placeholder-gray-400 focus:border-cyan-400 
-                               transition-colors ${formErrors.lastName ? 'border-red-500' : ''}`}
+                      className="w-full"
                       placeholder="Enter your last name"
                     />
-                    {formErrors.lastName && (
-                      <motion.p 
-                        initial={{ opacity: 0, y: -10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        className="text-red-400 text-sm mt-2"
-                      >
-                        {formErrors.lastName}
-                      </motion.p>
-                    )}
                   </div>
-
+                  
                   <div>
-                    <Label htmlFor="phone" className="text-gray-300 flex items-center gap-2 mb-2">
-                      <FiPhone className="text-cyan-400" />
-                      Phone *
+                    <Label htmlFor="email" className="text-gray-700 font-medium mb-2 block">
+                      Email address *
                     </Label>
-                    <Input 
-                      id="phone" 
-                      type="tel"
-                      value={phone}
-                      onChange={(e) => {
-                        const value = e.target.value.replace(/\D/g, '');
-                        if (value.length <= 11) {
-                          setPhone(value);
-                        }
-                      }}
-                      placeholder="Enter 11 digit phone number"
-                      required
-                      className={`bg-black/60 border-gray-600 text-white placeholder-gray-400 focus:border-cyan-400 
-                               transition-colors ${formErrors.phone ? 'border-red-500' : ''}`}
-                    />
-                    {formErrors.phone && (
-                      <motion.p 
-                        initial={{ opacity: 0, y: -10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        className="text-red-400 text-sm mt-2"
-                      >
-                        {formErrors.phone}
-                      </motion.p>
-                    )}
-                  </div>
-
-                  <div>
-                    <Label htmlFor="email" className="text-gray-300 flex items-center gap-2 mb-2">
-                      <FiMail className="text-cyan-400" />
-                      Your Email *
-                    </Label>
-                    <Input 
-                      id="email" 
+                    <Input
+                      id="email"
                       type="email"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
-                      required
-                      className={`bg-black/60 border-gray-600 text-white placeholder-gray-400 focus:border-cyan-400 
-                               transition-colors ${formErrors.email ? 'border-red-500' : ''}`}
-                      placeholder="Enter your email address"
+                      className="w-full"
+                      placeholder="Enter your email"
                     />
-                    {formErrors.email && (
-                      <motion.p 
-                        initial={{ opacity: 0, y: -10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        className="text-red-400 text-sm mt-2"
-                      >
-                        {formErrors.email}
-                      </motion.p>
-                    )}
                   </div>
-                </div>
-              </div>
-            </motion.div>
-
-            {/* Shipping Address */}
-            <motion.div
-              initial={{ opacity: 0, x: -50 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.4 }}
-              className="relative group"
-            >
-              <div className="absolute -inset-0.5 bg-gradient-to-r from-purple-500/20 to-pink-500/20 rounded-2xl blur opacity-50 group-hover:opacity-100 transition duration-500" />
-              <div className="relative bg-black/60 backdrop-blur-xl border border-purple-500/20 rounded-2xl p-8
-                            hover:border-purple-400/40 transition-all duration-500 hover:shadow-[0_0_30px_rgba(147,51,234,0.2)]">
-                <div className="flex items-center gap-3 mb-8">
-                  <FiMapPin className="text-2xl text-purple-400" />
-                  <h2 className="text-2xl font-bold text-white">Shipping Address</h2>
-                </div>
-                
-                <div className="space-y-6">
-                  {/* Location Details */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
-                      <Label className="text-gray-300 flex items-center gap-2 mb-2">
-                        <FiHome className="text-purple-400" />
-                        Country *
-                      </Label>
-                      <LocationAutocomplete
-                        value={address.country}
-                        onChange={(value) => setAddress(prev => ({ 
-                          ...prev, 
-                          country: value,
-                          // Reset dependent fields when country changes
-                          city: '',
-                          region: ''
-                        }))}
-                        placeholder="Enter your country"
-                        suggestions={countries}
-                        required
-                        className="bg-black/60 border-gray-600 text-white placeholder-gray-400 focus:border-purple-400 
-                                 transition-colors hover:border-purple-400/50"
-                      />
-                    </div>
-
-                    <div>
-                      <Label className="text-gray-300 flex items-center gap-2 mb-2">
-                        <FiMapPin className="text-purple-400" />
-                        City *
-                      </Label>
-                      <LocationAutocomplete
-                        value={address.city}
-                        onChange={(value) => setAddress(prev => ({ ...prev, city: value }))}
-                        placeholder={address.country ? "Enter your city" : "Please select a country first"}
-                        suggestions={address.country ? (citiesByCountry[address.country] || []) : []}
-                        required
-                        className="bg-black/60 border-gray-600 text-white placeholder-gray-400 focus:border-purple-400 
-                                 transition-colors hover:border-purple-400/50"
-                      />
-                    </div>
-
-                    <div>
-                      <Label className="text-gray-300 flex items-center gap-2 mb-2">
-                        <FiMapPin className="text-purple-400" />
-                        Region/State *
-                      </Label>
-                      <LocationAutocomplete
-                        value={address.region}
-                        onChange={(value) => setAddress(prev => ({ ...prev, region: value }))}
-                        placeholder={address.country ? "Enter your region/state" : "Please select a country first"}
-                        suggestions={address.country ? (regionsByCountry[address.country] || []) : []}
-                        required
-                        className="bg-black/60 border-gray-600 text-white placeholder-gray-400 focus:border-purple-400 
-                                 transition-colors hover:border-purple-400/50"
-                      />
-                    </div>
-
-                    <div>
-                      <Label className="text-gray-300 flex items-center gap-2 mb-2">
-                        <FiMapPin className="text-purple-400" />
-                        Postal Code *
-                      </Label>
-                      <Input
-                        value={address.postalCode}
-                        onChange={(e) => setAddress(prev => ({ ...prev, postalCode: e.target.value }))}
-                        placeholder="Enter your postal code"
-                        required
-                        className="bg-black/60 border-gray-600 text-white placeholder-gray-400 focus:border-purple-400 
-                                 transition-colors hover:border-purple-400/50"
-                      />
-                    </div>
-                  </div>
-
-                  {/* Street Address Input */}
+                  
                   <div>
-                    <Label htmlFor="street" className="text-gray-300 flex items-center gap-2 mb-2">
-                      <FiHome className="text-purple-400" />
-                      Street Address *
+                    <Label htmlFor="phone" className="text-gray-700 font-medium mb-2 block">
+                      Phone number *
                     </Label>
                     <Input
-                      id="street"
+                      id="phone"
+                      type="tel"
+                      value={phone}
+                      onChange={(e) => setPhone(e.target.value)}
+                      className="w-full"
+                      placeholder="Enter your phone number"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Delivery Address */}
+              <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+                <div className="flex items-center gap-3 mb-6">
+                  <div className="w-8 h-8 bg-blue-100 dark:bg-blue-900/50 rounded-full flex items-center justify-center">
+                    <FiMapPin className="text-blue-600 dark:text-blue-400 w-4 h-4" />
+                  </div>
+                  <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Delivery Address</h2>
+                </div>
+                
+                <div className="space-y-4">
+                  <div>
+                    <Label htmlFor="streetAddress" className="text-gray-700 font-medium mb-2 block">
+                      Street address *
+                    </Label>
+                    <Input
+                      id="streetAddress"
+                      type="text"
                       value={streetAddress}
                       onChange={(e) => setStreetAddress(e.target.value)}
+                      className="w-full"
                       placeholder="Enter your street address"
-                      required
-                      className={`bg-black/60 border-gray-600 text-white placeholder-gray-400 focus:border-purple-400 
-                               transition-colors ${formErrors.street ? 'border-red-500' : ''}`}
-                    />
-                    {formErrors.street && (
-                      <motion.p 
-                        initial={{ opacity: 0, y: -10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        className="text-red-400 text-sm mt-2"
-                      >
-                        {formErrors.street}
-                      </motion.p>
-                    )}
-                  </div>
-
-                  <div>
-                    <Label htmlFor="notes" className="text-gray-300 mb-2 block">Order notes (optional)</Label>
-                    <textarea 
-                      id="notes"
-                      className="w-full bg-black/60 border border-gray-600 rounded-lg p-4 text-white placeholder-gray-400 
-                               focus:border-purple-400 transition-colors h-32 resize-none"
-                      placeholder="Notes about your order, e.g. special notes for delivery"
                     />
                   </div>
-                </div>
-              </div>
-            </motion.div>
-          </div>
-
-          {/* Order Summary */}
-          <motion.div
-            initial={{ opacity: 0, x: 50 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.3 }}
-            className="relative group"
-          >
-            <div className="absolute -inset-0.5 bg-gradient-to-r from-pink-500/20 to-cyan-500/20 rounded-2xl blur opacity-50" />
-            <div className="relative bg-black/60 backdrop-blur-xl border border-pink-500/30 rounded-2xl p-8 h-fit
-                          hover:shadow-[0_0_40px_rgba(236,72,153,0.3)] transition-all duration-500 sticky top-8">
-              <div className="flex items-center gap-3 mb-8">
-                <FiShoppingCart className="text-2xl text-pink-400" />
-                <h2 className="text-2xl font-bold text-white">Your Order</h2>
-              </div>
-              
-              <div className="space-y-6">
-                {/* Order Items */}
-                <div className="space-y-4 max-h-64 overflow-y-auto pr-2">
-                  {cart.items.map((item) => (
-                    <motion.div 
-                      key={item.productId} 
-                      className="flex justify-between items-center p-4 bg-gray-800/30 rounded-xl border border-gray-700/50"
-                      whileHover={{ scale: 1.02 }}
-                    >
-                      <div className="flex items-center gap-3">
-                        <img
-                          src={`https://cloud.appwrite.io/v1/storage/buckets/67a32bbf003270b1e15c/files/${item.image}/view?project=679b0257003b758db270`}
-                          alt={item.name}
-                          className="w-12 h-12 object-cover rounded-lg border border-gray-600"
-                        />
-                        <div>
-                          <p className="text-white font-medium text-sm">{item.name}</p>
-                          <p className="text-gray-400 text-xs">Qty: {item.quantity}</p>
-                        </div>
-                      </div>
-                      <span className="text-cyan-400 font-bold">${(item.price * item.quantity).toFixed(2)}</span>
-                    </motion.div>
-                  ))}
-                </div>
-
-                {/* Summary Totals */}
-                <div className="border-t border-gray-700/50 pt-6 space-y-4">
-                  <div className="flex justify-between text-lg">
-                    <span className="text-gray-300">Subtotal</span>
-                    <span className="text-white font-semibold">${cart.total.toFixed(2)}</span>
-                  </div>
-                  <div className="flex justify-between text-lg">
-                    <span className="text-gray-300">Delivery Fee</span>
-                    <span className="text-cyan-400 font-semibold">${deliveryFee.toFixed(2)}</span>
-                  </div>
-                  <div className="border-t border-gray-700/50 pt-4">
-                    <div className="flex justify-between text-2xl font-bold">
-                      <span className="text-white">Total</span>
-                      <span className="bg-gradient-to-r from-cyan-400 to-pink-400 bg-clip-text text-transparent">
-                        ${(cart.total + deliveryFee).toFixed(2)}
-                      </span>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <Label className="text-gray-700 font-medium mb-2 block">
+                        Country *
+                      </Label>
+                                             <LocationAutocomplete
+                         value={address.country}
+                         onChange={(country: string) => {
+                           setAddress(prev => ({ ...prev, country, countryCode: '', city: '', region: '' }));
+                         }}
+                         placeholder="Select your country"
+                         suggestions={countries}
+                       />
+                    </div>
+                    
+                    <div>
+                      <Label className="text-gray-700 font-medium mb-2 block">
+                        City *
+                      </Label>
+                                             <LocationAutocomplete
+                         value={address.city}
+                         onChange={(city: string) => {
+                           setAddress(prev => ({ ...prev, city, region: '' }));
+                         }}
+                         placeholder="Select your city"
+                         suggestions={address.country ? (citiesByCountry[address.country] || []) : []}
+                       />
+                    </div>
+                    
+                    <div>
+                      <Label className="text-gray-700 font-medium mb-2 block">
+                        State/Region *
+                      </Label>
+                                             <LocationAutocomplete
+                         value={address.region}
+                         onChange={(region: string) => {
+                           setAddress(prev => ({ ...prev, region }));
+                         }}
+                         placeholder="Select your region"
+                         suggestions={address.country ? (regionsByCountry[address.country] || []) : []}
+                       />
+                    </div>
+                    
+                    <div>
+                      <Label htmlFor="postalCode" className="text-gray-700 font-medium mb-2 block">
+                        Postal code *
+                      </Label>
+                      <Input
+                        id="postalCode"
+                        type="text"
+                        value={address.postalCode}
+                        onChange={(e) => setAddress(prev => ({ ...prev, postalCode: e.target.value }))}
+                        className="w-full"
+                        placeholder="Enter postal code"
+                      />
                     </div>
                   </div>
                 </div>
+              </div>
 
-                {/* Payment Method Selection */}
-                <div className="space-y-4 mb-6">
-                  <h3 className="text-xl font-semibold text-white">Payment Method</h3>
-                  <div className="grid grid-cols-2 gap-4">
-                    <button
-                      type="button"
-                      onClick={() => setPaymentMethod('cod')}
-                      className={`p-4 rounded-xl border ${
-                        paymentMethod === 'cod'
-                          ? 'border-cyan-500 bg-cyan-500/10'
-                          : 'border-gray-700 hover:border-cyan-500/50'
-                      } transition-all duration-300`}
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className={`w-5 h-5 rounded-full border-2 ${
-                          paymentMethod === 'cod' ? 'border-cyan-500' : 'border-gray-500'
-                        } flex items-center justify-center`}>
-                          {paymentMethod === 'cod' && (
-                            <div className="w-3 h-3 rounded-full bg-cyan-500" />
-                          )}
-                        </div>
-                        <span className="text-white">Cash on Delivery</span>
-                      </div>
-                    </button>
-                    
-                    <button
-                      type="button"
-                      onClick={() => setPaymentMethod('stripe')}
-                      className={`p-4 rounded-xl border ${
-                        paymentMethod === 'stripe'
-                          ? 'border-cyan-500 bg-cyan-500/10'
-                          : 'border-gray-700 hover:border-cyan-500/50'
-                      } transition-all duration-300`}
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className={`w-5 h-5 rounded-full border-2 ${
-                          paymentMethod === 'stripe' ? 'border-cyan-500' : 'border-gray-500'
-                        } flex items-center justify-center`}>
-                          {paymentMethod === 'stripe' && (
-                            <div className="w-3 h-3 rounded-full bg-cyan-500" />
-                          )}
-                        </div>
-                        <span className="text-white">Credit/Debit Card</span>
-                      </div>
-                    </button>
+              {/* Payment Method */}
+              <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+                <div className="flex items-center gap-3 mb-6">
+                  <div className="w-8 h-8 bg-blue-100 dark:bg-blue-900/50 rounded-full flex items-center justify-center">
+                    <FiCreditCard className="text-blue-600 dark:text-blue-400 w-4 h-4" />
                   </div>
+                  <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Payment Method</h2>
                 </div>
-
-                {/* Place Order Button */}
-                <motion.div
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  className="pt-6"
-                >
-                  <Button 
-                    onClick={(e) => {
-                      e.preventDefault();
-                      handlePlaceOrder();
-                    }}
-                    className="w-full bg-gradient-to-r from-cyan-500 via-purple-600 to-pink-600 
-                             hover:from-cyan-400 hover:via-purple-500 hover:to-pink-500 
-                             text-white py-4 rounded-xl font-bold text-lg shadow-[0_0_30px_rgba(34,211,238,0.3)] 
-                             hover:shadow-[0_0_40px_rgba(34,211,238,0.5)] transform hover:scale-105 transition-all duration-300
-                             border border-cyan-400/20 backdrop-blur-sm"
-                  >
-                    <FiCheck className="mr-2" />
-                    Place Order
-                    <FiArrowRight className="ml-2" />
-                  </Button>
-                </motion.div>
+                
+                <RadioGroup value={paymentMethod} onValueChange={(value: 'stripe' | 'cod') => setPaymentMethod(value)}>
+                  <div className="space-y-3">
+                    <div className="flex items-center space-x-3 p-4 border border-gray-200 rounded-lg hover:bg-gray-50">
+                      <RadioGroupItem value="cod" id="cod" />
+                      <Label htmlFor="cod" className="flex items-center gap-3 cursor-pointer flex-1">
+                        <FiDollarSign className="text-green-600" />
+                        <div>
+                          <p className="font-medium text-gray-900">Cash on Delivery</p>
+                          <p className="text-sm text-gray-500">Pay when you receive your order</p>
+                        </div>
+                      </Label>
+                    </div>
+                    
+                    <div className="flex items-center space-x-3 p-4 border border-gray-200 rounded-lg hover:bg-gray-50 opacity-50">
+                      <RadioGroupItem value="stripe" id="stripe" disabled />
+                      <Label htmlFor="stripe" className="flex items-center gap-3 cursor-not-allowed flex-1">
+                        <FiCreditCard className="text-blue-600" />
+                        <div>
+                          <p className="font-medium text-gray-900">Credit/Debit Card</p>
+                          <p className="text-sm text-gray-500">Coming soon</p>
+                        </div>
+                      </Label>
+                    </div>
+                  </div>
+                </RadioGroup>
               </div>
             </div>
-          </motion.div>
-        </div>
-      </div>
 
-      {/* Invoice Modal */}
-      <AnimatePresence>
-        {showInvoice && orderDetails && (
-          <Invoice
-            {...orderDetails}
-            onClose={() => {
-              setShowInvoice(false);
-              router.push('/'); // Redirect to home after closing invoice
-            }}
-          />
-        )}
-      </AnimatePresence>
-    </div>
+            {/* Order Summary */}
+            <div className="xl:col-span-1">
+              <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6 sticky top-24">
+                <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-6">Order Summary</h2>
+                
+                <div className="space-y-4 mb-6">
+                  {cart.items.map((item) => (
+                    <div key={item.productId} className="flex gap-4">
+                      <div className="w-16 h-16 bg-gray-100 dark:bg-gray-700 rounded-lg overflow-hidden flex-shrink-0">
+                        <img
+                          src={item.image ? 
+                            `https://cloud.appwrite.io/v1/storage/buckets/67a32bbf003270b1e15c/files/${item.image}/view?project=679b0257003b758db270` :
+                            "/images/pexels-shattha-pilabut-38930-135620.jpg"}
+                          alt={item.name}
+                          className="w-full h-full object-cover"
+                          onError={(e) => {
+                            e.currentTarget.src = "/images/pexels-shattha-pilabut-38930-135620.jpg";
+                          }}
+                        />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <h3 className="font-medium text-gray-900 dark:text-white truncate">{item.name}</h3>
+                        <p className="text-sm text-gray-500 dark:text-gray-400">Qty: {item.quantity}</p>
+                        <p className="text-sm font-medium text-gray-900 dark:text-white">${(item.price * item.quantity).toFixed(2)}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                
+                <div className="border-t border-gray-200 dark:border-gray-700 pt-4 space-y-3">
+                  <div className="flex justify-between text-sm">
+                    <span className="text-gray-600 dark:text-gray-400">Subtotal</span>
+                    <span className="text-gray-900 dark:text-white">${cart.items.reduce((total, item) => total + (item.price * item.quantity), 0).toFixed(2)}</span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-gray-600 dark:text-gray-400">Delivery</span>
+                    <span className="text-gray-900 dark:text-white">${deliveryFee.toFixed(2)}</span>
+                  </div>
+                  <div className="flex justify-between text-lg font-semibold border-t border-gray-200 dark:border-gray-700 pt-3">
+                    <span className="text-gray-900 dark:text-white">Total</span>
+                    <span className="text-gray-900 dark:text-white">${(cart.items.reduce((total, item) => total + (item.price * item.quantity), 0) + deliveryFee).toFixed(2)}</span>
+                  </div>
+                </div>
+                
+                <Button 
+                  onClick={handlePlaceOrder}
+                  variant="primary"
+                  size="lg"
+                  className="w-full mt-6 gap-2"
+                >
+                  <FiCheck className="w-4 h-4" />
+                  Place Order
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Invoice Modal */}
+        <AnimatePresence>
+          {showInvoice && orderDetails && (
+            <Invoice
+              {...orderDetails}
+              onClose={() => {
+                setShowInvoice(false);
+                router.push('/'); // Redirect to home after closing invoice
+              }}
+            />
+          )}
+        </AnimatePresence>
+      </div>
+    </>
   );
 } 

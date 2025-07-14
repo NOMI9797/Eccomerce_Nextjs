@@ -56,19 +56,20 @@ const ListProducts: React.FC = () => {
           '679b031a001983d2ec66',
           '67a2ff0e0029b3db4449'
         );
-        
+        setCategories(categoriesResponse.documents as unknown as Category[]);
+
         // Fetch products
         const productsResponse = await db.listDocuments(
           '679b031a001983d2ec66',
           '67a2fec400214f3c891b',
-          [Query.limit(100)]
+          [Query.orderDesc('$createdAt'), Query.limit(100)]
         );
-
-        setCategories(categoriesResponse.documents as unknown as Category[]);
         setProducts(productsResponse.documents as Product[]);
+        
+        setError("");
       } catch (err) {
-        console.error('Error fetching data:', err);
-        setError('Failed to load products');
+        console.error("Error fetching data:", err);
+        setError("Failed to load products. Please try again.");
       } finally {
         setLoading(false);
       }
@@ -81,9 +82,9 @@ const ListProducts: React.FC = () => {
     if (window.confirm("Are you sure you want to delete this product?")) {
       try {
         await deleteProduct(productId, [imageId]);
-        setProducts(products.filter(product => product.$id !== productId));
-      } catch (err) {
-        console.error('Error deleting product:', err);
+        setProducts(products.filter(p => p.$id !== productId));
+      } catch (error) {
+        console.error("Error deleting product:", error);
       }
     }
   };
@@ -94,43 +95,18 @@ const ListProducts: React.FC = () => {
 
   const handleUpdateSuccess = async () => {
     try {
-      setLoading(true);
-      // Fetch both products and categories
-      const [productsResponse, categoriesResponse] = await Promise.all([
-        db.listDocuments(
-          '679b031a001983d2ec66',
-          '67a2fec400214f3c891b',
-          [Query.limit(100)]
-        ),
-        db.listDocuments(
-          '679b031a001983d2ec66',
-          '67a2ff0e0029b3db4449'
-        )
-      ]);
-
+      const productsResponse = await db.listDocuments(
+        '679b031a001983d2ec66',
+        '67a2fec400214f3c891b',
+        [Query.orderDesc('$createdAt'), Query.limit(100)]
+      );
       setProducts(productsResponse.documents as Product[]);
-      setCategories(categoriesResponse.documents as unknown as Category[]);
+      setEditingProduct(null);
     } catch (err) {
-      console.error('Error refreshing data:', err);
-    } finally {
-      setLoading(false);
+      console.error("Error refetching products:", err);
     }
   };
 
-  const getCategoryName = (categoryId: string) => {
-    const category = categories.find(cat => cat.$id === categoryId);
-    return category ? category.CategoryName : 'Unknown Category';
-  };
-
-  const handleAddProduct = () => {
-    router.push('/Dashboard/AddProduct');
-  };
-
-  const handleView = (product: Product) => {
-    setViewingProduct(product);
-  };
-
-  // Filter products based on selected category and search term
   const filteredProducts = products.filter(product => {
     const matchesCategory = selectedCategory === "all" || product.CategoryId === selectedCategory;
     const matchesSearch = product.Name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -138,36 +114,39 @@ const ListProducts: React.FC = () => {
     return matchesCategory && matchesSearch;
   });
 
+  const getCategoryName = (categoryId: string) => {
+    const category = categories.find(cat => cat.$id === categoryId);
+    return category ? category.CategoryName : "Unknown";
+  };
+
+  const handleAddProduct = () => {
+    router.push('/Dashboard?feature=Add Product');
+  };
+
+  const handleView = (product: Product) => {
+    setViewingProduct(product);
+  };
+
   const getProductStats = () => {
     const totalProducts = products.length;
     const totalValue = products.reduce((sum, product) => sum + product.Price, 0);
     const categoriesCount = new Set(products.map(p => p.CategoryId)).size;
-    return { totalProducts, totalValue, categoriesCount };
+    
+    return {
+      totalProducts,
+      totalValue,
+      categoriesCount
+    };
   };
 
   const stats = getProductStats();
 
   if (loading) {
     return (
-      <div className="min-h-screen relative overflow-hidden bg-gradient-to-br from-gray-900 via-black to-gray-900">
-        <div className="absolute inset-0">
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_25%_25%,rgba(56,189,248,0.1),transparent_50%)]" />
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_75%_75%,rgba(147,51,234,0.1),transparent_50%)]" />
-        </div>
-        
-        <div className="relative z-10 flex items-center justify-center min-h-screen">
-          <motion.div
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="text-center"
-          >
-            <motion.div
-              animate={{ rotate: 360 }}
-              transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
-              className="w-16 h-16 border-4 border-cyan-400/30 border-t-cyan-400 rounded-full mx-auto mb-4"
-            />
-            <p className="text-gray-400 text-lg">Loading inventory...</p>
-          </motion.div>
+      <div className="flex items-center justify-center min-h-96">
+        <div className="text-center">
+          <div className="w-16 h-16 border-4 border-blue-200 dark:border-blue-800 border-t-blue-600 dark:border-t-blue-400 rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-gray-600 dark:text-gray-400">Loading inventory...</p>
         </div>
       </div>
     );
@@ -175,309 +154,219 @@ const ListProducts: React.FC = () => {
 
   if (error) {
     return (
-      <div className="min-h-screen relative overflow-hidden bg-gradient-to-br from-gray-900 via-black to-gray-900">
-        <div className="absolute inset-0">
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_25%_25%,rgba(56,189,248,0.1),transparent_50%)]" />
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_75%_75%,rgba(147,51,234,0.1),transparent_50%)]" />
-        </div>
-        
-        <div className="relative z-10 flex items-center justify-center min-h-screen">
-          <motion.div
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="text-center max-w-md mx-auto"
-          >
-            <div className="bg-red-500/20 border border-red-500/40 text-red-400 px-6 py-4 rounded-xl backdrop-blur-xl">
-              <h3 className="font-semibold mb-2">Error Loading Products</h3>
-              <p>{error}</p>
-            </div>
-          </motion.div>
+      <div className="flex items-center justify-center min-h-96">
+        <div className="text-center max-w-md mx-auto">
+          <div className="bg-red-50 dark:bg-red-900/50 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-300 px-6 py-4 rounded-lg">
+            <h3 className="font-semibold mb-2">Error Loading Products</h3>
+            <p>{error}</p>
+          </div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="w-full space-y-8">
+    <div className="space-y-6">
       {/* Header Section */}
-      <motion.div
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6"
-      >
-        <div>
-          <h1 className="text-4xl font-bold bg-gradient-to-r from-cyan-400 via-purple-500 to-pink-500 bg-clip-text text-transparent mb-2">
-            Inventory Management
-          </h1>
-          <p className="text-gray-400">Manage your product catalog and inventory</p>
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+              Inventory Management
+            </h1>
+            <p className="text-gray-600 dark:text-gray-400">Manage your product catalog and inventory</p>
+          </div>
+          
+          <button 
+            onClick={handleAddProduct}
+            className="bg-blue-600 dark:bg-blue-500 hover:bg-blue-700 dark:hover:bg-blue-600 text-white px-6 py-3 rounded-lg flex items-center gap-3 font-medium transition-colors"
+          >
+            <FiPlus className="w-5 h-5" />
+            Add New Product
+          </button>
         </div>
-        
-        <motion.button 
-              onClick={handleAddProduct}
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-          className="bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-400 hover:to-emerald-500 
-                   text-white px-6 py-3 rounded-xl flex items-center gap-3 font-semibold
-                   shadow-[0_0_30px_rgba(34,197,94,0.3)] hover:shadow-[0_0_40px_rgba(34,197,94,0.5)] 
-                   transition-all duration-300 border border-green-400/20"
-            >
-              <FiPlus className="w-5 h-5" />
-              Add New Product
-        </motion.button>
-      </motion.div>
+      </div>
 
       {/* Stats Cards */}
-      <motion.div 
-        className="grid grid-cols-1 md:grid-cols-3 gap-6"
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.1 }}
-      >
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {/* Total Products */}
-        <motion.div 
-          whileHover={{ scale: 1.02 }}
-          className="relative group"
-        >
-          <div className="absolute -inset-0.5 bg-gradient-to-r from-cyan-500/20 to-blue-500/20 rounded-xl blur opacity-50 group-hover:opacity-100 transition duration-500" />
-          <div className="relative bg-black/60 backdrop-blur-xl border border-cyan-500/30 rounded-xl p-6 text-center">
-            <FiPackage className="text-3xl text-cyan-400 mx-auto mb-3" />
-            <div className="text-2xl font-bold text-white">{stats.totalProducts}</div>
-            <div className="text-gray-400 text-sm">Total Products</div>
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Total Products</p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-white mt-1">{stats.totalProducts}</p>
+            </div>
+            <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900/50 rounded-lg flex items-center justify-center">
+              <FiPackage className="w-6 h-6 text-blue-600 dark:text-blue-400" />
+            </div>
           </div>
-        </motion.div>
+        </div>
 
         {/* Total Value */}
-        <motion.div 
-          whileHover={{ scale: 1.02 }}
-          className="relative group"
-        >
-          <div className="absolute -inset-0.5 bg-gradient-to-r from-purple-500/20 to-pink-500/20 rounded-xl blur opacity-50 group-hover:opacity-100 transition duration-500" />
-          <div className="relative bg-black/60 backdrop-blur-xl border border-purple-500/30 rounded-xl p-6 text-center">
-            <FiDollarSign className="text-3xl text-purple-400 mx-auto mb-3" />
-            <div className="text-2xl font-bold text-white">${stats.totalValue.toFixed(0)}</div>
-            <div className="text-gray-400 text-sm">Total Value</div>
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Total Value</p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-white mt-1">${stats.totalValue.toFixed(2)}</p>
+            </div>
+            <div className="w-12 h-12 bg-green-100 dark:bg-green-900/50 rounded-lg flex items-center justify-center">
+              <FiDollarSign className="w-6 h-6 text-green-600 dark:text-green-400" />
+            </div>
           </div>
-        </motion.div>
+        </div>
 
         {/* Categories */}
-        <motion.div 
-          whileHover={{ scale: 1.02 }}
-          className="relative group"
-        >
-          <div className="absolute -inset-0.5 bg-gradient-to-r from-pink-500/20 to-red-500/20 rounded-xl blur opacity-50 group-hover:opacity-100 transition duration-500" />
-          <div className="relative bg-black/60 backdrop-blur-xl border border-pink-500/30 rounded-xl p-6 text-center">
-            <FiGrid className="text-3xl text-pink-400 mx-auto mb-3" />
-            <div className="text-2xl font-bold text-white">{stats.categoriesCount}</div>
-            <div className="text-gray-400 text-sm">Categories</div>
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Categories</p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-white mt-1">{stats.categoriesCount}</p>
+            </div>
+            <div className="w-12 h-12 bg-purple-100 dark:bg-purple-900/50 rounded-lg flex items-center justify-center">
+              <FiGrid className="w-6 h-6 text-purple-600 dark:text-purple-400" />
+            </div>
+          </div>
         </div>
-        </motion.div>
-      </motion.div>
+      </div>
 
-      {/* Search and Filter Section */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.2 }}
-        className="relative group"
-      >
-        <div className="absolute -inset-0.5 bg-gradient-to-r from-cyan-500/10 to-purple-500/10 rounded-xl blur opacity-50" />
-        <div className="relative bg-black/60 backdrop-blur-xl border border-cyan-500/20 rounded-xl p-6">
-          <div className="flex flex-col lg:flex-row gap-4">
-            {/* Search Input */}
-            <div className="flex-1 relative">
-              <FiSearch className="absolute left-4 top-1/2 transform -translate-y-1/2 text-cyan-400 w-5 h-5" />
+      {/* Filters and Search */}
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+        <div className="flex flex-col md:flex-row gap-4">
+          {/* Search */}
+          <div className="flex-1">
+            <div className="relative">
+              <FiSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500 w-5 h-5" />
               <input
                 type="text"
-                placeholder="Search inventory..."
+                placeholder="Search products..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-12 pr-4 py-3 bg-black/60 border border-gray-600 rounded-xl text-white 
-                         placeholder-gray-400 focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/20 
-                         transition-all duration-300"
+                className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
               />
             </div>
-            
-            {/* Category Filter */}
-            <div className="relative">
-              <FiFilter className="absolute left-4 top-1/2 transform -translate-y-1/2 text-purple-400 w-5 h-5" />
-          <select
-            value={selectedCategory}
-            onChange={(e) => setSelectedCategory(e.target.value)}
-                className="w-full lg:w-64 pl-12 pr-10 py-3 bg-black/60 border border-gray-600 rounded-xl text-white 
-                         focus:border-purple-400 focus:ring-2 focus:ring-purple-400/20 transition-all duration-300 appearance-none"
-          >
-            <option value="all">All Categories</option>
-            {categories.map((category) => (
-              <option key={category.$id} value={category.$id}>
-                {category.CategoryName}
-              </option>
-            ))}
-          </select>
-        </div>
-      </div>
-        </div>
-      </motion.div>
-
-      {/* Products Table */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.3 }}
-        className="relative group"
-      >
-        <div className="absolute -inset-0.5 bg-gradient-to-r from-cyan-500/10 to-purple-500/10 rounded-2xl blur opacity-50" />
-        <div className="relative bg-black/60 backdrop-blur-xl border border-cyan-500/20 rounded-2xl overflow-hidden
-                      hover:shadow-[0_0_40px_rgba(34,211,238,0.2)] transition-all duration-500">
-          
-          {/* Table Header */}
-          <div className="bg-gradient-to-r from-cyan-500/10 to-purple-500/10 p-6 border-b border-gray-700/50">
-            <h2 className="text-xl font-bold text-white flex items-center gap-3">
-              <FiPackage className="text-cyan-400" />
-              Product Inventory ({filteredProducts.length} items)
-            </h2>
           </div>
 
-          {/* Table Content */}
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-700/50">
-              <thead className="bg-gray-800/30">
-            <tr>
-                  <th className="px-6 py-4 text-left text-xs font-semibold text-cyan-400 uppercase tracking-wider">
-                Product
-                  </th>
-                  <th className="px-6 py-4 text-left text-xs font-semibold text-cyan-400 uppercase tracking-wider">
-                    Category
-                  </th>
-                  <th className="px-6 py-4 text-left text-xs font-semibold text-cyan-400 uppercase tracking-wider">
-                    Price
-                  </th>
-                  <th className="px-6 py-4 text-left text-xs font-semibold text-cyan-400 uppercase tracking-wider">
-                    Description
-                  </th>
-                  <th className="px-6 py-4 text-left text-xs font-semibold text-cyan-400 uppercase tracking-wider">
-                    Actions
-              </th>
-            </tr>
-          </thead>
-              <tbody className="divide-y divide-gray-700/30">
-                <AnimatePresence>
-                  {filteredProducts.map((product, index) => (
-                    <motion.tr
-                      key={product.$id}
-                      initial={{ opacity: 0, x: -20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      exit={{ opacity: 0, x: 20 }}
-                      transition={{ delay: index * 0.05 }}
-                      className="hover:bg-gray-800/30 transition-colors group/row"
-                    >
-                      {/* Product Info */}
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="flex items-center">
-                          <div className="h-12 w-12 flex-shrink-0 relative group">
-                      <img
-                              className="h-12 w-12 rounded-xl object-cover border border-cyan-400/20 
-                                       group-hover:border-cyan-400/60 transition-colors"
-                              src={product.MainImage ? 
-                                `https://cloud.appwrite.io/v1/storage/buckets/67a32bbf003270b1e15c/files/${product.MainImage}/view?project=679b0257003b758db270` : 
-                                "/images/pexels-shattha-pilabut-38930-135620.jpg"}
-                        alt={product.Name}
-                        onError={(e) => {
-                                e.currentTarget.src = "/images/pexels-shattha-pilabut-38930-135620.jpg";
-                        }}
-                      />
-                            <div className="absolute inset-0 bg-gradient-to-t from-cyan-500/20 to-transparent rounded-xl 
-                                          opacity-0 group-hover:opacity-100 transition-opacity" />
-                    </div>
-                    <div className="ml-4">
-                            <div className="text-sm font-semibold text-white group-hover/row:text-cyan-400 transition-colors">
-                              {product.Name}
-                            </div>
-                    </div>
-                  </div>
-                </td>
-                      
-                      {/* Category */}
-                <td className="px-6 py-4 whitespace-nowrap">
-                        <span className="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full 
-                                       bg-green-500/20 text-green-400 border border-green-500/30">
-                    {getCategoryName(product.CategoryId)}
-                  </span>
-                </td>
-                      
-                      {/* Price */}
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm font-bold text-white">
-                          <span className="bg-gradient-to-r from-green-400 to-emerald-400 bg-clip-text text-transparent">
-                  ${product.Price.toFixed(2)}
-                          </span>
-                        </div>
-                </td>
-                      
-                      {/* Description */}
-                      <td className="px-6 py-4 max-w-xs">
-                        <div className="text-sm text-gray-300 truncate">
-                          {product.Description}
-                        </div>
-                </td>
-                      
-                      {/* Actions */}
-                      <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="flex space-x-2">
-                          <motion.button 
-                      onClick={() => handleView(product)}
-                            whileHover={{ scale: 1.1 }}
-                            whileTap={{ scale: 0.9 }}
-                            className="p-2 bg-blue-500/20 hover:bg-blue-500/30 border border-blue-500/30 text-blue-400 
-                                     rounded-lg transition-all duration-300 hover:shadow-[0_0_20px_rgba(59,130,246,0.3)]"
-                      title="View Details"
-                    >
-                            <FiEye className="w-4 h-4" />
-                          </motion.button>
-                          
-                          <motion.button 
-                      onClick={() => handleEdit(product)}
-                            whileHover={{ scale: 1.1 }}
-                            whileTap={{ scale: 0.9 }}
-                            className="p-2 bg-purple-500/20 hover:bg-purple-500/30 border border-purple-500/30 text-purple-400 
-                                     rounded-lg transition-all duration-300 hover:shadow-[0_0_20px_rgba(147,51,234,0.3)]"
-                      title="Edit Product"
-                    >
-                            <FiEdit className="w-4 h-4" />
-                          </motion.button>
-                          
-                          <motion.button 
-                      onClick={() => handleDelete(product.$id, product.MainImage)}
-                            whileHover={{ scale: 1.1 }}
-                            whileTap={{ scale: 0.9 }}
-                            className="p-2 bg-red-500/20 hover:bg-red-500/30 border border-red-500/30 text-red-400 
-                                     rounded-lg transition-all duration-300 hover:shadow-[0_0_20px_rgba(239,68,68,0.3)]"
-                      title="Delete Product"
-                    >
-                            <FiTrash2 className="w-4 h-4" />
-                          </motion.button>
-                  </div>
-                </td>
-                    </motion.tr>
-            ))}
-                </AnimatePresence>
-          </tbody>
-        </table>
+          {/* Category Filter */}
+          <div className="md:w-64">
+            <div className="relative">
+              <FiFilter className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500 w-5 h-5" />
+              <select
+                value={selectedCategory}
+                onChange={(e) => setSelectedCategory(e.target.value)}
+                className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-transparent appearance-none bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+              >
+                <option value="all">All Categories</option>
+                {categories.map((category) => (
+                  <option key={category.$id} value={category.$id}>
+                    {category.CategoryName}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+        </div>
       </div>
 
-      {/* No results message */}
-      {filteredProducts.length === 0 && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              className="text-center py-16"
-            >
-              <FiPackage className="text-6xl text-gray-600 mx-auto mb-4" />
-              <h3 className="text-xl font-semibold text-gray-400 mb-2">No Products Found</h3>
-              <p className="text-gray-500">No products match your current search criteria.</p>
-            </motion.div>
-          )}
+      {/* Products Table */}
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead className="bg-gray-50 dark:bg-gray-700">
+              <tr>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                  Product
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                  Category
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                  Price
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                  Description
+                </th>
+                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                  Actions
+                </th>
+              </tr>
+            </thead>
+            <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+              <AnimatePresence>
+                {filteredProducts.map((product, index) => (
+                  <motion.tr
+                    key={product.$id}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -20 }}
+                    transition={{ delay: index * 0.05 }}
+                    className="hover:bg-gray-50 dark:hover:bg-gray-700"
+                  >
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="flex items-center">
+                        <div className="w-12 h-12 bg-gray-100 dark:bg-gray-600 rounded-lg overflow-hidden flex-shrink-0">
+                          <img
+                            src={`https://cloud.appwrite.io/v1/storage/buckets/67a32bbf003270b1e15c/files/${product.MainImage}/view?project=679b0257003b758db270`}
+                            alt={product.Name}
+                            className="w-full h-full object-cover"
+                          />
+                        </div>
+                        <div className="ml-4">
+                          <div className="text-sm font-medium text-gray-900 dark:text-white">{product.Name}</div>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 dark:bg-blue-900/50 text-blue-800 dark:text-blue-300">
+                        {getCategoryName(product.CategoryId)}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">
+                      ${product.Price.toFixed(2)}
+                    </td>
+                    <td className="px-6 py-4 text-sm text-gray-500 dark:text-gray-400 max-w-xs truncate">
+                      {product.Description}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                      <div className="flex justify-end space-x-2">
+                        <button
+                          onClick={() => handleView(product)}
+                          className="p-2 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/50 rounded-lg transition-colors"
+                          title="View Product"
+                        >
+                          <FiEye className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={() => handleEdit(product)}
+                          className="p-2 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                          title="Edit Product"
+                        >
+                          <FiEdit className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={() => handleDelete(product.$id, product.MainImage)}
+                          className="p-2 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/50 rounded-lg transition-colors"
+                          title="Delete Product"
+                        >
+                          <FiTrash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </td>
+                  </motion.tr>
+                ))}
+              </AnimatePresence>
+            </tbody>
+          </table>
         </div>
-      </motion.div>
+
+        {/* No results message */}
+        {filteredProducts.length === 0 && (
+          <div className="text-center py-16">
+            <FiPackage className="text-6xl text-gray-300 dark:text-gray-600 mx-auto mb-4" />
+            <h3 className="text-xl font-semibold text-gray-500 dark:text-gray-400 mb-2">No Products Found</h3>
+            <p className="text-gray-400 dark:text-gray-500">No products match your current search criteria.</p>
+          </div>
+        )}
+      </div>
 
       {/* Modals */}
       {viewingProduct && (

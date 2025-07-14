@@ -33,26 +33,22 @@ export default function CategoryFilter({ categories, selectedCategory, onCategor
 
   return (
     <motion.div 
-      className="bg-black/60 backdrop-blur-sm border border-cyan-400/30 rounded-xl p-6 sticky top-6"
-      style={{
-        background: 'linear-gradient(145deg, rgba(0,0,0,0.8), rgba(30,30,30,0.6))',
-        boxShadow: '0 0 30px rgba(0, 255, 255, 0.1)'
-      }}
+      className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-6 sticky top-6 shadow-sm"
       variants={containerVariants}
       initial="hidden"
       animate="visible"
     >
-      {/* Header with neon effect */}
+      {/* Header */}
       <motion.div 
-        className="mb-6 pb-4 border-b border-cyan-400/20"
+        className="mb-6 pb-4 border-b border-gray-200 dark:border-gray-700"
         initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
       >
-        <h3 className="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-purple-400 mb-2">
+        <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
           Categories
         </h3>
-        <p className="text-sm text-gray-400">Filter by category</p>
+        <p className="text-sm text-gray-600 dark:text-gray-400">Filter by category</p>
       </motion.div>
 
       {/* Category List */}
@@ -70,16 +66,13 @@ export default function CategoryFilter({ categories, selectedCategory, onCategor
           whileTap={{ scale: 0.98 }}
           className={`w-full text-left px-4 py-3 rounded-lg transition-all duration-300 relative overflow-hidden group ${
             selectedCategory === "all" 
-              ? "bg-gradient-to-r from-cyan-500 to-blue-500 text-white shadow-lg" 
-              : "text-gray-300 hover:text-white border border-gray-600/50 hover:border-cyan-400/50"
+              ? "bg-blue-600 text-white shadow-md" 
+              : "text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white border border-gray-200 dark:border-gray-600 hover:border-blue-300 dark:hover:border-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20"
           }`}
           onClick={() => onCategoryChange("all")}
-          style={selectedCategory === "all" ? {
-            boxShadow: '0 0 20px rgba(6, 182, 212, 0.4)'
-          } : {}}
         >
           <span className="relative z-10 font-medium flex items-center">
-            <span className="mr-3 text-cyan-400">🏠</span>
+            <span className="mr-3 text-blue-600">🏠</span>
             All Products
             {selectedCategory === "all" && (
               <motion.span
@@ -92,9 +85,6 @@ export default function CategoryFilter({ categories, selectedCategory, onCategor
               </motion.span>
             )}
           </span>
-          {selectedCategory !== "all" && (
-            <div className="absolute inset-0 bg-gradient-to-r from-cyan-500/10 to-blue-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-          )}
         </motion.button>
 
         {/* Category Items */}
@@ -109,13 +99,10 @@ export default function CategoryFilter({ categories, selectedCategory, onCategor
             whileTap={{ scale: 0.98 }}
             className={`w-full text-left px-4 py-3 rounded-lg transition-all duration-300 relative overflow-hidden group ${
               selectedCategory === category.$id 
-                ? "bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-lg" 
-                : "text-gray-300 hover:text-white border border-gray-600/50 hover:border-purple-400/50"
+                ? "bg-purple-600 text-white shadow-md" 
+                : "text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white border border-gray-200 dark:border-gray-600 hover:border-purple-300 dark:hover:border-purple-400 hover:bg-purple-50 dark:hover:bg-purple-900/20"
             }`}
             onClick={() => onCategoryChange(category.$id)}
-            style={selectedCategory === category.$id ? {
-              boxShadow: '0 0 20px rgba(147, 51, 234, 0.4)'
-            } : {}}
           >
             <span className="relative z-10 font-medium flex items-center">
               <span className="mr-3">
@@ -133,35 +120,26 @@ export default function CategoryFilter({ categories, selectedCategory, onCategor
                 </motion.span>
               )}
             </span>
-            {selectedCategory !== category.$id && (
-              <div className="absolute inset-0 bg-gradient-to-r from-purple-500/10 to-pink-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-            )}
           </motion.button>
         ))}
       </motion.div>
 
       {/* Stats Section */}
       <motion.div 
-        className="mt-6 pt-4 border-t border-cyan-400/20"
+        className="mt-6 pt-4 border-t border-gray-200 dark:border-gray-700"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.5, duration: 0.5 }}
       >
         <div className="text-center">
-          <p className="text-xs text-gray-400 mb-2">Available Categories</p>
+          <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">Available Categories</p>
           <motion.span 
-            className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-purple-400"
-            whileHover={{
-              textShadow: '0 0 10px rgba(0, 255, 255, 0.6)'
-            }}
+            className="text-2xl font-bold text-gray-900 dark:text-white"
           >
             {categories.length + 1}
           </motion.span>
         </div>
       </motion.div>
-
-      {/* Decorative glow */}
-      <div className="absolute -inset-0.5 bg-gradient-to-r from-cyan-500/20 via-purple-500/20 to-pink-500/20 rounded-xl blur opacity-20 -z-10" />
     </motion.div>
   );
 }

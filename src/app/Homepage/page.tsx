@@ -1,6 +1,8 @@
 "use client";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Card, CardContent } from "@/components/ui/card";
 import Header from "@/components/Header";
 import Link from "next/link";
 import { useAuth } from "@/session/AuthContext";
@@ -8,22 +10,26 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { FiShoppingBag, FiSettings, FiLogOut, FiZap, FiUsers, FiShield } from "react-icons/fi";
+import { 
+  FiShoppingBag, FiSettings, FiLogOut, FiZap, 
+  FiUsers, FiShield, FiTruck, FiHeart, 
+  FiCreditCard, FiArrowRight, FiMail, FiStar,
+  FiGlobe, FiClock, FiCheckCircle, FiTrendingUp
+} from "react-icons/fi";
 
 export default function LandingPage() {
   const { user, logout, isUserAdmin } = useAuth();
   const router = useRouter();
   const [mounted, setMounted] = useState(false);
+  const [email, setEmail] = useState("");
 
   useEffect(() => {
     setMounted(true);
-    // If user has been resolved (i.e., not undefined) and there's no logged-in user, redirect.
     if (user === null) {
       router.push("/signup");
     }
   }, [user, router]);
 
-  // Do not render until the auth state is resolved.
   if (!mounted || user === undefined) return null;
 
   const handleLogout = async () => {
@@ -36,265 +42,290 @@ export default function LandingPage() {
     }
   };
 
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: {
-        duration: 0.8,
-        staggerChildren: 0.2
-      }
-    }
-  };
-
-  const itemVariants = {
-    hidden: { y: 30, opacity: 0 },
-    visible: {
-      y: 0,
-      opacity: 1,
-      transition: {
-        duration: 0.6,
-        ease: "easeOut"
-      }
-    }
-  };
-
-  const glowVariants = {
-    animate: {
-      boxShadow: [
-        "0 0 20px #00ffff, 0 0 40px #00ffff, 0 0 60px #00ffff",
-        "0 0 20px #ff00ff, 0 0 40px #ff00ff, 0 0 60px #ff00ff",
-        "0 0 20px #00ff00, 0 0 40px #00ff00, 0 0 60px #00ff00",
-        "0 0 20px #00ffff, 0 0 40px #00ffff, 0 0 60px #00ffff"
-      ],
-      transition: {
-        duration: 4,
-        repeat: Infinity,
-        ease: "easeInOut"
-      }
-    }
+  const handleNewsletterSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    toast.success("Thanks for subscribing!");
+    setEmail("");
   };
 
   return (
     <>
       {user ? (
-        <div className="relative min-h-screen overflow-hidden bg-black">
-          {/* Animated Background Grid */}
-          <div className="absolute inset-0 opacity-20">
-            <div className="absolute inset-0 bg-gradient-to-br from-cyan-900/20 via-purple-900/20 to-pink-900/20" />
-            <motion.div 
-              className="absolute inset-0"
-              style={{
-                backgroundImage: `
-                  linear-gradient(rgba(0, 255, 255, 0.1) 1px, transparent 1px),
-                  linear-gradient(90deg, rgba(0, 255, 255, 0.1) 1px, transparent 1px)
-                `,
-                backgroundSize: '50px 50px'
-              }}
-              animate={{
-                backgroundPosition: ['0% 0%', '100% 100%']
-              }}
-              transition={{
-                duration: 20,
-                repeat: Infinity,
-                ease: "linear"
-              }}
-            />
-          </div>
-
-          {/* Floating Particles */}
-          <div className="absolute inset-0 overflow-hidden">
-            {[...Array(20)].map((_, i) => (
-              <motion.div
-                key={i}
-                className="absolute w-1 h-1 bg-cyan-400 rounded-full"
-                initial={{
-                  x: Math.random() * window.innerWidth,
-                  y: Math.random() * window.innerHeight,
-                }}
-                animate={{
-                  x: Math.random() * window.innerWidth,
-                  y: Math.random() * window.innerHeight,
-                }}
-                transition={{
-                  duration: Math.random() * 10 + 10,
-                  repeat: Infinity,
-                  ease: "linear"
-                }}
-                style={{
-                  boxShadow: '0 0 10px #00ffff'
-                }}
-              />
-            ))}
-          </div>
-
-          {/* Header with neon styling */}
+        <div className="relative min-h-screen bg-gray-50 dark:bg-gray-900">
+          {/* Header */}
           <div className="relative z-10">
             <Header />
           </div>
 
           {/* Main Content */}
-          <motion.div 
-            className="relative z-10 flex flex-col items-center justify-center min-h-screen px-4"
-            variants={containerVariants}
-            initial="hidden"
-            animate="visible"
-          >
-            {/* Neon Title */}
-            <motion.div
-              variants={itemVariants}
-              className="text-center mb-12"
-            >
-              <motion.h1 
-                className="text-6xl md:text-8xl font-bold mb-4 text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-purple-400 to-pink-400 tracking-widest relative"
-                variants={glowVariants}
-                animate="animate"
-                style={{
-                  textShadow: '0 0 20px #00ffff, 0 0 40px #00ffff'
-                }}
-              >
-                OUTFITTERS
-              </motion.h1>
-              <motion.p
-                className="text-xl md:text-2xl text-cyan-300 font-light tracking-wide"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 1, duration: 0.8 }}
-              >
-                The Future of Fashion
-              </motion.p>
-            </motion.div>
-
-            {/* Feature Cards */}
-            <motion.div 
-              variants={itemVariants}
-              className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12 max-w-4xl w-full"
-            >
-              <motion.div 
-                className="bg-black/50 backdrop-blur-sm border border-cyan-400/30 rounded-lg p-6 text-center group hover:border-cyan-400 transition-all duration-300"
-                whileHover={{ 
-                  scale: 1.05,
-                  boxShadow: "0 0 30px rgba(0, 255, 255, 0.3)"
-                }}
-              >
-                <FiZap className="w-8 h-8 text-cyan-400 mx-auto mb-4 group-hover:text-cyan-300" />
-                <h3 className="text-lg font-semibold text-white mb-2">Lightning Fast</h3>
-                <p className="text-gray-300 text-sm">Experience seamless shopping with cutting-edge technology</p>
-              </motion.div>
-
-              <motion.div 
-                className="bg-black/50 backdrop-blur-sm border border-purple-400/30 rounded-lg p-6 text-center group hover:border-purple-400 transition-all duration-300"
-                whileHover={{ 
-                  scale: 1.05,
-                  boxShadow: "0 0 30px rgba(147, 51, 234, 0.3)"
-                }}
-              >
-                <FiUsers className="w-8 h-8 text-purple-400 mx-auto mb-4 group-hover:text-purple-300" />
-                <h3 className="text-lg font-semibold text-white mb-2">Community Driven</h3>
-                <p className="text-gray-300 text-sm">Join millions of fashion enthusiasts worldwide</p>
-              </motion.div>
-
-              <motion.div 
-                className="bg-black/50 backdrop-blur-sm border border-pink-400/30 rounded-lg p-6 text-center group hover:border-pink-400 transition-all duration-300"
-                whileHover={{ 
-                  scale: 1.05,
-                  boxShadow: "0 0 30px rgba(236, 72, 153, 0.3)"
-                }}
-              >
-                <FiShield className="w-8 h-8 text-pink-400 mx-auto mb-4 group-hover:text-pink-300" />
-                <h3 className="text-lg font-semibold text-white mb-2">Secure & Safe</h3>
-                <p className="text-gray-300 text-sm">Advanced security protocols protect your data</p>
-              </motion.div>
-            </motion.div>
-
-            {/* Action Buttons */}
-            <motion.div 
-              variants={itemVariants}
-              className="flex flex-col sm:flex-row gap-6 items-center"
-            >
-                <Link href="/Products">
-                <motion.div
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
+          <main className="relative z-10">
+            {/* Hero Section */}
+            <section className="relative overflow-hidden bg-gradient-to-br from-blue-600 via-purple-600 to-indigo-700 dark:from-blue-800 dark:via-purple-800 dark:to-indigo-900">
+              {/* Background Pattern */}
+              <div className="absolute inset-0">
+                <div className="absolute inset-0 bg-black/10 dark:bg-black/20"></div>
+                <div className="absolute inset-0 bg-gradient-to-r from-blue-600/20 to-purple-600/20 dark:from-blue-800/30 dark:to-purple-800/30"></div>
+              </div>
+              
+              <div className="relative px-4 pt-24 pb-32">
+                <motion.div 
+                  className="max-w-7xl mx-auto text-center"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.8 }}
                 >
-                  <Button 
-                    size="lg" 
-                    className="bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 text-white border-0 px-8 py-4 text-lg font-semibold rounded-lg shadow-lg hover:shadow-cyan-500/25 transition-all duration-300 flex items-center gap-3"
-                    style={{
-                      boxShadow: '0 0 20px rgba(6, 182, 212, 0.4)'
-                    }}
-                  >
-                    <FiShoppingBag className="w-5 h-5" />
-                    Shop Now
-                  </Button>
-                </motion.div>
-                </Link>
-
-                {isUserAdmin && (
-                  <Link href="/Dashboard">
                   <motion.div
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
+                    className="inline-flex items-center gap-2 bg-white/10 dark:bg-white/5 backdrop-blur-sm border border-white/20 dark:border-white/10 rounded-full px-6 py-3 text-white/90 dark:text-white/80 text-sm font-medium mb-8"
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ delay: 0.2, duration: 0.6 }}
                   >
+                    <motion.div 
+                      className="w-2 h-2 bg-green-400 rounded-full"
+                      animate={{ scale: [1, 1.2, 1] }}
+                      transition={{ duration: 2, repeat: Infinity }}
+                    />
+                    <span>New arrivals every week</span>
+                  </motion.div>
+
+                  <motion.h1 
+                    className="text-4xl md:text-6xl lg:text-7xl font-bold text-white mb-6 leading-tight"
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.4, duration: 0.8 }}
+                  >
+                    Shop the Future
+                    <br />
+                    <span className="bg-gradient-to-r from-yellow-400 to-orange-500 bg-clip-text text-transparent">
+                      Today
+                    </span>
+                  </motion.h1>
+
+                  <motion.p 
+                    className="text-xl md:text-2xl text-white/80 dark:text-white/70 mb-12 max-w-3xl mx-auto leading-relaxed"
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.6, duration: 0.8 }}
+                  >
+                    Discover premium quality products curated for the modern lifestyle. 
+                    From cutting-edge tech to timeless fashion.
+                  </motion.p>
+
+                  <motion.div 
+                    className="flex flex-col sm:flex-row gap-4 justify-center items-center"
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.8, duration: 0.8 }}
+                  >
+                    <Link href="/Products">
+                      <Button 
+                        size="lg" 
+                        className="group bg-white dark:bg-gray-100 text-blue-600 dark:text-blue-700 hover:bg-gray-100 dark:hover:bg-gray-200 px-8 py-4 text-lg font-semibold rounded-lg shadow-lg hover:shadow-xl transition-all duration-300"
+                      >
+                        <FiShoppingBag className="mr-2 group-hover:scale-110 transition-transform" />
+                        Start Shopping
+                      </Button>
+                    </Link>
                     <Button 
-                      size="lg" 
-                      className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white border-0 px-8 py-4 text-lg font-semibold rounded-lg shadow-lg hover:shadow-purple-500/25 transition-all duration-300 flex items-center gap-3"
-                      style={{
-                        boxShadow: '0 0 20px rgba(147, 51, 234, 0.4)'
-                      }}
+                      size="lg"
+                      variant="outline" 
+                      className="bg-white/10 dark:bg-white/5 backdrop-blur-sm border-white/30 dark:border-white/20 text-white hover:bg-white/20 dark:hover:bg-white/10 px-8 py-4 text-lg font-semibold rounded-lg transition-all duration-300"
                     >
-                      <FiSettings className="w-5 h-5" />
-                      Dashboard
+                      <FiZap className="mr-2" />
+                      Explore Categories
                     </Button>
                   </motion.div>
-                  </Link>
-                )}
-
-              {user && (
-                <motion.div
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                >
-                  <Button
-                    size="lg"
-                    variant="outline"
-                    onClick={handleLogout}
-                    className="bg-transparent border-2 border-red-500 text-red-400 hover:bg-red-500 hover:text-white px-8 py-4 text-lg font-semibold rounded-lg transition-all duration-300 flex items-center gap-3"
-                    style={{
-                      boxShadow: '0 0 20px rgba(239, 68, 68, 0.3)'
-                    }}
-                  >
-                    <FiLogOut className="w-5 h-5" />
-                    Logout
-                  </Button>
                 </motion.div>
-              )}
-            </motion.div>
+              </div>
+            </section>
 
-            {/* User Welcome Message */}
-            {user && (
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 1.5, duration: 0.6 }}
-                className="mt-12 text-center"
-              >
-                <p className="text-gray-300 text-lg">
-                  Welcome back, <span className="text-cyan-400 font-semibold">{user.name || user.email}</span>
-                </p>
-                {isUserAdmin && (
-                  <p className="text-purple-400 text-sm mt-2 font-medium">
-                    Administrator Access Granted
+            {/* Features Section */}
+            <section className="px-4 py-20 bg-white dark:bg-gray-800">
+              <div className="max-w-7xl mx-auto">
+                <motion.div 
+                  className="text-center mb-16"
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.8 }}
+                  viewport={{ once: true }}
+                >
+                  <h2 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-4">
+                    Why Choose KharedLo?
+                  </h2>
+                  <p className="text-xl text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">
+                    Experience shopping like never before with our premium features and unmatched service.
                   </p>
-                )}
-              </motion.div>
-            )}
-          </motion.div>
+                </motion.div>
 
-          {/* Bottom Glow Effect */}
-          <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-cyan-900/20 to-transparent" />
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+                  {[
+                    { icon: FiTruck, title: "Fast Delivery", description: "Get your orders delivered within 24 hours", color: "blue" },
+                    { icon: FiShield, title: "Secure Shopping", description: "Your data and payments are always protected", color: "green" },
+                    { icon: FiHeart, title: "Quality Products", description: "Handpicked items from trusted brands", color: "red" },
+                    { icon: FiCreditCard, title: "Easy Returns", description: "30-day hassle-free return policy", color: "purple" }
+                  ].map((feature, index) => (
+                    <motion.div
+                      key={feature.title}
+                      className="bg-white dark:bg-gray-700 rounded-2xl p-8 text-center shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-100 dark:border-gray-600 group"
+                      initial={{ opacity: 0, y: 20 }}
+                      whileInView={{ opacity: 1, y: 0 }}
+                      transition={{ delay: index * 0.1, duration: 0.8 }}
+                      viewport={{ once: true }}
+                      whileHover={{ y: -5 }}
+                    >
+                      <div className={`w-16 h-16 mx-auto mb-6 rounded-full flex items-center justify-center ${
+                        feature.color === 'blue' ? 'bg-blue-100 dark:bg-blue-900/50 text-blue-600 dark:text-blue-400' :
+                        feature.color === 'green' ? 'bg-green-100 dark:bg-green-900/50 text-green-600 dark:text-green-400' :
+                        feature.color === 'red' ? 'bg-red-100 dark:bg-red-900/50 text-red-600 dark:text-red-400' :
+                        'bg-purple-100 dark:bg-purple-900/50 text-purple-600 dark:text-purple-400'
+                      } group-hover:scale-110 transition-transform duration-300`}>
+                        <feature.icon className="w-8 h-8" />
+                      </div>
+                      <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-3">{feature.title}</h3>
+                      <p className="text-gray-600 dark:text-gray-300">{feature.description}</p>
+                    </motion.div>
+                  ))}
+                </div>
+              </div>
+            </section>
+
+            {/* Statistics Section */}
+            <section className="px-4 py-20 bg-gray-50 dark:bg-gray-900">
+              <div className="max-w-7xl mx-auto">
+                <motion.div 
+                  className="text-center mb-16"
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.8 }}
+                  viewport={{ once: true }}
+                >
+                  <h2 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-4">
+                    Trusted by Thousands
+                  </h2>
+                  <p className="text-xl text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">
+                    Join our growing community of satisfied customers worldwide.
+                  </p>
+                </motion.div>
+
+                <div className="grid grid-cols-2 lg:grid-cols-4 gap-8">
+                  {[
+                    { number: "10K+", label: "Happy Customers", icon: FiUsers },
+                    { number: "50K+", label: "Products Sold", icon: FiShoppingBag },
+                    { number: "99%", label: "Satisfaction Rate", icon: FiStar },
+                    { number: "24/7", label: "Support Available", icon: FiClock }
+                  ].map((stat, index) => (
+                    <motion.div
+                      key={stat.label}
+                      className="text-center"
+                      initial={{ opacity: 0, scale: 0.8 }}
+                      whileInView={{ opacity: 1, scale: 1 }}
+                      transition={{ delay: index * 0.1, duration: 0.8 }}
+                      viewport={{ once: true }}
+                    >
+                      <div className="w-16 h-16 mx-auto mb-4 bg-blue-100 dark:bg-blue-900/50 rounded-full flex items-center justify-center">
+                        <stat.icon className="w-8 h-8 text-blue-600 dark:text-blue-400" />
+                      </div>
+                      <div className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-2">{stat.number}</div>
+                      <div className="text-gray-600 dark:text-gray-300 font-medium">{stat.label}</div>
+                    </motion.div>
+                  ))}
+                </div>
+              </div>
+            </section>
+
+            {/* Newsletter Section */}
+            <section className="px-4 py-20 bg-white dark:bg-gray-800">
+              <div className="max-w-4xl mx-auto">
+                <motion.div 
+                  className="bg-gradient-to-r from-blue-600 to-purple-600 dark:from-blue-800 dark:to-purple-800 rounded-3xl p-8 md:p-12 text-center relative overflow-hidden"
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.8 }}
+                  viewport={{ once: true }}
+                >
+                  <div className="absolute inset-0 bg-white/5 dark:bg-white/3"></div>
+                  
+                  <div className="relative z-10">
+                    <div className="w-16 h-16 bg-white/20 dark:bg-white/10 rounded-full flex items-center justify-center mx-auto mb-6">
+                      <FiMail className="w-8 h-8 text-white" />
+                    </div>
+                    <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
+                      Stay Updated
+                    </h2>
+                    <p className="text-xl text-white/80 dark:text-white/70 mb-8 max-w-2xl mx-auto">
+                      Subscribe to our newsletter and be the first to know about new arrivals, exclusive deals, and special offers.
+                    </p>
+                    
+                    <form onSubmit={handleNewsletterSubmit} className="flex flex-col sm:flex-row gap-4 max-w-md mx-auto">
+                      <Input
+                        type="email"
+                        placeholder="Enter your email"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        className="flex-1 bg-white/10 dark:bg-white/5 backdrop-blur-sm border-white/30 dark:border-white/20 text-white placeholder:text-white/70 dark:placeholder:text-white/60 rounded-lg px-4 py-3"
+                        required
+                      />
+                      <Button 
+                        type="submit"
+                        className="bg-white dark:bg-gray-100 text-blue-600 dark:text-blue-700 hover:bg-gray-100 dark:hover:bg-gray-200 px-8 py-3 font-semibold rounded-lg shadow-lg hover:shadow-xl transition-all duration-300"
+                      >
+                        Subscribe
+                      </Button>
+                    </form>
+                  </div>
+                </motion.div>
+              </div>
+            </section>
+
+            {/* Trust Indicators */}
+            <section className="px-4 py-16 bg-gray-50 dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700">
+              <div className="max-w-7xl mx-auto">
+                <motion.div 
+                  className="text-center mb-12"
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.8 }}
+                  viewport={{ once: true }}
+                >
+                  <h2 className="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white mb-4">
+                    Shop with Confidence
+                  </h2>
+                </motion.div>
+
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+                  {[
+                    { icon: FiShield, text: "SSL Secured" },
+                    { icon: FiCheckCircle, text: "Privacy Protected" },
+                    { icon: FiTruck, text: "Fast Shipping" },
+                    { icon: FiClock, text: "24/7 Support" }
+                  ].map((trust, index) => (
+                    <motion.div
+                      key={trust.text}
+                      className="flex flex-col items-center text-center"
+                      initial={{ opacity: 0, y: 20 }}
+                      whileInView={{ opacity: 1, y: 0 }}
+                      transition={{ delay: index * 0.1, duration: 0.8 }}
+                      viewport={{ once: true }}
+                    >
+                      <div className="w-12 h-12 bg-green-100 dark:bg-green-900/50 rounded-full flex items-center justify-center mb-3">
+                        <trust.icon className="w-6 h-6 text-green-600 dark:text-green-400" />
+                      </div>
+                      <span className="text-sm font-medium text-gray-700 dark:text-gray-300">{trust.text}</span>
+                    </motion.div>
+                  ))}
+                </div>
+              </div>
+            </section>
+          </main>
         </div>
-      ) : null}
+      ) : (
+        <div className="min-h-screen bg-gray-100 dark:bg-gray-900 flex items-center justify-center">
+          <div className="text-center">
+            <h2 className="text-2xl font-semibold text-gray-900 dark:text-white mb-4">Loading...</h2>
+            <p className="text-gray-600 dark:text-gray-400">Please wait while we load your content.</p>
+          </div>
+        </div>
+      )}
     </>
   );
 }

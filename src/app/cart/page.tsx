@@ -5,11 +5,13 @@ import { useOrders } from '@/app/hooks/useOrders';
 import { useAuth } from '@/session/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import Header from '@/components/Header';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FiShoppingCart, FiTrash2, FiPlus, FiMinus, FiArrowRight, FiPackage, FiShoppingBag } from 'react-icons/fi';
+import { FiShoppingCart, FiTrash2, FiPlus, FiMinus, FiArrowRight, FiPackage, FiShoppingBag, FiChevronLeft } from 'react-icons/fi';
+import Link from 'next/link';
 
 export default function CartPage() {
   const { cart, removeFromCart, updateQuantity, clearCart } = useCart();
@@ -31,323 +33,223 @@ export default function CartPage() {
     router.push('/checkout');
   };
 
+  const subtotal = cart.items.reduce((total, item) => total + (item.price * item.quantity), 0);
+  const shipping = 5.99;
+  const total = subtotal + shipping;
+
   if (cart.items.length === 0) {
     return (
-      <div className="min-h-screen relative overflow-hidden bg-gradient-to-br from-gray-900 via-black to-gray-900">
-        {/* Animated background */}
-        <div className="absolute inset-0">
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_25%_25%,rgba(56,189,248,0.1),transparent_50%)]" />
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_75%_75%,rgba(147,51,234,0.1),transparent_50%)]" />
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(236,72,153,0.05),transparent_50%)]" />
+      <>
+        <Header />
+        <div className="min-h-screen bg-gray-50 dark:bg-gray-900 pt-20">
+          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+            <div className="text-center">
+              <div className="mb-8">
+                <FiShoppingCart className="w-24 h-24 text-gray-300 dark:text-gray-700 mx-auto" />
+              </div>
+              <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-4">Your cart is empty</h2>
+              <p className="text-gray-600 dark:text-gray-400 mb-8 max-w-md mx-auto">
+                Looks like you haven't added any items to your cart yet. Start shopping to fill it up!
+              </p>
+              <Link href="/Products">
+                <Button className="inline-flex items-center gap-2">
+                  <FiShoppingBag className="w-4 h-4" />
+                  Continue Shopping
+                </Button>
+              </Link>
+            </div>
+          </div>
         </div>
-
-        {/* Floating particles */}
-        <div className="absolute inset-0 overflow-hidden">
-          {[...Array(20)].map((_, i) => (
-            <motion.div
-              key={i}
-              className="absolute w-1 h-1 bg-cyan-400 rounded-full opacity-60"
-              initial={{ 
-                x: Math.random() * window.innerWidth, 
-                y: Math.random() * window.innerHeight 
-              }}
-              animate={{
-                x: Math.random() * window.innerWidth,
-                y: Math.random() * window.innerHeight,
-              }}
-              transition={{
-                duration: Math.random() * 10 + 10,
-                repeat: Infinity,
-                repeatType: "reverse",
-              }}
-            />
-          ))}
-        </div>
-
-        <div className="relative z-10 container mx-auto py-32 text-center">
-          <motion.div
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.6 }}
-            className="max-w-md mx-auto"
-          >
-            <motion.div 
-              className="mb-8 relative"
-              whileHover={{ scale: 1.1 }}
-              transition={{ duration: 0.3 }}
-            >
-              <FiShoppingCart className="text-8xl text-cyan-400 mx-auto drop-shadow-[0_0_30px_rgba(34,211,238,0.5)]" />
-              <div className="absolute inset-0 bg-cyan-400 opacity-20 blur-3xl rounded-full" />
-            </motion.div>
-            
-            <motion.h1 
-              className="text-4xl font-bold mb-6 bg-gradient-to-r from-cyan-400 via-purple-500 to-pink-500 bg-clip-text text-transparent"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.2 }}
-            >
-              Your Cart is Empty
-            </motion.h1>
-            
-            <motion.p 
-              className="text-gray-400 mb-12 text-lg"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.4 }}
-            >
-              Discover amazing products and start your shopping journey.
-            </motion.p>
-            
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.6 }}
-            >
-              <Button 
-                onClick={() => router.push('/Products')}
-                className="bg-gradient-to-r from-cyan-500 to-purple-600 hover:from-cyan-400 hover:to-purple-500 
-                         text-white px-8 py-4 rounded-xl font-semibold text-lg shadow-[0_0_30px_rgba(34,211,238,0.3)] 
-                         hover:shadow-[0_0_40px_rgba(34,211,238,0.5)] transform hover:scale-105 transition-all duration-300
-                         border border-cyan-400/20 backdrop-blur-sm"
-              >
-                <FiShoppingBag className="mr-2" />
-          Continue Shopping
-                <FiArrowRight className="ml-2" />
-        </Button>
-            </motion.div>
-          </motion.div>
-        </div>
-      </div>
+      </>
     );
   }
 
   return (
-    <div className="min-h-screen relative overflow-hidden bg-gradient-to-br from-gray-900 via-black to-gray-900">
-      {/* Animated background */}
-      <div className="absolute inset-0">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_25%_25%,rgba(56,189,248,0.1),transparent_50%)]" />
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_75%_75%,rgba(147,51,234,0.1),transparent_50%)]" />
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(236,72,153,0.05),transparent_50%)]" />
-      </div>
+    <>
+      <Header />
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 pt-20">
+        <div className="w-full bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 shadow-sm">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            {/* Breadcrumb */}
+            <nav className="mb-4">
+              <Link 
+                href="/Products" 
+                className="inline-flex items-center text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400"
+              >
+                <FiChevronLeft className="w-4 h-4 mr-1" />
+                Continue Shopping
+              </Link>
+            </nav>
 
-      {/* Grid overlay */}
-      <div className="absolute inset-0 opacity-10">
-        <div className="absolute inset-0 bg-[linear-gradient(rgba(34,211,238,0.1)_1px,transparent_1px),linear-gradient(90deg,rgba(34,211,238,0.1)_1px,transparent_1px)] bg-[size:50px_50px]" />
-      </div>
-
-      {/* Floating particles */}
-      <div className="absolute inset-0 overflow-hidden">
-        {[...Array(15)].map((_, i) => (
-          <motion.div
-            key={i}
-            className="absolute w-1 h-1 bg-cyan-400 rounded-full opacity-60"
-            initial={{ 
-              x: Math.random() * window.innerWidth, 
-              y: Math.random() * window.innerHeight 
-            }}
-            animate={{
-              x: Math.random() * window.innerWidth,
-              y: Math.random() * window.innerHeight,
-            }}
-            transition={{
-              duration: Math.random() * 10 + 10,
-              repeat: Infinity,
-              repeatType: "reverse",
-            }}
-          />
-        ))}
-      </div>
-
-      <div className="relative z-10 container mx-auto py-12 px-4">
-        {/* Header */}
-        <motion.div 
-          className="text-center mb-12"
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
-        >
-          <h1 className="text-5xl font-bold mb-4 bg-gradient-to-r from-cyan-400 via-purple-500 to-pink-500 bg-clip-text text-transparent">
-            Shopping Cart
-          </h1>
-          <div className="flex items-center justify-center gap-2 text-gray-400">
-            <FiPackage className="text-cyan-400" />
-            <span>{cart.items.length} item{cart.items.length !== 1 ? 's' : ''} in your cart</span>
-          </div>
-        </motion.div>
-      
-        <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
-          {/* Cart Items */}
-          <div className="xl:col-span-2 space-y-6">
-            <AnimatePresence>
-              {cart.items.map((item, index) => (
-                <motion.div
-                  key={item.productId}
-                  initial={{ opacity: 0, x: -50 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: 50 }}
-                  transition={{ delay: index * 0.1 }}
-                  className="relative group"
-                >
-                  <div className="absolute -inset-0.5 bg-gradient-to-r from-cyan-500/20 to-purple-500/20 rounded-2xl blur opacity-0 group-hover:opacity-100 transition duration-500" />
-                  <div className="relative bg-black/40 backdrop-blur-xl border border-cyan-500/20 rounded-2xl p-6 
-                                hover:border-cyan-400/40 transition-all duration-500 hover:shadow-[0_0_30px_rgba(34,211,238,0.2)]">
-                    <div className="flex items-center gap-6">
-                      {/* Product Image */}
-                      <motion.div 
-                        className="relative group-hover:scale-105 transition-transform duration-300"
-                        whileHover={{ scale: 1.1 }}
-                      >
-              <img
-                src={`https://cloud.appwrite.io/v1/storage/buckets/67a32bbf003270b1e15c/files/${item.image}/view?project=679b0257003b758db270`}
-                alt={item.name}
-                          className="w-24 h-24 object-cover rounded-xl border border-cyan-400/20"
-              />
-                        <div className="absolute inset-0 bg-gradient-to-t from-cyan-500/20 to-transparent rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                      </motion.div>
-                      
-                      {/* Product Details */}
-              <div className="flex-1">
-                        <h3 className="font-semibold text-xl text-white mb-2">{item.name}</h3>
-                        <p className="text-cyan-400 text-lg font-bold">${item.price.toFixed(2)}</p>
-                        
-                        {/* Quantity Controls */}
-                        <div className="flex items-center gap-4 mt-4">
-                          <span className="text-gray-400">Quantity:</span>
-                          <div className="flex items-center gap-2 bg-black/60 rounded-xl p-1 border border-cyan-500/20">
-                            <motion.button
-                              whileHover={{ scale: 1.1 }}
-                              whileTap={{ scale: 0.9 }}
-                              onClick={() => handleQuantityChange(item.productId, item.quantity - 1)}
-                              className="p-2 text-cyan-400 hover:bg-cyan-500/10 rounded-lg transition-colors"
-                              disabled={item.quantity <= 1}
-                            >
-                              <FiMinus />
-                            </motion.button>
-                            
-                            <span className="px-4 py-2 text-white font-semibold min-w-[3rem] text-center">
-                              {item.quantity}
-                            </span>
-                            
-                            <motion.button
-                              whileHover={{ scale: 1.1 }}
-                              whileTap={{ scale: 0.9 }}
-                              onClick={() => handleQuantityChange(item.productId, item.quantity + 1)}
-                              className="p-2 text-cyan-400 hover:bg-cyan-500/10 rounded-lg transition-colors"
-                            >
-                              <FiPlus />
-                            </motion.button>
-                          </div>
-                        </div>
-                      </div>
-                      
-                      {/* Item Total & Remove */}
-                      <div className="text-right">
-                        <div className="text-2xl font-bold text-white mb-4">
-                          ${(item.price * item.quantity).toFixed(2)}
-                        </div>
-                        <motion.button
-                          whileHover={{ scale: 1.1 }}
-                          whileTap={{ scale: 0.9 }}
-                          onClick={() => removeFromCart(item.productId)}
-                          className="p-3 bg-red-500/20 hover:bg-red-500/30 border border-red-500/30 text-red-400 
-                                   rounded-xl transition-all duration-300 hover:shadow-[0_0_20px_rgba(239,68,68,0.3)]"
-                        >
-                          <FiTrash2 />
-                        </motion.button>
-                      </div>
-                    </div>
-                  </div>
-                </motion.div>
-              ))}
-            </AnimatePresence>
-          </div>
-
-          {/* Order Summary */}
-          <motion.div
-            initial={{ opacity: 0, x: 50 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.3 }}
-            className="relative group"
-          >
-            <div className="absolute -inset-0.5 bg-gradient-to-r from-purple-500/20 to-pink-500/20 rounded-2xl blur opacity-50" />
-            <div className="relative bg-black/60 backdrop-blur-xl border border-purple-500/30 rounded-2xl p-8 h-fit
-                          hover:shadow-[0_0_40px_rgba(147,51,234,0.3)] transition-all duration-500 sticky top-8">
-              <h2 className="text-2xl font-bold text-white mb-8 text-center bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
-                Order Summary
-              </h2>
-              
-              <div className="space-y-6">
-                {/* Summary Items */}
-                <div className="space-y-4 pb-6 border-b border-gray-700/50">
-                  {cart.items.map((item) => (
-                    <div key={item.productId} className="flex justify-between text-gray-300">
-                      <span className="truncate pr-2">{item.name} x{item.quantity}</span>
-                      <span className="text-cyan-400 font-semibold">${(item.price * item.quantity).toFixed(2)}</span>
-                    </div>
-                  ))}
+            {/* Header */}
+            <div className="flex items-center justify-between">
+              <div>
+                <h1 className="text-3xl font-semibold text-gray-900 dark:text-white">
+                  Shopping Cart
+                </h1>
+                <div className="mt-2 text-sm text-gray-600 dark:text-gray-400 flex items-center gap-2">
+                  <FiPackage className="w-4 h-4" />
+                  <span>{cart.items.length} item{cart.items.length !== 1 ? 's' : ''} in your cart</span>
                 </div>
-                
-                {/* Totals */}
-                <div className="space-y-4">
-                  <div className="flex justify-between text-lg">
-                    <span className="text-gray-300">Subtotal</span>
-                    <span className="text-white font-semibold">${cart.total.toFixed(2)}</span>
-                  </div>
-                  
-                  <div className="flex justify-between text-lg">
-                    <span className="text-gray-300">Shipping</span>
-                    <span className="text-green-400 font-semibold">Free</span>
-                  </div>
-                  
-                  <div className="border-t border-gray-700/50 pt-4">
-                    <div className="flex justify-between text-2xl font-bold">
-                      <span className="text-white">Total</span>
-                      <span className="bg-gradient-to-r from-cyan-400 to-purple-400 bg-clip-text text-transparent">
-                        ${cart.total.toFixed(2)}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-                
-                {/* Checkout Button */}
-                <motion.div
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  className="pt-6"
+              </div>
+              <div className="hidden sm:block">
+                <Button 
+                  onClick={() => router.push('/Products')}
+                  variant="white"
+                  className="inline-flex items-center gap-2"
                 >
-                  <Button
-                    onClick={handleCheckout}
-                    className="w-full bg-gradient-to-r from-cyan-500 via-purple-600 to-pink-600 
-                             hover:from-cyan-400 hover:via-purple-500 hover:to-pink-500 
-                             text-white py-4 rounded-xl font-bold text-lg shadow-[0_0_30px_rgba(34,211,238,0.3)] 
-                             hover:shadow-[0_0_40px_rgba(34,211,238,0.5)] transform hover:scale-105 transition-all duration-300
-                             border border-cyan-400/20 backdrop-blur-sm"
-                  >
-                    <FiArrowRight className="mr-2" />
-                    Proceed to Checkout
-                  </Button>
-                </motion.div>
-                
-                {/* Continue Shopping */}
-                <motion.div
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                >
-                  <Button
-                    onClick={() => router.push('/Products')}
-                    variant="outline"
-                    className="w-full border-gray-600 text-gray-300 hover:bg-gray-800/50 hover:text-white 
-                             hover:border-cyan-400/40 transition-all duration-300 py-3 rounded-xl"
-                  >
-                    <FiShoppingBag className="mr-2" />
-                    Continue Shopping
-                  </Button>
-                </motion.div>
+                  <FiShoppingBag className="w-4 h-4" />
+                  Continue Shopping
+                </Button>
               </div>
             </div>
-          </motion.div>
+          </div>
+        </div>
+
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            {/* Cart Items */}
+            <div className="lg:col-span-2">
+              <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm divide-y divide-gray-200 dark:divide-gray-700">
+                <AnimatePresence>
+                  {cart.items.map((item) => (
+                    <motion.div
+                      key={item.productId}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -20 }}
+                      className="p-6"
+                    >
+                      <div className="flex items-center space-x-4">
+                        {/* Product Image */}
+                        <div className="flex-shrink-0 w-20 h-20 bg-gray-100 dark:bg-gray-700 rounded-lg overflow-hidden">
+                          <img
+                            src={item.image ? 
+                              `https://cloud.appwrite.io/v1/storage/buckets/67a32bbf003270b1e15c/files/${item.image}/view?project=679b0257003b758db270` :
+                              "/images/pexels-shattha-pilabut-38930-135620.jpg"}
+                            alt={item.name}
+                            className="w-full h-full object-cover"
+                            onError={(e) => {
+                              e.currentTarget.src = "/images/pexels-shattha-pilabut-38930-135620.jpg";
+                            }}
+                          />
+                        </div>
+
+                        {/* Product Details */}
+                        <div className="flex-1 min-w-0">
+                          <h3 className="text-lg font-semibold text-gray-900 dark:text-white truncate">
+                            {item.name}
+                          </h3>
+                          <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                            ${item.price.toFixed(2)} each
+                          </p>
+                        </div>
+
+                        {/* Quantity Controls */}
+                        <div className="flex items-center space-x-2">
+                          <button
+                            onClick={() => handleQuantityChange(item.productId, item.quantity - 1)}
+                            className="p-1 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                            disabled={item.quantity <= 1}
+                          >
+                            <FiMinus className="w-4 h-4 text-gray-600 dark:text-gray-400" />
+                          </button>
+                          <span className="w-8 text-center font-medium text-gray-900 dark:text-white">
+                            {item.quantity}
+                          </span>
+                          <button
+                            onClick={() => handleQuantityChange(item.productId, item.quantity + 1)}
+                            className="p-1 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                          >
+                            <FiPlus className="w-4 h-4 text-gray-600 dark:text-gray-400" />
+                          </button>
+                        </div>
+
+                        {/* Price */}
+                        <div className="text-right">
+                          <p className="text-lg font-semibold text-gray-900 dark:text-white">
+                            ${(item.price * item.quantity).toFixed(2)}
+                          </p>
+                        </div>
+
+                        {/* Remove Button */}
+                        <button
+                          onClick={() => removeFromCart(item.productId)}
+                          className="p-2 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-md transition-colors"
+                        >
+                          <FiTrash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </motion.div>
+                  ))}
+                </AnimatePresence>
+              </div>
+            </div>
+
+            {/* Order Summary */}
+            <div className="lg:col-span-1">
+              <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 sticky top-24">
+                <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-6">Order Summary</h2>
+                
+                <div className="space-y-4">
+                  <div className="flex justify-between text-gray-600 dark:text-gray-400">
+                    <span>Subtotal ({cart.items.length} items)</span>
+                    <span>${subtotal.toFixed(2)}</span>
+                  </div>
+                  
+                  <div className="flex justify-between text-gray-600 dark:text-gray-400">
+                    <span>Shipping</span>
+                    <span>${shipping.toFixed(2)}</span>
+                  </div>
+                  
+                  <hr className="border-gray-200 dark:border-gray-700" />
+                  
+                  <div className="flex justify-between text-lg font-semibold text-gray-900 dark:text-white">
+                    <span>Total</span>
+                    <span>${total.toFixed(2)}</span>
+                  </div>
+                </div>
+
+                <div className="mt-6 space-y-4">
+                  <Button 
+                    onClick={handleCheckout}
+                    className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-4 rounded-lg transition-colors inline-flex items-center justify-center gap-2"
+                  >
+                    Proceed to Checkout
+                    <FiArrowRight className="w-4 h-4" />
+                  </Button>
+                  
+                  <Button 
+                    onClick={clearCart}
+                    variant="outline"
+                    className="w-full border-red-300 dark:border-red-700 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 font-medium py-3 px-4 rounded-lg transition-colors"
+                  >
+                    Clear Cart
+                  </Button>
+                </div>
+
+                {/* Trust Badges */}
+                <div className="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
+                  <div className="flex items-center justify-center space-x-4 text-xs text-gray-500 dark:text-gray-400">
+                    <div className="flex items-center gap-1">
+                      <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
+                      </svg>
+                      <span>Secure Checkout</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                      </svg>
+                      <span>30-Day Returns</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
-    </div>
+    </>
   );
 }

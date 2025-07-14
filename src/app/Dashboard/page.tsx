@@ -7,9 +7,10 @@ import AddProduct from "./AddProduct/page";
 import ListProducts from "./ListProduct/page";
 import Categories from "./Categories/page";
 import Orders from "./Orders/page";
+import AdminRoute from "@/components/AdminRoute";
 import { FiMenu, FiPackage, FiList, FiGrid, FiX, FiHome, FiBarChart, FiUsers, FiTrendingUp, FiTruck } from 'react-icons/fi';
 
-const Dashboard: React.FC = () => {
+const DashboardContent: React.FC = () => {
   const searchParams = useSearchParams();
   const router = useRouter();
   const [selectedFeature, setSelectedFeature] = useState<string>("Dashboard Overview");
@@ -31,164 +32,127 @@ const Dashboard: React.FC = () => {
     {
       name: "Dashboard Overview",
       icon: <FiHome className="w-5 h-5" />,
+      color: "blue",
     },
     {
       name: "Add Product",
       icon: <FiPackage className="w-5 h-5" />,
+      color: "green",
     },
     {
       name: "List Products",
       icon: <FiList className="w-5 h-5" />,
+      color: "purple",
     },
     {
       name: "Categories",
       icon: <FiGrid className="w-5 h-5" />,
+      color: "orange",
     },
     {
       name: "Orders",
       icon: <FiTruck className="w-5 h-5" />,
+      color: "red",
     }
   ];
 
   return (
-    <div className="flex min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-900 relative overflow-hidden">
-      {/* Animated background */}
-      <div className="absolute inset-0">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_25%_25%,rgba(56,189,248,0.1),transparent_50%)]" />
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_75%_75%,rgba(147,51,234,0.1),transparent_50%)]" />
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(236,72,153,0.05),transparent_50%)]" />
-      </div>
-
-      {/* Grid overlay */}
-      <div className="absolute inset-0 opacity-5">
-        <div className="absolute inset-0 bg-[linear-gradient(rgba(34,211,238,0.1)_1px,transparent_1px),linear-gradient(90deg,rgba(34,211,238,0.1)_1px,transparent_1px)] bg-[size:50px_50px]" />
-      </div>
-
-      {/* Floating particles */}
-      <div className="absolute inset-0 overflow-hidden">
-        {[...Array(10)].map((_, i) => (
-          <motion.div
-            key={i}
-            className="absolute w-1 h-1 bg-cyan-400 rounded-full opacity-40"
-            initial={{ 
-              x: Math.random() * window.innerWidth, 
-              y: Math.random() * window.innerHeight 
-            }}
-            animate={{
-              x: Math.random() * window.innerWidth,
-              y: Math.random() * window.innerHeight,
-            }}
-            transition={{
-              duration: Math.random() * 15 + 15,
-              repeat: Infinity,
-              repeatType: "reverse",
-            }}
-          />
-        ))}
-      </div>
-
+    <div className="flex min-h-screen bg-gray-50 dark:bg-gray-900">
       {/* Sidebar */}
       <motion.aside 
         initial={false}
         animate={{
-          width: isSidebarOpen ? "350px" : "80px",
+          width: isSidebarOpen ? "280px" : "80px",
         }}
-        className="fixed left-0 top-0 h-full z-30 relative group"
+        className="fixed left-0 top-0 h-full z-30 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 shadow-sm"
       >
-        {/* Sidebar glow effect */}
-        <div className="absolute -inset-0.5 bg-gradient-to-b from-cyan-500/20 to-purple-500/20 rounded-r-2xl blur opacity-50" />
-        
-        <div className="relative bg-black/60 backdrop-blur-xl border-r border-cyan-500/20 h-full
-                      hover:border-cyan-400/40 transition-all duration-500 flex flex-col">
+        <div className="h-full flex flex-col">
           {/* Header */}
-          <div className="flex items-center justify-between p-8 border-b border-gray-700/50 flex-shrink-0">
-          <AnimatePresence>
-            {isSidebarOpen && (
-              <motion.h2 
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                  className="text-3xl font-bold bg-gradient-to-r from-cyan-400 to-purple-400 bg-clip-text text-transparent"
-              >
-                Dashboard
-              </motion.h2>
-            )}
-          </AnimatePresence>
-          <motion.button 
-              whileHover={{ scale: 1.05, rotate: 90 }}
-            whileTap={{ scale: 0.95 }}
-            onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-              className="p-3 rounded-xl bg-cyan-500/10 hover:bg-cyan-500/20 border border-cyan-500/30 
-                       text-cyan-400 transition-all duration-300 hover:shadow-[0_0_20px_rgba(34,211,238,0.3)]"
-          >
-            {isSidebarOpen ? <FiX className="w-5 h-5" /> : <FiMenu className="w-5 h-5" />}
-          </motion.button>
-        </div>
-        
+          <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
+            <AnimatePresence>
+              {isSidebarOpen && (
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  className="flex items-center gap-3"
+                >
+                  <div className="w-8 h-8 bg-blue-600 dark:bg-blue-500 rounded-lg flex items-center justify-center">
+                    <FiHome className="w-4 h-4 text-white" />
+                  </div>
+                  <h2 className="text-xl font-bold text-gray-900 dark:text-white">Admin Panel</h2>
+                </motion.div>
+              )}
+            </AnimatePresence>
+            <button 
+              onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+              className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+            >
+              {isSidebarOpen ? <FiX className="w-5 h-5 text-gray-600 dark:text-gray-400" /> : <FiMenu className="w-5 h-5 text-gray-600 dark:text-gray-400" />}
+            </button>
+          </div>
+          
           {/* Menu Items */}
-          <div className="flex-1 p-6 space-y-3 overflow-y-auto">
+          <div className="flex-1 p-4 space-y-2">
             {menuItems.map((item, index) => (
-              <motion.div
+              <motion.button
                 key={item.name}
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: index * 0.1 }}
-              >
-              <motion.button
-                  whileHover={{ x: 5, scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  className={`w-full flex items-center space-x-5 px-6 py-5 rounded-xl transition-all duration-300 group/item
-                    ${selectedFeature === item.name 
-                      ? "bg-gradient-to-r from-cyan-500/20 to-purple-500/20 border border-cyan-400/40 text-white shadow-[0_0_20px_rgba(34,211,238,0.2)]" 
-                      : "hover:bg-gray-800/50 text-gray-300 hover:text-white border border-transparent hover:border-gray-600"
+                className={`w-full flex items-center gap-3 px-3 py-3 rounded-lg transition-all duration-200 text-left
+                  ${selectedFeature === item.name 
+                    ? "bg-blue-50 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-600" 
+                    : "hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
                 }`}
                 onClick={() => handleFeatureSelect(item.name)}
               >
-                  <div className={`${selectedFeature === item.name ? 'text-cyan-400' : 'text-gray-400 group-hover/item:text-cyan-400'} transition-colors text-xl`}>
-                {item.icon}
-                  </div>
+                <div className={`flex-shrink-0 ${
+                  selectedFeature === item.name ? 'text-blue-600 dark:text-blue-400' : 'text-gray-400 dark:text-gray-500'
+                }`}>
+                  {item.icon}
+                </div>
                 <AnimatePresence>
                   {isSidebarOpen && (
                     <motion.span 
                       initial={{ opacity: 0, x: -10 }}
                       animate={{ opacity: 1, x: 0 }}
                       exit={{ opacity: 0, x: -10 }}
-                        className="font-semibold text-base flex-1 text-left"
+                      className="font-medium"
                     >
                       {item.name}
                     </motion.span>
                   )}
                 </AnimatePresence>
               </motion.button>
-              </motion.div>
-          ))}
+            ))}
           </div>
 
-          {/* Sidebar Footer */}
+          {/* Footer */}
           {isSidebarOpen && (
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              className="p-6 border-t border-gray-700/50 flex-shrink-0"
+              className="p-4 border-t border-gray-200 dark:border-gray-700"
             >
-              <div className="p-5 bg-gradient-to-r from-cyan-500/10 to-purple-500/10 rounded-xl border border-cyan-500/20">
-                <p className="text-cyan-400 text-base font-semibold mb-1">Admin Panel</p>
-                <p className="text-gray-400 text-sm">Manage your store</p>
+              <div className="p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                <p className="text-sm font-medium text-gray-900 dark:text-white">Admin Dashboard</p>
+                <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">Manage your store efficiently</p>
               </div>
             </motion.div>
           )}
         </div>
       </motion.aside>
 
-      {/* Main Section */}
+      {/* Main Content */}
       <motion.main 
         initial={false}
         animate={{
-          marginLeft: isSidebarOpen ? "350px" : "80px",
+          marginLeft: isSidebarOpen ? "280px" : "80px",
         }}
-        className="flex-1 min-h-screen p-6 relative z-10"
+        className="flex-1 min-h-screen"
       >
-        <div className="max-w-[1600px] mx-auto">
+        <div className="p-6">
           <AnimatePresence mode="wait">
             <motion.div
               key={selectedFeature}
@@ -204,134 +168,113 @@ const Dashboard: React.FC = () => {
               {selectedFeature === "Dashboard Overview" && (
                 <div className="space-y-8">
                   {/* Header */}
-                  <motion.div
-                    initial={{ opacity: 0, y: -20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="text-center"
-                  >
-                    <h1 className="text-5xl font-bold mb-4 bg-gradient-to-r from-cyan-400 via-purple-500 to-pink-500 bg-clip-text text-transparent">
+                  <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+                    <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
                       Dashboard Overview
                     </h1>
-                    <p className="text-gray-400 text-lg">Monitor your store performance and manage operations</p>
-                  </motion.div>
+                    <p className="text-gray-600 dark:text-gray-400">Monitor your store performance and manage operations</p>
+                  </div>
 
                   {/* Stats Grid */}
-                  <motion.div 
-                    className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6"
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.2 }}
-                  >
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                     {/* Total Products */}
-                    <motion.div 
-                      whileHover={{ scale: 1.02, y: -5 }}
-                      className="relative group"
-                    >
-                      <div className="absolute -inset-0.5 bg-gradient-to-r from-cyan-500/20 to-blue-500/20 rounded-2xl blur opacity-50 group-hover:opacity-100 transition duration-500" />
-                      <div className="relative bg-black/60 backdrop-blur-xl border border-cyan-500/30 rounded-2xl p-8 text-center
-                                    hover:border-cyan-400/50 transition-all duration-500 hover:shadow-[0_0_30px_rgba(34,211,238,0.2)]">
-                        <FiPackage className="text-4xl text-cyan-400 mx-auto mb-4" />
-                        <h3 className="text-lg font-semibold mb-2 text-gray-300">Total Products</h3>
-                        <p className="text-4xl font-bold text-white mb-2">123</p>
-                        <div className="flex items-center justify-center gap-1 text-green-400 text-sm">
-                          <FiTrendingUp className="w-4 h-4" />
-                          <span>+12% from last month</span>
+                    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Total Products</p>
+                          <p className="text-2xl font-bold text-gray-900 dark:text-white mt-1">123</p>
+                          <div className="flex items-center gap-1 text-green-600 dark:text-green-400 text-sm mt-2">
+                            <FiTrendingUp className="w-4 h-4" />
+                            <span>+12% from last month</span>
+                          </div>
                         </div>
-                      </div>
-                    </motion.div>
-
-                    {/* Total Sales */}
-                    <motion.div 
-                      whileHover={{ scale: 1.02, y: -5 }}
-                      className="relative group"
-                    >
-                      <div className="absolute -inset-0.5 bg-gradient-to-r from-purple-500/20 to-pink-500/20 rounded-2xl blur opacity-50 group-hover:opacity-100 transition duration-500" />
-                      <div className="relative bg-black/60 backdrop-blur-xl border border-purple-500/30 rounded-2xl p-8 text-center
-                                    hover:border-purple-400/50 transition-all duration-500 hover:shadow-[0_0_30px_rgba(147,51,234,0.2)]">
-                        <FiBarChart className="text-4xl text-purple-400 mx-auto mb-4" />
-                        <h3 className="text-lg font-semibold mb-2 text-gray-300">Total Sales</h3>
-                        <p className="text-4xl font-bold text-white mb-2">$45.2K</p>
-                        <div className="flex items-center justify-center gap-1 text-green-400 text-sm">
-                          <FiTrendingUp className="w-4 h-4" />
-                          <span>+8% from last month</span>
+                        <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900/50 rounded-lg flex items-center justify-center">
+                          <FiPackage className="w-6 h-6 text-blue-600 dark:text-blue-400" />
                         </div>
-                      </div>
-                    </motion.div>
-
-                    {/* Total Customers */}
-                    <motion.div 
-                      whileHover={{ scale: 1.02, y: -5 }}
-                      className="relative group"
-                    >
-                      <div className="absolute -inset-0.5 bg-gradient-to-r from-pink-500/20 to-red-500/20 rounded-2xl blur opacity-50 group-hover:opacity-100 transition duration-500" />
-                      <div className="relative bg-black/60 backdrop-blur-xl border border-pink-500/30 rounded-2xl p-8 text-center
-                                    hover:border-pink-400/50 transition-all duration-500 hover:shadow-[0_0_30px_rgba(236,72,153,0.2)]">
-                        <FiUsers className="text-4xl text-pink-400 mx-auto mb-4" />
-                        <h3 className="text-lg font-semibold mb-2 text-gray-300">Total Customers</h3>
-                        <p className="text-4xl font-bold text-white mb-2">1,234</p>
-                        <div className="flex items-center justify-center gap-1 text-green-400 text-sm">
-                          <FiTrendingUp className="w-4 h-4" />
-                          <span>+15% from last month</span>
-                        </div>
-                      </div>
-                    </motion.div>
-
-                    {/* Pending Orders */}
-                    <motion.div 
-                      whileHover={{ scale: 1.02, y: -5 }}
-                      className="relative group"
-                    >
-                      <div className="absolute -inset-0.5 bg-gradient-to-r from-yellow-500/20 to-orange-500/20 rounded-2xl blur opacity-50 group-hover:opacity-100 transition duration-500" />
-                      <div className="relative bg-black/60 backdrop-blur-xl border border-yellow-500/30 rounded-2xl p-8 text-center
-                                    hover:border-yellow-400/50 transition-all duration-500 hover:shadow-[0_0_30px_rgba(245,158,11,0.2)]">
-                        <FiList className="text-4xl text-yellow-400 mx-auto mb-4" />
-                        <h3 className="text-lg font-semibold mb-2 text-gray-300">Pending Orders</h3>
-                        <p className="text-4xl font-bold text-white mb-2">23</p>
-                        <div className="flex items-center justify-center gap-1 text-yellow-400 text-sm">
-                          <span>Requires attention</span>
-                        </div>
-                      </div>
-                    </motion.div>
-                  </motion.div>
-
-                  {/* Quick Actions */}
-                  <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.4 }}
-                    className="relative group"
-                  >
-                    <div className="absolute -inset-0.5 bg-gradient-to-r from-cyan-500/10 to-purple-500/10 rounded-2xl blur opacity-50" />
-                    <div className="relative bg-black/60 backdrop-blur-xl border border-cyan-500/20 rounded-2xl p-8">
-                      <h2 className="text-2xl font-bold text-white mb-6 text-center">Quick Actions</h2>
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        {menuItems.slice(1).map((item, index) => (
-                          <motion.button
-                            key={item.name}
-                            whileHover={{ scale: 1.05 }}
-                            whileTap={{ scale: 0.95 }}
-                            onClick={() => handleFeatureSelect(item.name)}
-                            className="p-6 bg-gradient-to-r from-gray-800/50 to-gray-700/50 rounded-xl border border-gray-600
-                                     hover:border-cyan-400/50 transition-all duration-300 hover:shadow-[0_0_20px_rgba(34,211,238,0.2)]
-                                     text-left group/action"
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: 0.5 + index * 0.1 }}
-                          >
-                            <div className="text-2xl text-cyan-400 group-hover/action:text-cyan-300 transition-colors mb-3">
-                              {item.icon}
-                            </div>
-                            <h3 className="text-white font-semibold mb-2">{item.name}</h3>
-                            <p className="text-gray-400 text-sm">
-                              {item.name === "Add Product" && "Add new products to your inventory"}
-                              {item.name === "List Products" && "View and manage existing products"}
-                              {item.name === "Categories" && "Organize products into categories"}
-                            </p>
-                          </motion.button>
-                        ))}
                       </div>
                     </div>
-                  </motion.div>
+
+                    {/* Total Sales */}
+                    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Total Sales</p>
+                          <p className="text-2xl font-bold text-gray-900 dark:text-white mt-1">$45.2K</p>
+                          <div className="flex items-center gap-1 text-green-600 dark:text-green-400 text-sm mt-2">
+                            <FiTrendingUp className="w-4 h-4" />
+                            <span>+8% from last month</span>
+                          </div>
+                        </div>
+                        <div className="w-12 h-12 bg-green-100 dark:bg-green-900/50 rounded-lg flex items-center justify-center">
+                          <FiBarChart className="w-6 h-6 text-green-600 dark:text-green-400" />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Total Customers */}
+                    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Total Customers</p>
+                          <p className="text-2xl font-bold text-gray-900 dark:text-white mt-1">1,234</p>
+                          <div className="flex items-center gap-1 text-green-600 dark:text-green-400 text-sm mt-2">
+                            <FiTrendingUp className="w-4 h-4" />
+                            <span>+15% from last month</span>
+                          </div>
+                        </div>
+                        <div className="w-12 h-12 bg-purple-100 dark:bg-purple-900/50 rounded-lg flex items-center justify-center">
+                          <FiUsers className="w-6 h-6 text-purple-600 dark:text-purple-400" />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Pending Orders */}
+                    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Pending Orders</p>
+                          <p className="text-2xl font-bold text-gray-900 dark:text-white mt-1">23</p>
+                          <div className="flex items-center gap-1 text-orange-600 dark:text-orange-400 text-sm mt-2">
+                            <span>Requires attention</span>
+                          </div>
+                        </div>
+                        <div className="w-12 h-12 bg-orange-100 dark:bg-orange-900/50 rounded-lg flex items-center justify-center">
+                          <FiTruck className="w-6 h-6 text-orange-600 dark:text-orange-400" />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Quick Actions */}
+                  <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+                    <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-6">Quick Actions</h2>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      {menuItems.slice(1).map((item, index) => (
+                        <button
+                          key={item.name}
+                          onClick={() => handleFeatureSelect(item.name)}
+                          className="p-6 bg-gray-50 dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 rounded-lg border border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500 transition-all duration-200 text-left group"
+                        >
+                          <div className={`w-10 h-10 rounded-lg flex items-center justify-center mb-4 ${
+                            item.color === 'blue' ? 'bg-blue-100 dark:bg-blue-900/50 text-blue-600 dark:text-blue-400' :
+                            item.color === 'green' ? 'bg-green-100 dark:bg-green-900/50 text-green-600 dark:text-green-400' :
+                            item.color === 'purple' ? 'bg-purple-100 dark:bg-purple-900/50 text-purple-600 dark:text-purple-400' :
+                            item.color === 'orange' ? 'bg-orange-100 dark:bg-orange-900/50 text-orange-600 dark:text-orange-400' :
+                            'bg-red-100 dark:bg-red-900/50 text-red-600 dark:text-red-400'
+                          }`}>
+                            {item.icon}
+                          </div>
+                          <h3 className="font-semibold text-gray-900 dark:text-white mb-2">{item.name}</h3>
+                          <p className="text-sm text-gray-600 dark:text-gray-400">
+                            {item.name === "Add Product" && "Add new products to your inventory"}
+                            {item.name === "List Products" && "View and manage existing products"}
+                            {item.name === "Categories" && "Organize products into categories"}
+                            {item.name === "Orders" && "View and manage customer orders"}
+                          </p>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
                 </div>
               )}
             </motion.div>
@@ -339,6 +282,14 @@ const Dashboard: React.FC = () => {
         </div>
       </motion.main>
     </div>
+  );
+};
+
+const Dashboard: React.FC = () => {
+  return (
+    <AdminRoute>
+      <DashboardContent />
+    </AdminRoute>
   );
 };
 

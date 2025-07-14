@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { FiDownload, FiPrinter } from 'react-icons/fi';
+import { FiDownload, FiPrinter, FiX, FiCheck, FiUser, FiCreditCard, FiPackage } from 'react-icons/fi';
 
 interface InvoiceProps {
   orderDetails: {
@@ -47,110 +47,178 @@ const Invoice: React.FC<InvoiceProps> = ({ orderDetails, customerDetails, onClos
       initial={{ opacity: 0, scale: 0.95 }}
       animate={{ opacity: 1, scale: 1 }}
       exit={{ opacity: 0, scale: 0.95 }}
-      className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 print:p-0"
+      className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 print:p-0"
       onClick={(e) => e.target === e.currentTarget && onClose()}
     >
-      <div className="bg-black/60 backdrop-blur-xl border border-cyan-500/20 rounded-2xl w-full max-w-4xl overflow-y-auto max-h-[90vh] print:max-h-full print:bg-white print:text-black">
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-2xl w-full max-w-4xl overflow-y-auto max-h-[90vh] print:max-h-full print:shadow-none">
         {/* Invoice Header */}
-        <div className="border-b border-gray-700/50 p-8 flex justify-between items-start">
+        <div className="border-b border-gray-200 dark:border-gray-700 p-6 flex justify-between items-start">
           <div>
-            <h1 className="text-3xl font-bold bg-gradient-to-r from-cyan-400 to-purple-400 bg-clip-text text-transparent print:text-black">
-              Invoice
-            </h1>
-            <p className="text-gray-400 mt-2 print:text-gray-600">Order #{orderDetails.orderId}</p>
-            <p className="text-gray-400 print:text-gray-600">{orderDetails.date}</p>
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-12 h-12 bg-green-100 dark:bg-green-900/50 rounded-full flex items-center justify-center">
+                <FiCheck className="w-6 h-6 text-green-600 dark:text-green-400" />
+              </div>
+              <div>
+                <h1 className="text-2xl font-bold text-gray-900 dark:text-white print:text-black">
+                  Order Confirmed
+                </h1>
+                <p className="text-gray-600 dark:text-gray-400 text-sm">Your order has been successfully placed</p>
+              </div>
+            </div>
+            <div className="space-y-1">
+              <p className="text-sm text-gray-500">Order ID: <span className="font-medium text-gray-900">#{orderDetails.orderId}</span></p>
+              <p className="text-sm text-gray-500">Date: <span className="font-medium text-gray-900">{orderDetails.date}</span></p>
+            </div>
           </div>
-          <div className="flex gap-4 print:hidden">
+          
+          <div className="flex gap-3 print:hidden">
             <button
               onClick={handlePrint}
-              className="p-3 rounded-xl bg-cyan-500/10 hover:bg-cyan-500/20 border border-cyan-500/30 
-                       text-cyan-400 transition-all duration-300 hover:shadow-[0_0_20px_rgba(34,211,238,0.3)]
-                       flex items-center gap-2"
+              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors flex items-center gap-2"
             >
-              <FiPrinter className="w-5 h-5" />
+              <FiPrinter className="w-4 h-4" />
               Print
             </button>
             <button
               onClick={handleDownload}
-              className="p-3 rounded-xl bg-purple-500/10 hover:bg-purple-500/20 border border-purple-500/30 
-                       text-purple-400 transition-all duration-300 hover:shadow-[0_0_20px_rgba(147,51,234,0.3)]
-                       flex items-center gap-2"
+              className="px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg font-medium transition-colors flex items-center gap-2"
             >
-              <FiDownload className="w-5 h-5" />
+              <FiDownload className="w-4 h-4" />
               Download
+            </button>
+            <button
+              onClick={onClose}
+              className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+            >
+              <FiX className="w-5 h-5" />
             </button>
           </div>
         </div>
 
         {/* Invoice Content */}
-        <div className="p-8 space-y-8">
+        <div className="p-6 space-y-8">
           {/* Customer Details */}
-          <div className="grid grid-cols-2 gap-8">
-            <div>
-              <h2 className="text-xl font-semibold text-white mb-4 print:text-black">Bill To</h2>
-              <div className="space-y-2 text-gray-300 print:text-gray-700">
-                <p className="font-medium">{customerDetails.firstName} {customerDetails.lastName}</p>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div className="bg-gray-50 rounded-lg p-6">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                  <FiUser className="w-4 h-4 text-blue-600" />
+                </div>
+                <h2 className="text-lg font-semibold text-gray-900 print:text-black">Billing Information</h2>
+              </div>
+              <div className="space-y-2 text-gray-700 print:text-gray-700">
+                <p className="font-medium text-gray-900">{customerDetails.firstName} {customerDetails.lastName}</p>
                 <p>{customerDetails.email}</p>
                 <p>{customerDetails.phone}</p>
-                <p>{customerDetails.address.street}</p>
-                <p>{customerDetails.address.city}, {customerDetails.address.region}</p>
-                <p>{customerDetails.address.country}, {customerDetails.address.postalCode}</p>
+                <div className="pt-2 border-t border-gray-200">
+                  <p className="font-medium text-gray-900 mb-1">Delivery Address:</p>
+                  <p>{customerDetails.address.street}</p>
+                  <p>{customerDetails.address.city}, {customerDetails.address.region}</p>
+                  <p>{customerDetails.address.country}, {customerDetails.address.postalCode}</p>
+                </div>
               </div>
             </div>
-            <div>
-              <h2 className="text-xl font-semibold text-white mb-4 print:text-black">Payment Method</h2>
-              <p className="text-gray-300 print:text-gray-700">{orderDetails.paymentMethod}</p>
+            
+            <div className="bg-gray-50 rounded-lg p-6">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
+                  <FiCreditCard className="w-4 h-4 text-green-600" />
+                </div>
+                <h2 className="text-lg font-semibold text-gray-900 print:text-black">Payment Method</h2>
+              </div>
+              <p className="text-gray-700 print:text-gray-700 font-medium">{orderDetails.paymentMethod}</p>
+              <p className="text-sm text-gray-500 mt-2">
+                {orderDetails.paymentMethod === 'Cash on Delivery' ? 
+                  'Payment will be collected upon delivery' : 
+                  'Payment processed successfully'
+                }
+              </p>
             </div>
           </div>
 
           {/* Order Items */}
-          <div className="mt-8">
-            <h2 className="text-xl font-semibold text-white mb-4 print:text-black">Order Items</h2>
-            <div className="border border-gray-700/50 rounded-xl overflow-hidden print:border-gray-200">
-              <table className="w-full">
-                <thead className="bg-gray-800/50 print:bg-gray-100">
-                  <tr>
-                    <th className="py-4 px-6 text-left text-gray-300 print:text-gray-700">Item</th>
-                    <th className="py-4 px-6 text-left text-gray-300 print:text-gray-700">Quantity</th>
-                    <th className="py-4 px-6 text-right text-gray-300 print:text-gray-700">Price</th>
-                    <th className="py-4 px-6 text-right text-gray-300 print:text-gray-700">Total</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-700/50 print:divide-gray-200">
-                  {orderDetails.items.map((item, index) => (
-                    <tr key={index} className="text-gray-300 print:text-gray-700">
-                      <td className="py-4 px-6">{item.name}</td>
-                      <td className="py-4 px-6">{item.quantity}</td>
-                      <td className="py-4 px-6 text-right">${item.price.toFixed(2)}</td>
-                      <td className="py-4 px-6 text-right">${(item.quantity * item.price).toFixed(2)}</td>
+          <div>
+            <div className="flex items-center gap-3 mb-6">
+              <div className="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center">
+                <FiPackage className="w-4 h-4 text-purple-600" />
+              </div>
+              <h2 className="text-lg font-semibold text-gray-900 print:text-black">Order Items</h2>
+            </div>
+            
+            <div className="border border-gray-200 rounded-lg overflow-hidden">
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="py-3 px-4 text-left text-sm font-medium text-gray-700 print:text-gray-700">Item</th>
+                      <th className="py-3 px-4 text-center text-sm font-medium text-gray-700 print:text-gray-700">Quantity</th>
+                      <th className="py-3 px-4 text-right text-sm font-medium text-gray-700 print:text-gray-700">Price</th>
+                      <th className="py-3 px-4 text-right text-sm font-medium text-gray-700 print:text-gray-700">Total</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody className="divide-y divide-gray-200">
+                    {orderDetails.items.map((item, index) => (
+                      <tr key={index} className="text-gray-700 print:text-gray-700">
+                        <td className="py-4 px-4">
+                          <div className="flex items-center gap-3">
+                            {item.image && (
+                              <div className="w-12 h-12 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0">
+                                <img
+                                  src={`https://cloud.appwrite.io/v1/storage/buckets/67a32bbf003270b1e15c/files/${item.image}/view?project=679b0257003b758db270`}
+                                  alt={item.name}
+                                  className="w-full h-full object-cover"
+                                />
+                              </div>
+                            )}
+                            <div>
+                              <p className="font-medium text-gray-900">{item.name}</p>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="py-4 px-4 text-center">
+                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                            {item.quantity}
+                          </span>
+                        </td>
+                        <td className="py-4 px-4 text-right font-medium">${item.price.toFixed(2)}</td>
+                        <td className="py-4 px-4 text-right font-semibold text-gray-900">${(item.quantity * item.price).toFixed(2)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
           </div>
 
           {/* Order Summary */}
-          <div className="mt-8 border-t border-gray-700/50 pt-8 print:border-gray-200">
-            <div className="w-full max-w-xs ml-auto space-y-4">
-              <div className="flex justify-between text-gray-300 print:text-gray-700">
-                <span>Subtotal</span>
-                <span>${orderDetails.subtotal.toFixed(2)}</span>
-              </div>
-              <div className="flex justify-between text-gray-300 print:text-gray-700">
-                <span>Delivery Fee</span>
-                <span>${orderDetails.deliveryFee.toFixed(2)}</span>
-              </div>
-              <div className="flex justify-between text-xl font-semibold text-white print:text-black pt-4 border-t border-gray-700/50 print:border-gray-200">
-                <span>Total</span>
-                <span>${orderDetails.total.toFixed(2)}</span>
+          <div className="border-t border-gray-200 pt-6">
+            <div className="bg-gray-50 rounded-lg p-6">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">Order Summary</h3>
+              <div className="space-y-3">
+                <div className="flex justify-between text-gray-700">
+                  <span>Subtotal</span>
+                  <span>${orderDetails.subtotal.toFixed(2)}</span>
+                </div>
+                <div className="flex justify-between text-gray-700">
+                  <span>Delivery Fee</span>
+                  <span>${orderDetails.deliveryFee.toFixed(2)}</span>
+                </div>
+                <div className="flex justify-between text-xl font-semibold text-gray-900 pt-3 border-t border-gray-200">
+                  <span>Total</span>
+                  <span>${orderDetails.total.toFixed(2)}</span>
+                </div>
               </div>
             </div>
           </div>
 
           {/* Thank You Note */}
-          <div className="mt-12 text-center text-gray-400 print:text-gray-600">
-            <p>Thank you for shopping with us!</p>
+          <div className="text-center py-6 border-t border-gray-200">
+            <div className="max-w-md mx-auto">
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">Thank you for your order!</h3>
+              <p className="text-gray-600 text-sm">
+                We'll send you a confirmation email shortly with tracking information once your order is processed.
+              </p>
+            </div>
           </div>
         </div>
       </div>

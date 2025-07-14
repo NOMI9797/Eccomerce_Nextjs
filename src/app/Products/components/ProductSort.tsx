@@ -25,13 +25,8 @@ export default function ProductSort({ value, onChange }: ProductSortProps) {
       <motion.select
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="appearance-none bg-black/60 backdrop-blur-sm border border-cyan-400/30 rounded-lg px-4 py-3 pr-10 text-white placeholder-gray-400 focus:outline-none focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/50 transition-all duration-300 min-w-[200px] cursor-pointer"
-        style={{
-          background: 'linear-gradient(145deg, rgba(0,0,0,0.8), rgba(30,30,30,0.6))',
-          boxShadow: '0 0 20px rgba(0, 255, 255, 0.1)'
-        }}
+        className="appearance-none bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-3 pr-10 text-gray-900 dark:text-white focus:outline-none focus:border-blue-500 dark:focus:border-blue-400 focus:ring-2 focus:ring-blue-500/20 dark:focus:ring-blue-400/20 transition-all duration-300 min-w-[200px] cursor-pointer"
         whileFocus={{
-          boxShadow: '0 0 30px rgba(0, 255, 255, 0.3)',
           scale: 1.02
         }}
         transition={{ duration: 0.2 }}
@@ -40,7 +35,7 @@ export default function ProductSort({ value, onChange }: ProductSortProps) {
           <option 
             key={option.value} 
             value={option.value}
-            className="bg-gray-900 text-white"
+            className="bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
           >
             {option.icon} {option.label}
           </option>
@@ -49,7 +44,7 @@ export default function ProductSort({ value, onChange }: ProductSortProps) {
 
       {/* Custom dropdown arrow */}
       <motion.div 
-        className="absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none text-cyan-400"
+        className="absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none text-gray-400 dark:text-gray-500"
         whileHover={{ scale: 1.1 }}
       >
         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -59,16 +54,13 @@ export default function ProductSort({ value, onChange }: ProductSortProps) {
 
       {/* Label */}
       <motion.div 
-        className="absolute -top-2 left-3 px-2 text-xs text-cyan-400 bg-black/80 rounded"
+        className="absolute -top-2 left-3 px-2 text-xs text-gray-500 dark:text-gray-400 bg-white dark:bg-gray-800 rounded"
         initial={{ opacity: 0, y: 5 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.3, duration: 0.4 }}
       >
         Sort by
       </motion.div>
-
-      {/* Glowing border effect */}
-      <div className="absolute inset-0 rounded-lg border border-transparent bg-gradient-to-r from-cyan-500/20 via-purple-500/20 to-pink-500/20 opacity-0 hover:opacity-100 transition-opacity duration-300 -z-10 blur-sm" />
     </motion.div>
   );
 } 

@@ -35,27 +35,41 @@ import {
   FiEye,
   FiRefreshCw,
   FiFilter,
-  FiDownload
+  FiDownload,
+  FiMail,
+  FiPhone,
+  FiMapPin
 } from 'react-icons/fi';
 
 // Utility functions
 const getStatusIcon = (status: string) => {
   switch (status) {
-    case 'pending': return <FiClock className="text-yellow-400" />;
-    case 'processing': return <FiRefreshCw className="text-blue-400" />;
-    case 'shipped': return <FiTruck className="text-purple-400" />;
-    case 'delivered': return <FiCheckCircle className="text-green-400" />;
-    case 'cancelled': return <FiXCircle className="text-red-400" />;
-    default: return <FiPackage className="text-gray-400" />;
+    case 'pending': return <FiClock className="text-yellow-600" />;
+    case 'processing': return <FiRefreshCw className="text-blue-600" />;
+    case 'shipped': return <FiTruck className="text-purple-600" />;
+    case 'delivered': return <FiCheckCircle className="text-green-600" />;
+    case 'cancelled': return <FiXCircle className="text-red-600" />;
+    default: return <FiPackage className="text-gray-600" />;
   }
 };
 
 const getPaymentStatusColor = (status: string) => {
   switch (status) {
-    case 'paid': return 'text-green-400 bg-green-400/10 border-green-400/30';
-    case 'pending': return 'text-yellow-400 bg-yellow-400/10 border-yellow-400/30';
-    case 'failed': return 'text-red-400 bg-red-400/10 border-red-400/30';
-    default: return 'text-gray-400 bg-gray-400/10 border-gray-400/30';
+    case 'paid': return 'text-green-700 dark:text-green-300 bg-green-50 dark:bg-green-900/50 border-green-200 dark:border-green-800';
+    case 'pending': return 'text-yellow-700 dark:text-yellow-300 bg-yellow-50 dark:bg-yellow-900/50 border-yellow-200 dark:border-yellow-800';
+    case 'failed': return 'text-red-700 dark:text-red-300 bg-red-50 dark:bg-red-900/50 border-red-200 dark:border-red-800';
+    default: return 'text-gray-700 dark:text-gray-300 bg-gray-50 dark:bg-gray-900/50 border-gray-200 dark:border-gray-700';
+  }
+};
+
+const getStatusColor = (status: string) => {
+  switch (status) {
+    case 'pending': return 'text-yellow-700 dark:text-yellow-300 bg-yellow-50 dark:bg-yellow-900/50 border-yellow-200 dark:border-yellow-800';
+    case 'processing': return 'text-blue-700 dark:text-blue-300 bg-blue-50 dark:bg-blue-900/50 border-blue-200 dark:border-blue-800';
+    case 'shipped': return 'text-purple-700 dark:text-purple-300 bg-purple-50 dark:bg-purple-900/50 border-purple-200 dark:border-purple-800';
+    case 'delivered': return 'text-green-700 dark:text-green-300 bg-green-50 dark:bg-green-900/50 border-green-200 dark:border-green-800';
+    case 'cancelled': return 'text-red-700 dark:text-red-300 bg-red-50 dark:bg-red-900/50 border-red-200 dark:border-red-800';
+    default: return 'text-gray-700 dark:text-gray-300 bg-gray-50 dark:bg-gray-900/50 border-gray-200 dark:border-gray-700';
   }
 };
 
@@ -75,101 +89,154 @@ const ViewOrderModal = ({ order, onClose }: { order: Order | null; onClose: () =
         initial={{ scale: 0.95, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         exit={{ scale: 0.95, opacity: 0 }}
-        className="bg-black/80 border border-cyan-500/30 rounded-2xl p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto"
+        className="bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 p-6 max-w-4xl w-full max-h-[90vh] overflow-y-auto"
         onClick={e => e.stopPropagation()}
       >
-        <div className="flex justify-between items-center mb-6">
-          <h2 className="text-2xl font-bold text-white">Order Details</h2>
+        {/* Header */}
+        <div className="flex justify-between items-center mb-6 pb-4 border-b border-gray-200 dark:border-gray-700">
+          <div>
+            <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Order Details</h2>
+            <p className="text-gray-600 dark:text-gray-400 mt-1">View complete order information</p>
+          </div>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-white transition-colors"
+            className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
           >
-            <FiXCircle className="w-6 h-6" />
+            <FiXCircle className="w-6 h-6 text-gray-500 dark:text-gray-400" />
           </button>
         </div>
 
-        {/* Order Info */}
-        <div className="grid grid-cols-2 gap-4 mb-6">
-          <div className="space-y-2">
-            <p className="text-gray-400">Order Number</p>
-            <p className="text-white font-mono">{order.orderNumber}</p>
-          </div>
-          <div className="space-y-2">
-            <p className="text-gray-400">Date</p>
-            <p className="text-white">
-              {order.createdAt ? format(new Date(order.createdAt), 'PPP') : 'N/A'}
-            </p>
-          </div>
-          <div className="space-y-2">
-            <p className="text-gray-400">Status</p>
-            <p className="text-white flex items-center gap-2">
-              {getStatusIcon(order.status)}
-              {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
-            </p>
-          </div>
-          <div className="space-y-2">
-            <p className="text-gray-400">Payment Status</p>
-            <p className={`inline-flex px-3 py-1 rounded-full text-sm ${getPaymentStatusColor(order.paymentStatus)}`}>
-              {order.paymentStatus.charAt(0).toUpperCase() + order.paymentStatus.slice(1)}
-            </p>
+        {/* Order Summary */}
+        <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-6 mb-6">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+            <div className="space-y-2">
+              <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Order Number</p>
+              <p className="text-lg font-mono text-gray-900 dark:text-white">{order.orderNumber}</p>
+            </div>
+            <div className="space-y-2">
+              <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Date</p>
+              <p className="text-lg text-gray-900 dark:text-white">
+                {order.createdAt ? format(new Date(order.createdAt), 'MMM dd, yyyy') : 'N/A'}
+              </p>
+            </div>
+            <div className="space-y-2">
+              <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Status</p>
+              <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm font-medium border ${getStatusColor(order.status)}`}>
+                {getStatusIcon(order.status)}
+                {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
+              </div>
+            </div>
+            <div className="space-y-2">
+              <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Payment Status</p>
+              <div className={`inline-flex px-3 py-1 rounded-full text-sm font-medium border ${getPaymentStatusColor(order.paymentStatus)}`}>
+                {order.paymentStatus.charAt(0).toUpperCase() + order.paymentStatus.slice(1)}
+              </div>
+            </div>
           </div>
         </div>
 
-        {/* Shipping Info */}
+        {/* Shipping Information */}
         <div className="mb-6">
-          <h3 className="text-lg font-semibold text-white mb-4">Shipping Information</h3>
-          <div className="grid grid-cols-2 gap-4 bg-white/5 rounded-xl p-4">
-            <div className="space-y-2">
-              <p className="text-gray-400">Name</p>
-              <p className="text-white">{order.shippingFirstName} {order.shippingLastName}</p>
-            </div>
-            <div className="space-y-2">
-              <p className="text-gray-400">Email</p>
-              <p className="text-white">{order.shippingEmail}</p>
-            </div>
-            <div className="space-y-2">
-              <p className="text-gray-400">Phone</p>
-              <p className="text-white">{order.shippingPhone}</p>
-            </div>
-            <div className="space-y-2">
-              <p className="text-gray-400">Address</p>
-              <p className="text-white">
-                {order.shippingStreet}<br />
-                {order.shippingCity}, {order.shippingRegion} {order.shippingPostalCode}<br />
-                {order.shippingCountry}
-              </p>
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+            <FiTruck className="text-blue-600 dark:text-blue-400" />
+            Shipping Information
+          </h3>
+          <div className="bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg p-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-4">
+                <div className="flex items-center gap-3">
+                  <FiUser className="text-gray-500 dark:text-gray-400 flex-shrink-0" />
+                  <div>
+                    <p className="font-medium text-gray-900 dark:text-white">{order.shippingFirstName} {order.shippingLastName}</p>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">Customer Name</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3">
+                  <FiMail className="text-gray-500 dark:text-gray-400 flex-shrink-0" />
+                  <div>
+                    <p className="font-medium text-gray-900 dark:text-white">{order.shippingEmail}</p>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">Email Address</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3">
+                  <FiPhone className="text-gray-500 dark:text-gray-400 flex-shrink-0" />
+                  <div>
+                    <p className="font-medium text-gray-900 dark:text-white">{order.shippingPhone}</p>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">Phone Number</p>
+                  </div>
+                </div>
+              </div>
+              <div className="space-y-4">
+                <div className="flex items-start gap-3">
+                  <FiMapPin className="text-gray-500 dark:text-gray-400 flex-shrink-0 mt-1" />
+                  <div>
+                    <p className="font-medium text-gray-900 dark:text-white">{order.shippingStreet}</p>
+                    <p className="text-gray-900 dark:text-white">{order.shippingCity}, {order.shippingRegion} {order.shippingPostalCode}</p>
+                    <p className="text-gray-900 dark:text-white">{order.shippingCountry}</p>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">Shipping Address</p>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
 
         {/* Order Items */}
         <div>
-          <h3 className="text-lg font-semibold text-white mb-4">Order Items</h3>
-          <div className="space-y-4">
-            {order.items.map((item, index) => (
-              <div key={index} className="flex items-center gap-4 bg-white/5 rounded-xl p-4">
-                {item.image && (
-                  <img src={item.image} alt={item.name} className="w-16 h-16 object-cover rounded-lg" />
-                )}
-                <div className="flex-1">
-                  <h4 className="text-white font-semibold">{item.name}</h4>
-                  <p className="text-gray-400">Quantity: {item.quantity}</p>
-                  <p className="text-cyan-400">${item.price.toFixed(2)} each</p>
-                </div>
-                <div className="text-right">
-                  <p className="text-white font-semibold">${(item.price * item.quantity).toFixed(2)}</p>
-                </div>
-              </div>
-            ))}
-          </div>
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+            <FiPackage className="text-blue-600 dark:text-blue-400" />
+            Order Items
+          </h3>
+          <div className="bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead className="bg-gray-50 dark:bg-gray-600">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Product</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Price</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Quantity</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Total</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-200 dark:divide-gray-600">
+                  {order.items.map((item, index) => (
+                    <tr key={index} className="hover:bg-gray-50 dark:hover:bg-gray-600">
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="flex items-center gap-4">
+                          {item.image && (
+                            <img 
+                              src={item.image} 
+                              alt={item.name} 
+                              className="w-16 h-16 object-cover rounded-lg border border-gray-200 dark:border-gray-600" 
+                            />
+                          )}
+                          <div>
+                            <h4 className="font-medium text-gray-900 dark:text-white">{item.name}</h4>
+                            <p className="text-sm text-gray-500 dark:text-gray-400">Product Item</p>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className="text-gray-900 dark:text-white font-medium">${item.price.toFixed(2)}</span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className="text-gray-900 dark:text-white">{item.quantity}</span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className="text-gray-900 dark:text-white font-semibold">${(item.price * item.quantity).toFixed(2)}</span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
 
-          {/* Total */}
-          <div className="mt-6 pt-6 border-t border-gray-700">
-            <div className="flex justify-between items-center">
-              <p className="text-lg text-white font-semibold">Total Amount</p>
-              <p className="text-2xl font-bold bg-gradient-to-r from-cyan-400 to-purple-400 bg-clip-text text-transparent">
-                ${order.total.toFixed(2)}
-              </p>
+            {/* Order Total */}
+            <div className="bg-gray-50 dark:bg-gray-600 px-6 py-4 border-t border-gray-200 dark:border-gray-600">
+              <div className="flex justify-between items-center">
+                <span className="text-lg font-semibold text-gray-900 dark:text-white">Total Amount</span>
+                <span className="text-2xl font-bold text-blue-600 dark:text-blue-400">${order.total.toFixed(2)}</span>
+              </div>
             </div>
           </div>
         </div>
@@ -264,56 +331,36 @@ export default function OrdersPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen relative overflow-hidden bg-gradient-to-br from-gray-900 via-black to-gray-900">
-        {/* Animated background */}
-        <div className="absolute inset-0">
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_25%_25%,rgba(56,189,248,0.1),transparent_50%)]" />
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_75%_75%,rgba(147,51,234,0.1),transparent_50%)]" />
-        </div>
-        
-        <div className="relative z-10 flex items-center justify-center min-h-screen">
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.8 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="text-center"
+        >
           <motion.div
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="text-center"
-          >
-            <motion.div
-              animate={{ rotate: 360 }}
-              transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
-              className="w-16 h-16 border-4 border-cyan-400/30 border-t-cyan-400 rounded-full mx-auto mb-4"
-            />
-            <p className="text-gray-400 text-lg">Loading orders...</p>
-          </motion.div>
-        </div>
+            animate={{ rotate: 360 }}
+            transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+            className="w-16 h-16 border-4 border-blue-200 dark:border-blue-800 border-t-blue-600 dark:border-t-blue-400 rounded-full mx-auto mb-4"
+          />
+          <p className="text-gray-600 dark:text-gray-400 text-lg">Loading orders...</p>
+        </motion.div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen relative overflow-hidden bg-gradient-to-br from-gray-900 via-black to-gray-900">
-      {/* Animated background */}
-      <div className="absolute inset-0">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_25%_25%,rgba(56,189,248,0.1),transparent_50%)]" />
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_75%_75%,rgba(147,51,234,0.1),transparent_50%)]" />
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(236,72,153,0.05),transparent_50%)]" />
-      </div>
-
-      {/* Grid overlay */}
-      <div className="absolute inset-0 opacity-10">
-        <div className="absolute inset-0 bg-[linear-gradient(rgba(34,211,238,0.1)_1px,transparent_1px),linear-gradient(90deg,rgba(34,211,238,0.1)_1px,transparent_1px)] bg-[size:50px_50px]" />
-      </div>
-
-      <div className="relative z-10 container mx-auto py-8 px-4">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+      <div className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="text-center mb-12"
+          className="mb-8"
         >
-          <h1 className="text-5xl font-bold mb-4 bg-gradient-to-r from-cyan-400 via-purple-500 to-pink-500 bg-clip-text text-transparent">
-            Order Management
-          </h1>
-          <p className="text-gray-400 text-lg">Monitor and manage all customer orders</p>
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+            <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">Order Management</h1>
+            <p className="text-gray-600 dark:text-gray-400">Monitor and manage all customer orders</p>
+          </div>
         </motion.div>
 
         {/* Stats Cards */}
@@ -324,108 +371,129 @@ export default function OrdersPage() {
           transition={{ delay: 0.2 }}
         >
           {/* Total Orders */}
-          <motion.div 
-            whileHover={{ scale: 1.02 }}
-            className="relative group"
-          >
-            <div className="absolute -inset-0.5 bg-gradient-to-r from-cyan-500/20 to-blue-500/20 rounded-xl blur opacity-50 group-hover:opacity-100 transition duration-300" />
-            <div className="relative bg-black/60 backdrop-blur-xl border border-cyan-500/30 rounded-xl p-6 text-center">
-              <FiPackage className="text-3xl text-cyan-400 mx-auto mb-3" />
-              <div className="text-2xl font-bold text-white">{stats.total}</div>
-              <div className="text-gray-400 text-sm">Total Orders</div>
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Total Orders</p>
+                <p className="text-2xl font-bold text-gray-900 dark:text-white mt-1">{stats.total}</p>
+                <div className="flex items-center gap-1 text-green-600 dark:text-green-400 text-sm mt-2">
+                  <span>All time</span>
+                </div>
+              </div>
+              <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900/50 rounded-lg flex items-center justify-center">
+                <FiPackage className="w-6 h-6 text-blue-600 dark:text-blue-400" />
+              </div>
             </div>
-          </motion.div>
+          </div>
 
           {/* Pending Orders */}
-          <motion.div 
-            whileHover={{ scale: 1.02 }}
-            className="relative group"
-          >
-            <div className="absolute -inset-0.5 bg-gradient-to-r from-yellow-500/20 to-orange-500/20 rounded-xl blur opacity-50 group-hover:opacity-100 transition duration-300" />
-            <div className="relative bg-black/60 backdrop-blur-xl border border-yellow-500/30 rounded-xl p-6 text-center">
-              <FiClock className="text-3xl text-yellow-400 mx-auto mb-3" />
-              <div className="text-2xl font-bold text-white">{stats.pending}</div>
-              <div className="text-gray-400 text-sm">Pending</div>
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Pending</p>
+                <p className="text-2xl font-bold text-gray-900 dark:text-white mt-1">{stats.pending}</p>
+                <div className="flex items-center gap-1 text-yellow-600 dark:text-yellow-400 text-sm mt-2">
+                  <span>Needs attention</span>
+                </div>
+              </div>
+              <div className="w-12 h-12 bg-yellow-100 dark:bg-yellow-900/50 rounded-lg flex items-center justify-center">
+                <FiClock className="w-6 h-6 text-yellow-600 dark:text-yellow-400" />
+              </div>
             </div>
-          </motion.div>
+          </div>
 
           {/* Processing Orders */}
-          <motion.div 
-            whileHover={{ scale: 1.02 }}
-            className="relative group"
-          >
-            <div className="absolute -inset-0.5 bg-gradient-to-r from-blue-500/20 to-purple-500/20 rounded-xl blur opacity-50 group-hover:opacity-100 transition duration-300" />
-            <div className="relative bg-black/60 backdrop-blur-xl border border-blue-500/30 rounded-xl p-6 text-center">
-              <FiRefreshCw className="text-3xl text-blue-400 mx-auto mb-3" />
-              <div className="text-2xl font-bold text-white">{stats.processing}</div>
-              <div className="text-gray-400 text-sm">Processing</div>
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Processing</p>
+                <p className="text-2xl font-bold text-gray-900 dark:text-white mt-1">{stats.processing}</p>
+                <div className="flex items-center gap-1 text-blue-600 dark:text-blue-400 text-sm mt-2">
+                  <span>In progress</span>
+                </div>
+              </div>
+              <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900/50 rounded-lg flex items-center justify-center">
+                <FiRefreshCw className="w-6 h-6 text-blue-600 dark:text-blue-400" />
+              </div>
             </div>
-          </motion.div>
+          </div>
 
           {/* Delivered Orders */}
-          <motion.div 
-            whileHover={{ scale: 1.02 }}
-            className="relative group"
-          >
-            <div className="absolute -inset-0.5 bg-gradient-to-r from-green-500/20 to-emerald-500/20 rounded-xl blur opacity-50 group-hover:opacity-100 transition duration-300" />
-            <div className="relative bg-black/60 backdrop-blur-xl border border-green-500/30 rounded-xl p-6 text-center">
-              <FiCheckCircle className="text-3xl text-green-400 mx-auto mb-3" />
-              <div className="text-2xl font-bold text-white">{stats.delivered}</div>
-              <div className="text-gray-400 text-sm">Delivered</div>
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Delivered</p>
+                <p className="text-2xl font-bold text-gray-900 dark:text-white mt-1">{stats.delivered}</p>
+                <div className="flex items-center gap-1 text-green-600 dark:text-green-400 text-sm mt-2">
+                  <span>Completed</span>
+                </div>
+              </div>
+              <div className="w-12 h-12 bg-green-100 dark:bg-green-900/50 rounded-lg flex items-center justify-center">
+                <FiCheckCircle className="w-6 h-6 text-green-600 dark:text-green-400" />
+              </div>
             </div>
-          </motion.div>
+          </div>
 
           {/* Revenue */}
-          <motion.div 
-            whileHover={{ scale: 1.02 }}
-            className="relative group"
-          >
-            <div className="absolute -inset-0.5 bg-gradient-to-r from-purple-500/20 to-pink-500/20 rounded-xl blur opacity-50 group-hover:opacity-100 transition duration-300" />
-            <div className="relative bg-black/60 backdrop-blur-xl border border-purple-500/30 rounded-xl p-6 text-center">
-              <FiDollarSign className="text-3xl text-purple-400 mx-auto mb-3" />
-              <div className="text-2xl font-bold text-white">${stats.totalRevenue.toFixed(0)}</div>
-              <div className="text-gray-400 text-sm">Revenue</div>
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Revenue</p>
+                <p className="text-2xl font-bold text-gray-900 dark:text-white mt-1">${stats.totalRevenue.toFixed(0)}</p>
+                <div className="flex items-center gap-1 text-purple-600 dark:text-purple-400 text-sm mt-2">
+                  <span>Total sales</span>
+                </div>
+              </div>
+              <div className="w-12 h-12 bg-purple-100 dark:bg-purple-900/50 rounded-lg flex items-center justify-center">
+                <FiDollarSign className="w-6 h-6 text-purple-600 dark:text-purple-400" />
+              </div>
             </div>
-          </motion.div>
+          </div>
         </motion.div>
 
         {/* Filters and Export */}
-        <div className="mb-6 flex flex-wrap gap-4 items-center justify-between">
-          <div className="flex gap-4">
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-[150px] bg-black/60 border-gray-600">
-                <SelectValue placeholder="Filter by status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Statuses</SelectItem>
-                <SelectItem value="pending">Pending</SelectItem>
-                <SelectItem value="processing">Processing</SelectItem>
-                <SelectItem value="shipped">Shipped</SelectItem>
-                <SelectItem value="delivered">Delivered</SelectItem>
-                <SelectItem value="cancelled">Cancelled</SelectItem>
-              </SelectContent>
-            </Select>
+        <div className="mb-6 bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+          <div className="flex flex-wrap gap-4 items-center justify-between">
+            <div className="flex gap-4">
+              <div className="flex items-center gap-2">
+                <FiFilter className="text-gray-500 dark:text-gray-400" />
+                <Select value={statusFilter} onValueChange={setStatusFilter}>
+                  <SelectTrigger className="w-[180px]">
+                    <SelectValue placeholder="Filter by status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Statuses</SelectItem>
+                    <SelectItem value="pending">Pending</SelectItem>
+                    <SelectItem value="processing">Processing</SelectItem>
+                    <SelectItem value="shipped">Shipped</SelectItem>
+                    <SelectItem value="delivered">Delivered</SelectItem>
+                    <SelectItem value="cancelled">Cancelled</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
 
-            <Select value={paymentFilter} onValueChange={setPaymentFilter}>
-              <SelectTrigger className="w-[150px] bg-black/60 border-gray-600">
-                <SelectValue placeholder="Filter by payment" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Payments</SelectItem>
-                <SelectItem value="pending">Pending</SelectItem>
-                <SelectItem value="paid">Paid</SelectItem>
-                <SelectItem value="failed">Failed</SelectItem>
-              </SelectContent>
-            </Select>
+              <Select value={paymentFilter} onValueChange={setPaymentFilter}>
+                <SelectTrigger className="w-[180px]">
+                  <SelectValue placeholder="Filter by payment" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Payments</SelectItem>
+                  <SelectItem value="pending">Pending</SelectItem>
+                  <SelectItem value="paid">Paid</SelectItem>
+                  <SelectItem value="failed">Failed</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <Button
+              onClick={handleExportOrders}
+              variant="outline"
+              className="flex items-center gap-2"
+            >
+              <FiDownload className="w-4 h-4" />
+              Export Orders
+            </Button>
           </div>
-
-          <Button
-            onClick={handleExportOrders}
-            className="bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-400 border border-cyan-500/30"
-          >
-            <FiDownload className="mr-2" />
-            Export Orders
-          </Button>
         </div>
 
         {/* Orders Table */}
@@ -433,142 +501,136 @@ export default function OrdersPage() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.4 }}
-          className="relative group"
+          className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden"
         >
-          <div className="absolute -inset-0.5 bg-gradient-to-r from-cyan-500/10 to-purple-500/10 rounded-2xl blur opacity-50" />
-          <div className="relative bg-black/60 backdrop-blur-xl border border-cyan-500/20 rounded-2xl overflow-hidden
-                        hover:shadow-[0_0_40px_rgba(34,211,238,0.2)] transition-all duration-500">
-            
-            {/* Table Header */}
-            <div className="bg-gradient-to-r from-cyan-500/10 to-purple-500/10 p-6 border-b border-gray-700/50">
-              <h2 className="text-2xl font-bold text-white flex items-center gap-3">
-                <FiPackage className="text-cyan-400" />
-                Recent Orders
-              </h2>
-            </div>
-
-            {/* Table Content */}
-            <div className="overflow-x-auto">
-        <Table>
-          <TableHeader>
-                  <TableRow className="border-gray-700/50 hover:bg-gray-800/20">
-                    <TableHead className="text-cyan-400 font-semibold">Order Number</TableHead>
-                    <TableHead className="text-cyan-400 font-semibold">Date</TableHead>
-                    <TableHead className="text-cyan-400 font-semibold">Customer</TableHead>
-                    <TableHead className="text-cyan-400 font-semibold">Total Amount</TableHead>
-                    <TableHead className="text-cyan-400 font-semibold">Status</TableHead>
-                    <TableHead className="text-cyan-400 font-semibold">Payment</TableHead>
-                    <TableHead className="text-cyan-400 font-semibold">Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-                  <AnimatePresence>
-                    {filteredOrders.map((order: Order, index) => (
-                      <motion.tr
-                        key={order.$id}
-                        initial={{ opacity: 0, x: -20 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        exit={{ opacity: 0, x: 20 }}
-                        transition={{ delay: index * 0.05 }}
-                        className="border-gray-700/30 hover:bg-gray-800/30 transition-colors group/row"
-                      >
-                        <TableCell className="text-white font-mono">
-                          <div className="flex items-center gap-2">
-                            <button
-                              onClick={() => setSelectedOrder(order)}
-                              className="text-gray-400 hover:text-cyan-400 transition-colors"
-                            >
-                              <FiEye />
-                            </button>
-                            {order.orderNumber}
-                          </div>
-                        </TableCell>
-                        <TableCell className="text-gray-300">
-                          <div className="flex items-center gap-2">
-                            <FiCalendar className="text-gray-500" />
-                            {order.createdAt ? format(new Date(order.createdAt), 'MMM dd, yyyy') : 'N/A'}
-                          </div>
-                        </TableCell>
-                        <TableCell className="text-gray-300">
-                          <div className="flex items-center gap-2">
-                            <FiUser className="text-gray-500" />
-                            {order.userId}
-                          </div>
-                        </TableCell>
-                        <TableCell className="text-white font-bold">
-                          <span className="bg-gradient-to-r from-green-400 to-emerald-400 bg-clip-text text-transparent">
-                            ${order.total.toFixed(2)}
-                          </span>
-                </TableCell>
-                <TableCell>
-                          <div className="flex items-center gap-2">
-                            {getStatusIcon(order.status)}
-                  <Select
-                    defaultValue={order.status}
-                    onValueChange={(value) => handleStatusChange(order.$id!, value as 'pending' | 'processing' | 'shipped' | 'delivered' | 'cancelled')}
-                  >
-                    <SelectTrigger className="w-[140px] bg-black/60 border-gray-600 text-white hover:border-cyan-400/40 transition-colors">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent className="bg-black/90 backdrop-blur-xl border-gray-600">
-                      <SelectItem value="pending" className="text-yellow-400">Pending</SelectItem>
-                      <SelectItem value="processing" className="text-blue-400">Processing</SelectItem>
-                      <SelectItem value="shipped" className="text-purple-400">Shipped</SelectItem>
-                      <SelectItem value="delivered" className="text-green-400">Delivered</SelectItem>
-                      <SelectItem value="cancelled" className="text-red-400">Cancelled</SelectItem>
-                    </SelectContent>
-                  </Select>
-                          </div>
-                </TableCell>
-                <TableCell>
-                  <Select
-                    defaultValue={order.paymentStatus}
-                    onValueChange={(value) => handlePaymentStatusChange(order.$id!, value as Order['paymentStatus'])}
-                  >
-                            <SelectTrigger className="w-[120px] bg-black/60 border-gray-600 text-white hover:border-cyan-400/40 transition-colors">
-                              <SelectValue />
-                    </SelectTrigger>
-                            <SelectContent className="bg-black/90 backdrop-blur-xl border-gray-600">
-                              <SelectItem value="pending" className="text-yellow-400">Pending</SelectItem>
-                              <SelectItem value="paid" className="text-green-400">Paid</SelectItem>
-                              <SelectItem value="failed" className="text-red-400">Failed</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </TableCell>
-                <TableCell>
-                          <motion.button
-                            whileHover={{ scale: 1.1 }}
-                            whileTap={{ scale: 0.9 }}
-                    onClick={() => handleDeleteOrder(order.$id!)}
-                            className="p-2 bg-red-500/20 hover:bg-red-500/30 border border-red-500/30 text-red-400 
-                                     rounded-lg transition-all duration-300 hover:shadow-[0_0_20px_rgba(239,68,68,0.3)]"
-                  >
-                            <FiTrash2 />
-                          </motion.button>
-                </TableCell>
-                      </motion.tr>
-            ))}
-                  </AnimatePresence>
-          </TableBody>
-        </Table>
-            </div>
-
-            {filteredOrders.length === 0 && (
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                className="text-center py-16"
-              >
-                <FiPackage className="text-6xl text-gray-600 mx-auto mb-4" />
-                <h3 className="text-xl font-semibold text-gray-400 mb-2">No Orders Found</h3>
-                <p className="text-gray-500">
-                  {orders.length > 0
-                    ? 'No orders match the selected filters.'
-                    : 'Orders will appear here once customers start placing them.'}
-                </p>
-              </motion.div>
-            )}
+          {/* Table Header */}
+          <div className="bg-gray-50 dark:bg-gray-700 px-6 py-4 border-b border-gray-200 dark:border-gray-600">
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+              <FiPackage className="text-blue-600 dark:text-blue-400" />
+              Orders ({filteredOrders.length})
+            </h2>
           </div>
+
+          {/* Table Content */}
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="font-semibold text-gray-900 dark:text-white">Order Number</TableHead>
+                  <TableHead className="font-semibold text-gray-900 dark:text-white">Date</TableHead>
+                  <TableHead className="font-semibold text-gray-900 dark:text-white">Customer</TableHead>
+                  <TableHead className="font-semibold text-gray-900 dark:text-white">Total Amount</TableHead>
+                  <TableHead className="font-semibold text-gray-900 dark:text-white">Status</TableHead>
+                  <TableHead className="font-semibold text-gray-900 dark:text-white">Payment</TableHead>
+                  <TableHead className="font-semibold text-gray-900 dark:text-white">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                <AnimatePresence>
+                  {filteredOrders.map((order: Order, index) => (
+                    <motion.tr
+                      key={order.$id}
+                      initial={{ opacity: 0, x: -20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      exit={{ opacity: 0, x: 20 }}
+                      transition={{ delay: index * 0.05 }}
+                      className="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                    >
+                      <TableCell className="font-mono text-sm">
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => setSelectedOrder(order)}
+                            className="p-1 hover:bg-gray-100 dark:hover:bg-gray-600 rounded transition-colors"
+                            title="View order details"
+                          >
+                            <FiEye className="w-4 h-4 text-gray-500 dark:text-gray-400" />
+                          </button>
+                          <span className="font-medium text-gray-900 dark:text-white">{order.orderNumber}</span>
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-gray-700 dark:text-gray-300">
+                        <div className="flex items-center gap-2">
+                          <FiCalendar className="w-4 h-4 text-gray-400 dark:text-gray-500" />
+                          {order.createdAt ? format(new Date(order.createdAt), 'MMM dd, yyyy') : 'N/A'}
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-gray-700 dark:text-gray-300">
+                        <div className="flex items-center gap-2">
+                          <FiUser className="w-4 h-4 text-gray-400 dark:text-gray-500" />
+                          <div>
+                            <p className="font-medium text-gray-900 dark:text-white">{order.shippingFirstName} {order.shippingLastName}</p>
+                            <p className="text-sm text-gray-500 dark:text-gray-400">{order.shippingEmail}</p>
+                          </div>
+                        </div>
+                      </TableCell>
+                      <TableCell className="font-semibold text-gray-900 dark:text-white">
+                        ${order.total.toFixed(2)}
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          <Select
+                            defaultValue={order.status}
+                            onValueChange={(value) => handleStatusChange(order.$id!, value as 'pending' | 'processing' | 'shipped' | 'delivered' | 'cancelled')}
+                          >
+                            <SelectTrigger className="w-[140px]">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="pending">Pending</SelectItem>
+                              <SelectItem value="processing">Processing</SelectItem>
+                              <SelectItem value="shipped">Shipped</SelectItem>
+                              <SelectItem value="delivered">Delivered</SelectItem>
+                              <SelectItem value="cancelled">Cancelled</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <Select
+                          defaultValue={order.paymentStatus}
+                          onValueChange={(value) => handlePaymentStatusChange(order.$id!, value as Order['paymentStatus'])}
+                        >
+                          <SelectTrigger className="w-[120px]">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="pending">Pending</SelectItem>
+                            <SelectItem value="paid">Paid</SelectItem>
+                            <SelectItem value="failed">Failed</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </TableCell>
+                      <TableCell>
+                        <button
+                          onClick={() => handleDeleteOrder(order.$id!)}
+                          className="p-2 hover:bg-red-50 dark:hover:bg-red-900/50 text-red-600 dark:text-red-400 rounded-lg transition-colors"
+                          title="Delete order"
+                        >
+                          <FiTrash2 className="w-4 h-4" />
+                        </button>
+                      </TableCell>
+                    </motion.tr>
+                  ))}
+                </AnimatePresence>
+              </TableBody>
+            </Table>
+          </div>
+
+          {filteredOrders.length === 0 && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="text-center py-16"
+            >
+              <FiPackage className="text-6xl text-gray-300 dark:text-gray-600 mx-auto mb-4" />
+              <h3 className="text-xl font-semibold text-gray-500 dark:text-gray-400 mb-2">No Orders Found</h3>
+              <p className="text-gray-400 dark:text-gray-500">
+                {orders.length > 0
+                  ? 'No orders match the selected filters.'
+                  : 'Orders will appear here once customers start placing them.'}
+              </p>
+            </motion.div>
+          )}
         </motion.div>
       </div>
 
