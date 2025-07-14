@@ -215,6 +215,77 @@ export const notificationService = {
     });
   },
 
+  // Create comprehensive payment success notification for customer
+  async createPaymentSuccessNotification(userId: string, orderId: string, orderNumber: string, paymentAmount: number, paymentMethod: string): Promise<Notification> {
+    return this.createNotification({
+      type: 'payment',
+      title: `Payment Successful - Order #${orderNumber}`,
+      priority: 'high',
+      userId,
+      orderId,
+      orderNumber,
+      actionType: 'view_invoice',
+      metadata: {
+        paymentAmount,
+        paymentMethod,
+        timestamp: new Date().toISOString()
+      }
+    });
+  },
+
+  // Create payment success notification for admin
+  async createAdminPaymentNotification(orderId: string, orderNumber: string, customerName: string, paymentAmount: number, paymentMethod: string): Promise<Notification> {
+    return this.createNotification({
+      type: 'payment',
+      title: `Payment Received - Order #${orderNumber}`,
+      priority: 'high',
+      orderId,
+      orderNumber,
+      actionType: 'view_order',
+      metadata: {
+        customerName,
+        paymentAmount,
+        paymentMethod,
+        timestamp: new Date().toISOString()
+      }
+    });
+  },
+
+  // Create order confirmation notification for customer
+  async createOrderConfirmationNotification(userId: string, orderId: string, orderNumber: string, totalAmount: number, estimatedDelivery: string): Promise<Notification> {
+    return this.createNotification({
+      type: 'order',
+      title: `Order Confirmed - #${orderNumber}`,
+      priority: 'high',
+      userId,
+      orderId,
+      orderNumber,
+      actionType: 'view_order',
+      metadata: {
+        totalAmount,
+        estimatedDelivery,
+        timestamp: new Date().toISOString()
+      }
+    });
+  },
+
+  // Create shipping notification for customer
+  async createShippingNotification(userId: string, orderId: string, orderNumber: string, trackingNumber?: string): Promise<Notification> {
+    return this.createNotification({
+      type: 'shipping',
+      title: `Order Shipped - #${orderNumber}`,
+      priority: 'medium',
+      userId,
+      orderId,
+      orderNumber,
+      actionType: 'track_order',
+      metadata: {
+        trackingNumber,
+        timestamp: new Date().toISOString()
+      }
+    });
+  },
+
   // Create product notification
   async createProductNotification(productId: string, productName: string, action: string): Promise<Notification> {
     return this.createNotification({

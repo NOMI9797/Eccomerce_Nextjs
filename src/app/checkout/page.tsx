@@ -37,16 +37,24 @@ import { useRouter } from 'next/navigation';
 import { ordersService } from '@/appwrite/db/orders';
 import { notificationService } from '@/appwrite/db/notifications';
 import { useNotifications } from '@/session/NotificationContext';
+import StripeCheckout from './components/StripeCheckout';
+import NotificationToastSystem, { 
+  useNotificationToasts, 
+  createPaymentSuccessToast, 
+  createOrderConfirmationToast 
+} from '@/components/ui/notification-toast-system';
 
 export default function CheckoutPage() {
   const { user } = useAuth();
   const { cart, clearCart } = useCart();
   const { fetchNotifications } = useNotifications();
   const router = useRouter();
+  const { toasts, addToast, removeToast } = useNotificationToasts();
   const deliveryFee = 10.00;
   const [showInvoice, setShowInvoice] = useState(false);
   const [orderDetails, setOrderDetails] = useState<any>(null);
   const [paymentMethod, setPaymentMethod] = useState<'stripe' | 'cod'>('cod');
+  const [processing, setProcessing] = useState(false);
   const { locationData, loading: locationLoading } = useLocation();
   const [address, setAddress] = useState({
     country: '',
@@ -98,8 +106,42 @@ export default function CheckoutPage() {
     return true;
   };
 
-  const handlePlaceOrder = async () => {
+  // Stripe payment success handler
+  const handleStripePaymentSuccess = async (paymentIntent: any) => {
+    await createOrderWithPayment('paid', paymentIntent.id);
+  };
+
+  // Update payment intent with order metadata
+  const updatePaymentIntentMetadata = async (paymentIntentId: string, orderId: string, orderNumber: string, userId: string) => {
+    try {
+      await fetch('/api/stripe/update-payment-intent', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          paymentIntentId,
+          orderId,
+          orderNumber,
+          userId,
+        }),
+      });
+    } catch (error) {
+      console.error('Failed to update payment intent metadata:', error);
+    }
+  };
+
+  // Stripe payment error handler
+  const handleStripePaymentError = (error: string) => {
+    toast.error(`Payment failed: ${error}`);
+    setProcessing(false);
+  };
+
+  // Create order with payment status
+  const createOrderWithPayment = async (paymentStatus: 'pending' | 'paid' | 'failed', paymentIntentId?: string) => {
     if (!validateForm()) return;
+
+    setProcessing(true);
 
     try {
       // Create order data
@@ -114,7 +156,7 @@ export default function CheckoutPage() {
         })),
         total: cart.items.reduce((total, item) => total + (item.price * item.quantity), 0) + deliveryFee,
         status: 'pending' as const,
-        paymentStatus: 'pending' as const,
+        paymentStatus,
         shippingFirstName: firstName,
         shippingLastName: lastName,
         shippingEmail: email,
@@ -129,24 +171,85 @@ export default function CheckoutPage() {
       // Save order to database
       const result = await ordersService.createOrder(orderData);
 
+      // Update payment intent metadata for webhooks (if payment intent ID is provided)
+      if (paymentIntentId && result.$id && user?.$id) {
+        await updatePaymentIntentMetadata(
+          paymentIntentId,
+          result.$id,
+          result.orderNumber,
+          user.$id
+        );
+      }
+
       // Create notifications for both admin and customer
       try {
         if (result.$id && user?.$id) {
-          // Create admin notification
-          await notificationService.createOrderNotification(
-            result.$id,
-            result.orderNumber,
-            `${firstName} ${lastName}`
-          );
+          const orderTotal = cart.items.reduce((total, item) => total + (item.price * item.quantity), 0) + deliveryFee;
+          const estimatedDelivery = new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toLocaleDateString(); // 5 days from now
 
-          // Create customer notification
-          await notificationService.createCustomerOrderNotification(
-            user.$id,
-            result.$id,
-            result.orderNumber
-          );
+          if (paymentStatus === 'paid') {
+            // Create comprehensive payment success notifications
+            await notificationService.createPaymentSuccessNotification(
+              user.$id,
+              result.$id,
+              result.orderNumber,
+              orderTotal,
+              'Credit/Debit Card (Stripe)'
+            );
 
-          // Refresh notifications to show the new one
+            await notificationService.createAdminPaymentNotification(
+              result.$id,
+              result.orderNumber,
+              `${firstName} ${lastName}`,
+              orderTotal,
+              'Credit/Debit Card (Stripe)'
+            );
+
+            // Show rich payment success toast
+            addToast(createPaymentSuccessToast(
+              result.orderNumber,
+              orderTotal,
+              'Credit/Debit Card (Stripe)'
+            ));
+
+            // Also create order confirmation notification
+            await notificationService.createOrderConfirmationNotification(
+              user.$id,
+              result.$id,
+              result.orderNumber,
+              orderTotal,
+              estimatedDelivery
+            );
+
+            // Show order confirmation toast
+            addToast(createOrderConfirmationToast(
+              result.orderNumber,
+              orderTotal,
+              estimatedDelivery
+            ));
+          } else {
+            // Create basic order notifications for COD
+            await notificationService.createOrderNotification(
+              result.$id,
+              result.orderNumber,
+              `${firstName} ${lastName}`
+            );
+
+            await notificationService.createCustomerOrderNotification(
+              user.$id,
+              result.$id,
+              result.orderNumber
+            );
+
+            // Show order confirmation toast for COD
+            addToast(createOrderConfirmationToast(
+              result.orderNumber,
+              orderTotal,
+              estimatedDelivery
+            ));
+          }
+
+          // Refresh notifications to show the new ones
           await fetchNotifications();
         }
       } catch (notificationError) {
@@ -158,12 +261,15 @@ export default function CheckoutPage() {
       const invoiceData = {
         orderDetails: {
           orderId: result.$id,
+          orderNumber: result.orderNumber,
           date: new Date().toLocaleDateString(),
           items: cart.items,
           subtotal: cart.items.reduce((total, item) => total + (item.price * item.quantity), 0),
           deliveryFee,
           total: cart.items.reduce((total, item) => total + (item.price * item.quantity), 0) + deliveryFee,
-          paymentMethod: paymentMethod === 'cod' ? 'Cash on Delivery' : 'Credit/Debit Card',
+          paymentMethod: paymentStatus === 'paid' ? 'Credit/Debit Card (Stripe)' : 'Cash on Delivery',
+          paymentStatus,
+          paymentIntentId,
         },
         customerDetails: {
           firstName,
@@ -187,10 +293,22 @@ export default function CheckoutPage() {
       // Clear cart
       clearCart();
 
-      toast.success('Order placed successfully!');
-    } catch (error) {
+      const successMessage = paymentStatus === 'paid' 
+        ? 'Order placed and payment processed successfully!' 
+        : 'Order placed successfully!';
+      toast.success(successMessage);
+    } catch (error: any) {
       console.error('Error placing order:', error);
       toast.error('Failed to place order. Please try again.');
+    } finally {
+      setProcessing(false);
+    }
+  };
+
+  const handlePlaceOrder = async () => {
+    // Only handle COD orders here, Stripe orders are handled in handleStripePaymentSuccess
+    if (paymentMethod === 'cod') {
+      await createOrderWithPayment('pending');
     }
   };
 
@@ -408,29 +526,61 @@ export default function CheckoutPage() {
                 
                 <RadioGroup value={paymentMethod} onValueChange={(value: 'stripe' | 'cod') => setPaymentMethod(value)}>
                   <div className="space-y-3">
-                    <div className="flex items-center space-x-3 p-4 border border-gray-200 rounded-lg hover:bg-gray-50">
+                    <div className={`flex items-center space-x-3 p-4 border rounded-lg transition-all ${
+                      paymentMethod === 'cod' 
+                        ? 'border-green-300 bg-green-50 dark:bg-green-900/20 dark:border-green-600' 
+                        : 'border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700'
+                    }`}>
                       <RadioGroupItem value="cod" id="cod" />
                       <Label htmlFor="cod" className="flex items-center gap-3 cursor-pointer flex-1">
-                        <FiDollarSign className="text-green-600" />
+                        <FiDollarSign className="text-green-600 dark:text-green-400" />
                         <div>
-                          <p className="font-medium text-gray-900">Cash on Delivery</p>
-                          <p className="text-sm text-gray-500">Pay when you receive your order</p>
+                          <p className="font-medium text-gray-900 dark:text-white">Cash on Delivery</p>
+                          <p className="text-sm text-gray-500 dark:text-gray-400">Pay when you receive your order</p>
                         </div>
                       </Label>
                     </div>
                     
-                    <div className="flex items-center space-x-3 p-4 border border-gray-200 rounded-lg hover:bg-gray-50 opacity-50">
-                      <RadioGroupItem value="stripe" id="stripe" disabled />
-                      <Label htmlFor="stripe" className="flex items-center gap-3 cursor-not-allowed flex-1">
-                        <FiCreditCard className="text-blue-600" />
+                    <div className={`flex items-center space-x-3 p-4 border rounded-lg transition-all ${
+                      paymentMethod === 'stripe' 
+                        ? 'border-blue-300 bg-blue-50 dark:bg-blue-900/20 dark:border-blue-600' 
+                        : 'border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700'
+                    }`}>
+                      <RadioGroupItem value="stripe" id="stripe" />
+                      <Label htmlFor="stripe" className="flex items-center gap-3 cursor-pointer flex-1">
+                        <FiCreditCard className="text-blue-600 dark:text-blue-400" />
                         <div>
-                          <p className="font-medium text-gray-900">Credit/Debit Card</p>
-                          <p className="text-sm text-gray-500">Coming soon</p>
+                          <p className="font-medium text-gray-900 dark:text-white">Credit/Debit Card</p>
+                          <p className="text-sm text-gray-500 dark:text-gray-400">Secure payment with Stripe</p>
                         </div>
                       </Label>
                     </div>
                   </div>
                 </RadioGroup>
+                
+                {/* Stripe Payment Form */}
+                {paymentMethod === 'stripe' && (
+                  <div className="mt-6 p-6 bg-gray-50 dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600">
+                    <StripeCheckout
+                      amount={cart.items.reduce((total, item) => total + (item.price * item.quantity), 0) + deliveryFee}
+                      onPaymentSuccess={handleStripePaymentSuccess}
+                      onPaymentError={handleStripePaymentError}
+                      customerDetails={{
+                        firstName,
+                        lastName,
+                        email,
+                        phone,
+                        address: {
+                          street: streetAddress,
+                          city: address.city,
+                          region: address.region,
+                          country: address.country,
+                          postalCode: address.postalCode,
+                        },
+                      }}
+                    />
+                  </div>
+                )}
               </div>
             </div>
 
@@ -478,15 +628,56 @@ export default function CheckoutPage() {
                   </div>
                 </div>
                 
-                <Button 
-                  onClick={handlePlaceOrder}
-                  variant="primary"
-                  size="lg"
-                  className="w-full mt-6 gap-2"
-                >
-                  <FiCheck className="w-4 h-4" />
-                  Place Order
-                </Button>
+                {paymentMethod === 'cod' && (
+                  <Button 
+                    onClick={handlePlaceOrder}
+                    disabled={processing}
+                    variant="primary"
+                    size="lg"
+                    className="w-full mt-6 gap-2"
+                  >
+                    <AnimatePresence mode="wait">
+                      {processing ? (
+                        <motion.div
+                          key="processing"
+                          initial={{ opacity: 0 }}
+                          animate={{ opacity: 1 }}
+                          exit={{ opacity: 0 }}
+                          className="flex items-center gap-2"
+                        >
+                          <motion.div
+                            animate={{ rotate: 360 }}
+                            transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                            className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full"
+                          />
+                          Processing...
+                        </motion.div>
+                      ) : (
+                        <motion.div
+                          key="place"
+                          initial={{ opacity: 0 }}
+                          animate={{ opacity: 1 }}
+                          exit={{ opacity: 0 }}
+                          className="flex items-center gap-2"
+                        >
+                          <FiCheck className="w-4 h-4" />
+                          Place Order
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </Button>
+                )}
+                
+                {paymentMethod === 'stripe' && (
+                  <div className="mt-6 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-700">
+                    <div className="flex items-center gap-2 text-blue-800 dark:text-blue-300">
+                      <FiCreditCard className="w-4 h-4" />
+                      <span className="text-sm font-medium">
+                        Complete payment above to place your order
+                      </span>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -504,6 +695,15 @@ export default function CheckoutPage() {
             />
           )}
         </AnimatePresence>
+
+        {/* Rich Notification Toast System */}
+        <NotificationToastSystem
+          notifications={toasts}
+          onNotificationClose={removeToast}
+          onNotificationAction={(actionType, notification) => {
+            console.log('Notification action:', actionType, notification);
+          }}
+        />
       </div>
     </>
   );
