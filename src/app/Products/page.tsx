@@ -7,8 +7,10 @@ import ProductGrid from './components/ProductGrid';
 import CategoryFilter from './components/CategoryFilter';
 import SearchBar from './components/SearchBar';
 import ProductSort from './components/ProductSort';
+import Pagination from './components/Pagination';
 import { useProducts } from '@/app/hooks/useProducts';
 import { useCategories } from '@/app/hooks/useCategories';
+import { usePagination } from '@/app/hooks/usePagination';
 import { useAuth } from '@/session/AuthContext';
 import { useCart } from '@/session/CartContext';
 import { Button } from '@/components/ui/button';
@@ -22,11 +24,6 @@ export default function ProductsPage() {
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [sortBy, setSortBy] = useState<string>("featured");
-  const [hasMore] = useState(false); // We'll implement pagination later
-  
-  const onLoadMore = () => {
-    // We'll implement pagination later
-  };
 
   // Ensure products is an array before filtering
   const productArray = Array.isArray(products) ? products : [];
@@ -50,6 +47,27 @@ export default function ProductsPage() {
         return 0;
     }
   });
+
+  // Pagination logic
+  const {
+    currentPage,
+    totalPages,
+    totalItems,
+    itemsPerPage,
+    paginatedItems: paginatedProducts,
+    goToPage
+  } = usePagination({
+    items: sortedProducts,
+    itemsPerPage: 12,
+    initialPage: 1
+  });
+
+  // Handle page change with scroll to top
+  const handlePageChange = (page: number) => {
+    goToPage(page);
+    // Scroll to top of product grid smoothly
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -260,7 +278,7 @@ export default function ProductsPage() {
           >
             <div className="flex items-center space-x-4">
                   <span className="text-gray-700 dark:text-gray-300 font-medium">
-                {sortedProducts.length} {sortedProducts.length === 1 ? 'Product' : 'Products'} Found
+                {totalItems} {totalItems === 1 ? 'Product' : 'Products'} Found
               </span>
               {selectedCategory !== "all" && (
                 <motion.span 
@@ -302,7 +320,7 @@ export default function ProductsPage() {
 
             {/* Product Grid */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-6">
-              {sortedProducts.map((product, index) => (
+              {paginatedProducts.map((product, index) => (
                 <motion.div
                   key={product.$id}
             variants={itemVariants}
@@ -362,45 +380,14 @@ export default function ProductsPage() {
               ))}
             </div>
 
-            {/* Load More Button */}
-            {hasMore && (
-              <div className="flex justify-center pt-8">
-                <motion.button
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  onClick={onLoadMore}
-                  disabled={isLoading}
-                  className="bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500 text-gray-700 dark:text-gray-300 px-8 py-3 rounded-md transition-all duration-300 flex items-center space-x-3 font-medium shadow-sm hover:shadow"
-                  whileHover={{ y: -2 }}
-                  whileTap={{ y: 0 }}
-          >
-            {isLoading ? (
-                    <>
-                <motion.div 
-                        className="w-5 h-5 border-t-2 border-b-2 border-gray-700 dark:border-gray-300 rounded-full"
-                  animate={{ rotate: 360 }}
-                  transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                      />
-                      <span>Loading...</span>
-                    </>
-                  ) : (
-                    <>
-                      <span>Load More Products</span>
-                      <motion.svg 
-                        className="w-5 h-5" 
-                        fill="none" 
-                        stroke="currentColor" 
-                        viewBox="0 0 24 24"
-                        whileHover={{ y: 2 }}
-                        transition={{ duration: 0.2 }}
-                >
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                      </motion.svg>
-                    </>
-                  )}
-                </motion.button>
-              </div>
-            )}
+            {/* Pagination */}
+            <Pagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              onPageChange={handlePageChange}
+              totalItems={totalItems}
+              itemsPerPage={itemsPerPage}
+            />
           </div>
         </div>
       </motion.main>
