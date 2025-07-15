@@ -3,12 +3,27 @@ import Link from 'next/link';
 import { useCart } from '@/session/CartContext';
 import { Button } from '@/components/ui/button';
 import { CartItem } from '@/appwrite/db/cart';
+import StarRating from '@/components/ui/StarRating';
+import { useEffect, useState } from 'react';
+import { reviewsService } from '@/appwrite/db/reviews';
+import { ReviewStats } from '@/types/review';
+import { FiStar } from 'react-icons/fi';
 
 interface ProductGridProps {
   products: any[];
   hasMore?: boolean;
   isLoading?: boolean;
   onLoadMore?: () => void;
+}
+
+interface ProductWithRating {
+  $id: string;
+  Name: string;
+  Description: string;
+  Price: number;
+  MainImage: string;
+  CategoryId: string;
+  reviewStats?: ReviewStats | null;
 }
 
 export default function ProductGrid({ 
@@ -18,8 +33,44 @@ export default function ProductGrid({
   onLoadMore = () => {} 
 }: ProductGridProps) {
   const { addToCart } = useCart();
+  const [productsWithRatings, setProductsWithRatings] = useState<ProductWithRating[]>([]);
 
-  const handleAddToCart = (product: any) => {
+  useEffect(() => {
+    const loadProductRatings = async () => {
+      const productsWithStats = await Promise.all(
+        products.map(async (product) => {
+          try {
+            const stats = await reviewsService.getProductReviewStats(product.$id);
+            return { 
+              $id: product.$id,
+              Name: product.Name,
+              Description: product.Description,
+              Price: product.Price,
+              MainImage: product.MainImage,
+              CategoryId: product.CategoryId,
+              reviewStats: stats 
+            } as ProductWithRating;
+          } catch (error) {
+            console.error(`Error loading ratings for product ${product.$id}:`, error);
+            return { 
+              $id: product.$id,
+              Name: product.Name,
+              Description: product.Description,
+              Price: product.Price,
+              MainImage: product.MainImage,
+              CategoryId: product.CategoryId,
+              reviewStats: null 
+            } as ProductWithRating;
+          }
+        })
+      );
+      setProductsWithRatings(productsWithStats);
+    };
+
+    loadProductRatings();
+  }, [products]);
+
+  const handleAddToCart = (product: ProductWithRating) => {
     const cartItem: CartItem = {
       productId: product.$id,
       name: product.Name,
@@ -62,7 +113,7 @@ export default function ProductGrid({
   return (
     <div className="space-y-8">
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-        {products.map((product, index) => (
+        {productsWithRatings.map((product, index) => (
           <motion.div
             key={product.$id}
             variants={cardVariants}
@@ -116,7 +167,7 @@ export default function ProductGrid({
                   <p className="text-gray-400 line-clamp-2 mb-4 text-sm group-hover:text-gray-300 transition-colors duration-300">
                     {product.Description}
                   </p>
-                  <div className="flex items-center justify-between">
+                  <div className="flex items-center justify-between mb-3">
                     <motion.span 
                       className="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-purple-400"
                       whileHover={{
@@ -125,6 +176,30 @@ export default function ProductGrid({
                     >
                       ${product.Price.toFixed(2)}
                     </motion.span>
+                  </div>
+                  {/* Rating Display */}
+                  <div className="flex items-center gap-2 mb-3">
+                    {product.reviewStats ? (
+                      <>
+                        <StarRating
+                          rating={product.reviewStats.averageRating}
+                          size="sm"
+                          interactive={false}
+                          showCount={false}
+                        />
+                        <div className="flex items-center gap-1 text-sm text-gray-400">
+                          <span className="font-medium text-yellow-500">
+                            {product.reviewStats.averageRating.toFixed(1)}
+                          </span>
+                          <FiStar className="w-3 h-3 text-yellow-500" />
+                          <span className="text-gray-500">
+                            ({product.reviewStats.totalReviews})
+                          </span>
+                        </div>
+                      </>
+                    ) : (
+                      <span className="text-sm text-gray-500">No reviews yet</span>
+                    )}
                   </div>
                 </div>
               </Link>

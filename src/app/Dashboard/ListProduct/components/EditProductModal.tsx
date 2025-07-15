@@ -8,8 +8,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
-import { FiPackage, FiAlertTriangle } from 'react-icons/fi';
+import { FiPackage, FiAlertTriangle, FiStar, FiShield, FiThumbsUp, FiRefreshCw } from 'react-icons/fi';
 import { Product, getStockStatus } from '../types/product';
+import { reviewsService } from '@/appwrite/db/reviews';
+import { ReviewStats, Review } from '@/types/review';
 
 interface EditProductModalProps {
   product: Product;
@@ -41,6 +43,9 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
   const [newImages, setNewImages] = useState<File[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [reviewStats, setReviewStats] = useState<ReviewStats | null>(null);
+  const [reviewsLoading, setReviewsLoading] = useState(true);
+  const [reviews, setReviews] = useState<Review[]>([]);
 
   useEffect(() => {
     setFormData({
@@ -54,6 +59,21 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
       trackStock: product.TrackStock !== undefined ? product.TrackStock : true,
     });
     setExistingImages(product.Images);
+    
+    // Fetch review statistics
+    const fetchReviewStats = async () => {
+      try {
+        const stats = await reviewsService.getProductReviewStats(product.$id);
+        setReviewStats(stats);
+      } catch (error) {
+        console.error('Error fetching review stats:', error);
+      } finally {
+        setReviewsLoading(false);
+      }
+    };
+    
+    fetchReviewStats();
+    loadReviews();
   }, [product]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -173,6 +193,175 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
     } finally {
       setLoading(false);
     }
+  };
+
+  const loadReviews = async () => {
+    try {
+      const reviews = await reviewsService.getProductReviews(product.$id, {
+        limit: 10,
+        sortBy: 'newest'
+      });
+      setReviews(reviews);
+    } catch (error) {
+      console.error('Error loading reviews:', error);
+    }
+  };
+
+  const renderReviewStats = () => {
+    if (reviewsLoading) {
+      return (
+        <div className="flex items-center justify-center p-6">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+        </div>
+      );
+    }
+
+    if (!reviewStats) {
+      return (
+        <div className="text-center p-6 text-muted-foreground">
+          No reviews available
+        </div>
+      );
+    }
+
+    return (
+      <div className="space-y-6">
+        {/* Stats Overview */}
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="text-3xl font-bold">{reviewStats.averageRating.toFixed(1)}</span>
+                <div className="flex items-center">
+                  {[1, 2, 3, 4, 5].map((star) => (
+                    <FiStar
+                      key={star}
+                      className={cn(
+                        "w-4 h-4",
+                        star <= reviewStats.averageRating
+                          ? "text-yellow-400 fill-current"
+                          : "text-gray-300"
+                      )}
+                    />
+                  ))}
+                </div>
+              </div>
+              <p className="text-sm text-muted-foreground">
+                Based on {reviewStats.totalReviews} reviews
+              </p>
+            </div>
+            <div className="text-right">
+              <div className="text-2xl font-semibold text-green-600">
+                {reviewStats.verifiedReviews}
+              </div>
+              <p className="text-sm text-muted-foreground">Verified Reviews</p>
+            </div>
+          </div>
+
+          {/* Rating Breakdown */}
+          <div className="space-y-2">
+            {[5, 4, 3, 2, 1].map((rating) => {
+              const count = reviewStats.ratingBreakdown[rating as keyof typeof reviewStats.ratingBreakdown] || 0;
+              const percentage = (count / reviewStats.totalReviews) * 100 || 0;
+              
+              return (
+                <div key={rating} className="flex items-center gap-2">
+                  <div className="flex items-center gap-1 w-12">
+                    <span className="text-sm">{rating}</span>
+                    <FiStar className="w-3 h-3 text-yellow-400 fill-current" />
+                  </div>
+                  <div className="flex-1 h-2 bg-gray-200 rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-yellow-400 rounded-full"
+                      style={{ width: `${percentage}%` }}
+                    />
+                  </div>
+                  <div className="w-12 text-sm text-right">{count}</div>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Additional Stats */}
+          <div className="grid grid-cols-2 gap-4 pt-4 border-t">
+            <div>
+              <div className="text-2xl font-semibold text-blue-600">
+                {reviewStats.helpfulReviews}
+              </div>
+              <p className="text-sm text-muted-foreground">Helpful Reviews</p>
+            </div>
+            <div>
+              <div className="text-2xl font-semibold text-purple-600">
+                {reviewStats.recentReviews}
+              </div>
+              <p className="text-sm text-muted-foreground">Recent Reviews</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Recent Reviews List */}
+        <div className="space-y-4 pt-4 border-t">
+          <div className="flex items-center justify-between">
+            <h4 className="text-lg font-semibold">Recent Reviews</h4>
+            <Button variant="outline" size="sm" onClick={loadReviews} disabled={reviewsLoading}>
+              <FiRefreshCw className={cn("w-4 h-4 mr-2", reviewsLoading && "animate-spin")} />
+              Refresh
+            </Button>
+          </div>
+          
+          <div className="space-y-4 max-h-[400px] overflow-y-auto">
+            {reviews.map((review) => (
+              <div key={review.$id} className="bg-muted/30 rounded-lg p-4 space-y-2">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-500 rounded-full flex items-center justify-center text-white text-xs font-semibold">
+                      {review.userName?.split(' ').map(n => n[0]).join('').toUpperCase()}
+                    </div>
+                    <div>
+                      <div className="font-medium">{review.userName}</div>
+                      <div className="text-xs text-muted-foreground">
+                        {new Date(review.createdAt).toLocaleDateString()}
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    {[...Array(5)].map((_, i) => (
+                      <FiStar
+                        key={i}
+                        className={cn(
+                          "w-4 h-4",
+                          i < review.rating ? "text-yellow-400 fill-current" : "text-gray-300"
+                        )}
+                      />
+                    ))}
+                  </div>
+                </div>
+                
+                <div>
+                  <div className="font-medium">{review.title}</div>
+                  <p className="text-sm text-muted-foreground">{review.comment}</p>
+                </div>
+
+                <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                  {review.isVerified && (
+                    <span className="flex items-center gap-1 text-green-600">
+                      <FiShield className="w-3 h-3" />
+                      Verified Purchase
+                    </span>
+                  )}
+                  {review.isHelpful?.length > 0 && (
+                    <span className="flex items-center gap-1">
+                      <FiThumbsUp className="w-3 h-3" />
+                      {review.isHelpful.length} found helpful
+                    </span>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
   };
 
   if (!isOpen) return null;
@@ -394,6 +583,15 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
                 )}
               </div>
             </div>
+          </div>
+
+          {/* Reviews Section */}
+          <div className="bg-muted/50 p-6 rounded-lg border">
+            <div className="flex items-center gap-2 mb-4">
+              <FiStar className="w-5 h-5 text-yellow-500" />
+              <h3 className="text-lg font-semibold">Review Statistics</h3>
+            </div>
+            {renderReviewStats()}
           </div>
 
           {/* Images Section */}

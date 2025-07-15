@@ -8,8 +8,9 @@ import ListProducts from "./ListProduct/page";
 import Categories from "./Categories/page";
 import Orders from "./Orders/page";
 import StockManagement from "./StockManagement/page";
+import UserReviews from "./Reviews/page";
 import AdminRoute from "@/components/AdminRoute";
-import { FiMenu, FiPackage, FiList, FiGrid, FiX, FiHome, FiBarChart, FiUsers, FiTrendingUp, FiTruck, FiExternalLink, FiShoppingCart, FiDollarSign, FiAlertTriangle, FiRefreshCw, FiBell, FiActivity, FiPieChart } from 'react-icons/fi';
+import { FiMenu, FiPackage, FiList, FiGrid, FiX, FiHome, FiBarChart, FiUsers, FiTrendingUp, FiTruck, FiExternalLink, FiShoppingCart, FiDollarSign, FiAlertTriangle, FiRefreshCw, FiBell, FiActivity, FiPieChart, FiStar } from 'react-icons/fi';
 import { 
   LineChart, 
   Line, 
@@ -103,16 +104,19 @@ const DashboardContent: React.FC = () => {
       name: "Add Product",
       icon: <FiPackage className="w-5 h-5" />,
       color: "green",
+      adminOnly: true,
     },
     {
       name: "List Products",
       icon: <FiList className="w-5 h-5" />,
       color: "purple",
+      adminOnly: true,
     },
     {
       name: "Categories",
       icon: <FiGrid className="w-5 h-5" />,
       color: "orange",
+      adminOnly: true,
     },
     {
       name: "Orders",
@@ -123,6 +127,12 @@ const DashboardContent: React.FC = () => {
       name: "Stock Management",
       icon: <FiShoppingCart className="w-5 h-5" />,
       color: "purple",
+      adminOnly: true,
+    },
+    {
+      name: "Your Reviews",
+      icon: <FiStar className="w-5 h-5" />,
+      color: "yellow",
     },
   ];
 
@@ -155,6 +165,8 @@ const DashboardContent: React.FC = () => {
         return <Orders />;
       case "Stock Management":
         return <StockManagement />;
+      case "Your Reviews":
+        return <UserReviews />;
       default:
         return (
           <div className="space-y-6">

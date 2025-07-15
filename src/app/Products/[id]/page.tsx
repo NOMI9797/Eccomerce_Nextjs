@@ -11,11 +11,73 @@ import LoadingSpinner from '@/components/ui/LoadingSpinner';
 import Header from '@/components/Header';
 import Link from 'next/link';
 import { FiArrowLeft, FiHome } from 'react-icons/fi';
+import ReviewStats from '@/components/ui/ReviewStats';
+import ReviewCard from '@/components/ui/ReviewCard';
+import ReviewForm from '@/components/ui/ReviewForm';
+import { useAuth } from '@/session/AuthContext';
+import { useState, useEffect as useReactEffect } from 'react';
+import { Review, ReviewStats as ReviewStatsType } from '@/types/review';
+import { reviewsService } from '@/appwrite/db/reviews';
+import { Button } from '@/components/ui/button';
+import { FiStar, FiMessageCircle, FiFilter } from 'react-icons/fi';
 
 export default function ProductDetails() {
   const params = useParams();
   const productId = params?.id as string;
   const { data: product, isLoading, error } = useProduct(productId);
+  const { user } = useAuth();
+  
+  // Reviews state
+  const [reviews, setReviews] = useState<Review[]>([]);
+  const [reviewStats, setReviewStats] = useState<ReviewStatsType | null>(null);
+  const [userReview, setUserReview] = useState<Review | null>(null);
+  const [showReviewForm, setShowReviewForm] = useState(false);
+  const [reviewsLoading, setReviewsLoading] = useState(true);
+  const [selectedRatingFilter, setSelectedRatingFilter] = useState<number | null>(null);
+
+  // Load reviews data
+  useReactEffect(() => {
+    if (productId) {
+      loadReviews();
+    }
+  }, [productId]);
+
+  const loadReviews = async () => {
+    try {
+      setReviewsLoading(true);
+      const [reviewsData, statsData, userReviewData] = await Promise.all([
+        reviewsService.getProductReviews(productId, {
+          rating: selectedRatingFilter || undefined,
+          limit: 20
+        }),
+        reviewsService.getProductReviewStats(productId),
+        user ? reviewsService.getUserReviewForProduct(user.$id, productId) : null
+      ]);
+
+      setReviews(reviewsData);
+      setReviewStats(statsData);
+      setUserReview(userReviewData);
+    } catch (error) {
+      console.error('Error loading reviews:', error);
+    } finally {
+      setReviewsLoading(false);
+    }
+  };
+
+  const handleReviewSubmit = async () => {
+    setShowReviewForm(false);
+    await loadReviews();
+  };
+
+  const handleFilterChange = (rating: number | null) => {
+    setSelectedRatingFilter(rating);
+  };
+
+  useReactEffect(() => {
+    if (productId) {
+      loadReviews();
+    }
+  }, [selectedRatingFilter]);
 
   if (isLoading) {
     return (
@@ -100,11 +162,128 @@ export default function ProductDetails() {
           </div>
         </div>
 
-        {/* Related Products */}
+        {/* Reviews Section */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.2 }}
+          className="mt-12"
+        >
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-8">
+            <div className="flex items-center justify-between mb-8">
+              <div className="flex items-center gap-3">
+                <FiStar className="w-6 h-6 text-yellow-500" />
+                <h2 className="text-2xl font-semibold text-gray-900 dark:text-white">
+                  Customer Reviews
+                </h2>
+              </div>
+              {user && !userReview && (
+                <Button
+                  onClick={() => setShowReviewForm(true)}
+                  className="flex items-center gap-2"
+                >
+                  <FiMessageCircle className="w-4 h-4" />
+                  Write Review
+                </Button>
+              )}
+            </div>
+
+            {/* Review Stats */}
+            {reviewStats && (
+              <div className="mb-8">
+                <ReviewStats stats={reviewStats} />
+              </div>
+            )}
+
+            {/* Rating Filter */}
+            <div className="mb-6">
+              <div className="flex items-center gap-2 mb-4">
+                <FiFilter className="w-4 h-4 text-gray-500" />
+                <span className="text-sm font-medium text-gray-900 dark:text-white">
+                  Filter by rating:
+                </span>
+              </div>
+              <div className="flex gap-2">
+                <Button
+                  variant={selectedRatingFilter === null ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => handleFilterChange(null)}
+                >
+                  All
+                </Button>
+                {[5, 4, 3, 2, 1].map((rating) => (
+                  <Button
+                    key={rating}
+                    variant={selectedRatingFilter === rating ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => handleFilterChange(rating)}
+                    className="flex items-center gap-1"
+                  >
+                    {rating} <FiStar className="w-3 h-3" />
+                  </Button>
+                ))}
+              </div>
+            </div>
+
+            {/* Reviews List */}
+            {reviewsLoading ? (
+              <div className="flex justify-center py-8">
+                <LoadingSpinner />
+              </div>
+            ) : reviews.length > 0 ? (
+              <div className="space-y-6">
+                                 {reviews.map((review) => (
+                   <ReviewCard
+                     key={review.$id}
+                     review={review}
+                     onHelpfulToggle={async (reviewId) => {
+                       if (user) {
+                         await reviewsService.toggleHelpful(reviewId, user.$id);
+                         loadReviews();
+                       }
+                     }}
+                     onEdit={userReview && userReview.$id === review.$id ? (review) => {
+                       // Handle edit - reopen form with existing review
+                       setShowReviewForm(true);
+                     } : undefined}
+                     onDelete={userReview && userReview.$id === review.$id ? async (reviewId) => {
+                       await reviewsService.deleteReview(reviewId);
+                       loadReviews();
+                     } : undefined}
+                   />
+                 ))}
+              </div>
+            ) : (
+              <div className="text-center py-12">
+                <FiMessageCircle className="w-12 h-12 text-gray-300 mx-auto mb-4" />
+                <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
+                  No Reviews Yet
+                </h3>
+                <p className="text-gray-500 dark:text-gray-400 mb-4">
+                  {selectedRatingFilter 
+                    ? `No reviews with ${selectedRatingFilter} star rating found.`
+                    : 'Be the first to review this product!'
+                  }
+                </p>
+                {user && !userReview && !selectedRatingFilter && (
+                  <Button
+                    onClick={() => setShowReviewForm(true)}
+                    className="flex items-center gap-2"
+                  >
+                    <FiMessageCircle className="w-4 h-4" />
+                    Write First Review
+                  </Button>
+                )}
+              </div>
+            )}
+          </div>
+        </motion.div>
+
+        {/* Related Products */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.4 }}
           className="mt-12"
         >
           <RelatedProducts 
@@ -113,6 +292,33 @@ export default function ProductDetails() {
           />
         </motion.div>
       </div>
+
+      {/* Review Form Modal */}
+      {showReviewForm && user && (
+        <ReviewForm
+          isOpen={showReviewForm}
+          onCancel={() => setShowReviewForm(false)}
+          productId={productId}
+          productName={product.Name}
+          existingReview={userReview}
+          onSubmit={async (data) => {
+            try {
+              if (userReview) {
+                await reviewsService.updateReview(userReview.$id, data);
+              } else {
+                await reviewsService.createReview({
+                  ...data,
+                  userId: user.$id,
+                  productId: productId
+                });
+              }
+              await handleReviewSubmit();
+            } catch (error) {
+              console.error('Error submitting review:', error);
+            }
+          }}
+        />
+      )}
     </div>
   );
 } 
