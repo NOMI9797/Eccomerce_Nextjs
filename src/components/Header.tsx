@@ -7,7 +7,7 @@ import { useCart } from "@/session/CartContext";
 import { useNotifications } from "@/session/NotificationContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { FiSearch, FiShoppingCart, FiMenu, FiX, FiUser, FiSettings, FiLogOut } from "react-icons/fi";
+import { FiShoppingCart, FiUser, FiLogOut, FiSettings, FiSearch, FiMenu, FiX, FiHome } from "react-icons/fi";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
@@ -71,7 +71,7 @@ export default function Header() {
 
   return (
     <>
-      <header className="sticky top-0 z-50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b">
+      <header className="sticky top-0 z-[100] bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             {/* Logo and Brand */}
@@ -121,6 +121,14 @@ export default function Header() {
             {/* Desktop Navigation */}
             <div className="hidden lg:flex items-center gap-4">
               <nav className="flex items-center gap-6">
+                <Button
+                  variant="ghost"
+                  onClick={() => router.push('/Homepage')}
+                  className="text-sm font-medium hover:text-primary flex items-center gap-2"
+                >
+                  <FiHome className="w-4 h-4" />
+                  Homepage
+                </Button>
                 <Button
                   variant="ghost"
                   onClick={() => router.push('/Products')}
@@ -232,6 +240,17 @@ export default function Header() {
           >
             <div className="container mx-auto px-4 py-4">
               <nav className="flex flex-col gap-4">
+                <Button
+                  variant="ghost"
+                  onClick={() => {
+                    router.push('/Homepage');
+                    setIsMobileMenuOpen(false);
+                  }}
+                  className="justify-start text-sm font-medium"
+                >
+                  <FiHome className="w-4 h-4" />
+                  Homepage
+                </Button>
                 <Button
                   variant="ghost"
                   onClick={() => {

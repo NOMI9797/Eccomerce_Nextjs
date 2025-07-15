@@ -53,12 +53,10 @@ export default function LandingPage() {
       {user ? (
         <div className="relative min-h-screen bg-gray-50 dark:bg-gray-900">
           {/* Header */}
-          <div className="relative z-10">
-            <Header />
-          </div>
+          <Header />
 
           {/* Main Content */}
-          <main className="relative z-10">
+          <main className="relative">
             {/* Hero Section */}
             <section className="relative overflow-hidden bg-gradient-to-br from-blue-600 via-purple-600 to-indigo-700 dark:from-blue-800 dark:via-purple-800 dark:to-indigo-900">
               {/* Background Pattern */}
