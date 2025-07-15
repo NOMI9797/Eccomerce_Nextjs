@@ -1,9 +1,11 @@
 import { ID, Query } from 'appwrite';
 import db from './index';
 import { Notification, CreateNotificationData } from '@/types/notification';
+import { Product, getStockStatus } from '@/app/Dashboard/ListProduct/types/product';
 
 const DATABASE_ID = '679b031a001983d2ec66';
 const NOTIFICATIONS_COLLECTION_ID = '6874b8bc00118bfbe390';
+const PRODUCTS_COLLECTION_ID = '67a2fec400214f3c891b';
 
 // In-memory cache for notifications to reduce API calls
 class NotificationCache {
@@ -65,6 +67,132 @@ class NotificationCache {
 
 const notificationCache = new NotificationCache();
 
+// Low Stock Alert Manager
+class LowStockAlertManager {
+  private alertedProducts = new Set<string>();
+  private readonly CHECK_INTERVAL = 60000; // Check every minute
+  private intervalId?: NodeJS.Timeout;
+
+  // Check all products for low stock and create notifications
+  async checkAndCreateLowStockAlerts(): Promise<void> {
+    try {
+      // Get all products with stock tracking enabled
+      const response = await db.listDocuments(
+        DATABASE_ID,
+        PRODUCTS_COLLECTION_ID,
+        [
+          Query.equal('TrackStock', true),
+          Query.limit(500)
+        ]
+      );
+
+      const products = response.documents as Product[];
+      const lowStockProducts: Product[] = [];
+
+      for (const product of products) {
+        const stockStatus = getStockStatus(product.Stock || 0, product.MinStock || 5);
+        
+        if (stockStatus === 'low_stock' || stockStatus === 'out_of_stock') {
+          // Check if we haven't already alerted for this product
+          if (!this.alertedProducts.has(product.$id)) {
+            lowStockProducts.push(product);
+            this.alertedProducts.add(product.$id);
+          }
+        } else {
+          // Remove from alerted products if stock is restored
+          this.alertedProducts.delete(product.$id);
+        }
+      }
+
+      // Create notifications for low stock products
+      for (const product of lowStockProducts) {
+        await this.createLowStockNotification(product);
+      }
+
+    } catch (error) {
+      console.error('Error checking low stock alerts:', error);
+    }
+  }
+
+  // Create a low stock notification for a specific product
+  private async createLowStockNotification(product: Product): Promise<void> {
+    const stockStatus = getStockStatus(product.Stock || 0, product.MinStock || 5);
+    
+    let title = '';
+    let priority: 'high' | 'medium' | 'low' = 'medium';
+    
+    if (stockStatus === 'out_of_stock') {
+      title = `Out of Stock: ${product.Name}`;
+      priority = 'high';
+    } else if (stockStatus === 'low_stock') {
+      title = `Low Stock Alert: ${product.Name}`;
+      priority = 'high';
+    }
+
+    await notificationService.createNotification({
+      type: 'stock_alert',
+      title,
+      priority,
+      productId: product.$id,
+      actionType: 'manage_stock'
+    });
+  }
+
+  // Start monitoring low stock
+  startMonitoring(): void {
+    if (this.intervalId) {
+      clearInterval(this.intervalId);
+    }
+
+    this.intervalId = setInterval(() => {
+      this.checkAndCreateLowStockAlerts();
+    }, this.CHECK_INTERVAL);
+
+    // Run initial check
+    this.checkAndCreateLowStockAlerts();
+  }
+
+  // Stop monitoring
+  stopMonitoring(): void {
+    if (this.intervalId) {
+      clearInterval(this.intervalId);
+      this.intervalId = undefined;
+    }
+  }
+
+  // Manual check for low stock
+  async manualCheck(): Promise<Product[]> {
+    try {
+      const response = await db.listDocuments(
+        DATABASE_ID,
+        PRODUCTS_COLLECTION_ID,
+        [
+          Query.equal('TrackStock', true),
+          Query.limit(500)
+        ]
+      );
+
+      const products = response.documents as Product[];
+      const lowStockProducts: Product[] = [];
+
+      for (const product of products) {
+        const stockStatus = getStockStatus(product.Stock || 0, product.MinStock || 5);
+        
+        if (stockStatus === 'low_stock' || stockStatus === 'out_of_stock') {
+          lowStockProducts.push(product);
+        }
+      }
+
+      return lowStockProducts;
+    } catch (error) {
+      console.error('Error in manual low stock check:', error);
+      return [];
+    }
+  }
+}
+
+const lowStockAlertManager = new LowStockAlertManager();
+
 export const notificationService = {
   // Create a new notification
   async createNotification(data: CreateNotificationData): Promise<Notification> {
@@ -81,6 +209,7 @@ export const notificationService = {
           userId: data.userId || '',
           orderId: data.orderId || '',
           orderNumber: data.orderNumber || '',
+          productId: data.productId || '',
           actionType: data.actionType || 'none'
         }
       );
@@ -97,27 +226,31 @@ export const notificationService = {
   },
 
   // Get all notifications with caching (for admin)
-  async getNotifications(limit = 50): Promise<Notification[]> {
+  async getNotifications(userId?: string, limit = 50): Promise<Notification[]> {
     try {
       // Check cache first
-      const cached = notificationCache.get();
+      const cached = notificationCache.get(userId);
       if (cached) {
         return cached;
+      }
+
+      const queries = [Query.orderDesc('isCreated'), Query.limit(limit)];
+      
+      // If userId is provided, filter by user
+      if (userId) {
+        queries.unshift(Query.equal('userId', userId));
       }
 
       const response = await db.listDocuments(
         DATABASE_ID,
         NOTIFICATIONS_COLLECTION_ID,
-        [
-          Query.orderDesc('isCreated'),
-          Query.limit(limit)
-        ]
+        queries
       );
       
       const notifications = response.documents as unknown as Notification[];
       
       // Cache the result
-      notificationCache.set(notifications);
+      notificationCache.set(notifications, userId);
       
       return notifications;
     } catch (error) {
@@ -486,7 +619,44 @@ export const notificationService = {
     return this.createNotification({
       type: 'product',
       title: `Product "${productName}" has been ${action}`,
-      priority: 'medium'
+      priority: 'medium',
+      productId,
+      actionType: 'view_product'
     });
+  },
+
+  // Low Stock Alert Methods
+  async createLowStockAlert(productId: string, productName: string, currentStock: number, minStock: number): Promise<Notification> {
+    const isOutOfStock = currentStock <= 0;
+    
+    return this.createNotification({
+      type: 'stock_alert',
+      title: isOutOfStock 
+        ? `Out of Stock: ${productName}` 
+        : `Low Stock Alert: ${productName} (${currentStock} left)`,
+      priority: 'high',
+      productId,
+      actionType: 'manage_stock'
+    });
+  },
+
+  // Get low stock products
+  async getLowStockProducts(): Promise<Product[]> {
+    return lowStockAlertManager.manualCheck();
+  },
+
+  // Start low stock monitoring
+  startLowStockMonitoring(): void {
+    lowStockAlertManager.startMonitoring();
+  },
+
+  // Stop low stock monitoring
+  stopLowStockMonitoring(): void {
+    lowStockAlertManager.stopMonitoring();
+  },
+
+  // Manual low stock check
+  async checkLowStock(): Promise<void> {
+    await lowStockAlertManager.checkAndCreateLowStockAlerts();
   }
 }; 

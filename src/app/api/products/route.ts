@@ -20,6 +20,12 @@ export async function POST(req: Request) {
         const categoryId = formData.get('category') as string;
         const description = formData.get('description') as string;
         const imageFiles = formData.getAll('images') as File[];
+        
+        // Extract stock management fields
+        const stock = parseInt(formData.get('stock') as string) || 0;
+        const minStock = parseInt(formData.get('minStock') as string) || 5;
+        const maxStock = formData.get('maxStock') ? parseInt(formData.get('maxStock') as string) : null;
+        const trackStock = formData.get('trackStock') === 'true';
 
         // Validate required fields
         if (!name || !price || !categoryId || !description || imageFiles.length === 0) {
@@ -27,6 +33,37 @@ export async function POST(req: Request) {
                 { error: "All fields are required" },
                 { status: 400 }
             );
+        }
+
+        // Validate stock fields if stock tracking is enabled
+        if (trackStock) {
+            if (stock < 0) {
+                return NextResponse.json(
+                    { error: "Stock quantity cannot be negative" },
+                    { status: 400 }
+                );
+            }
+
+            if (minStock < 0) {
+                return NextResponse.json(
+                    { error: "Minimum stock level cannot be negative" },
+                    { status: 400 }
+                );
+            }
+
+            if (maxStock !== null && maxStock < minStock) {
+                return NextResponse.json(
+                    { error: "Maximum stock level cannot be less than minimum stock level" },
+                    { status: 400 }
+                );
+            }
+
+            if (maxStock !== null && stock > maxStock) {
+                return NextResponse.json(
+                    { error: "Current stock cannot exceed maximum stock level" },
+                    { status: 400 }
+                );
+            }
         }
 
         try {
@@ -42,33 +79,47 @@ export async function POST(req: Request) {
                 })
             );
 
-            // Log the data being sent to createDocument
-            console.log("Attempting to create document with data:", {
+            // Prepare product data with stock management fields
+            const productData: any = {
                 Name: name,
                 Price: price,
                 CategoryId: categoryId,
                 Description: description,
                 Images: uploadedFileIds,
-                MainImage: uploadedFileIds[0]
-            });
+                MainImage: uploadedFileIds[0],
+                Stock: stock,
+                MinStock: minStock,
+                TrackStock: trackStock
+            };
 
-            // Create product with category reference
+            // Add MaxStock only if it's provided
+            if (maxStock !== null) {
+                productData.MaxStock = maxStock;
+            }
+
+            // Log the data being sent to createDocument
+            console.log("Attempting to create document with data:", productData);
+
+            // Create product with stock management fields
             const product = await databases.createDocument(
                 '679b031a001983d2ec66',  // database ID
                 '67a2fec400214f3c891b',  // collection ID
                 ID.unique(),
-                {
-                    Name: name,
-                    Price: price,
-                    CategoryId: categoryId,
-                    Description: description,
-                    Images: uploadedFileIds,
-                    MainImage: uploadedFileIds[0]
-                }
+                productData
             );
 
             return NextResponse.json(
-                { message: "Product created successfully", product },
+                { 
+                    message: "Product created successfully", 
+                    product,
+                    stockInfo: {
+                        stock,
+                        minStock,
+                        maxStock,
+                        trackStock,
+                        status: stock <= 0 ? 'out_of_stock' : (stock <= minStock ? 'low_stock' : 'in_stock')
+                    }
+                },
                 { status: 201 }
             );
         } catch (dbError: any) {

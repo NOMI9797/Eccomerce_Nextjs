@@ -16,6 +16,7 @@ import { Button } from '@/components/ui/button';
 import { CartItem } from '@/appwrite/db/cart';
 import Header from '@/components/Header';
 import { FiShoppingCart, FiStar, FiGrid, FiList, FiFilter, FiSearch } from 'react-icons/fi';
+import { Product, getStockStatus, getStockBadgeColor } from '@/app/Dashboard/ListProduct/types/product';
 
 export default function ProductsPage() {
   const { data: products = [], isLoading } = useProducts();
@@ -27,7 +28,7 @@ export default function ProductsPage() {
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
 
   // Ensure products is an array before filtering
-  const productArray = Array.isArray(products) ? products : [];
+  const productArray = Array.isArray(products) ? products as Product[] : [];
 
   const filteredProducts = productArray.filter(product => {
     const matchesCategory = selectedCategory === "all" || product.CategoryId === selectedCategory;
@@ -70,7 +71,13 @@ export default function ProductsPage() {
 
   const { addToCart } = useCart();
 
-  const handleAddToCart = (product: any) => {
+  const handleAddToCart = (product: Product) => {
+    // Check stock before adding to cart
+    if (product.TrackStock && (product.Stock || 0) <= 0) {
+      alert("This product is currently out of stock");
+      return;
+    }
+
     const cartItem: CartItem = {
       productId: product.$id,
       name: product.Name,
@@ -167,79 +174,116 @@ export default function ProductsPage() {
                 ? 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-6' 
                 : 'grid-cols-1'
             }`}>
-              {paginatedProducts.map((product, index) => (
-                <motion.div
-                  key={product.$id}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.4, delay: index * 0.05 }}
-                  className="group"
-                >
-                  <div className={`bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden hover:shadow-lg transition-all duration-300 hover:border-blue-300 dark:hover:border-blue-600 ${
-                    viewMode === 'list' ? 'flex' : ''
-                  }`}>
-                    <Link href={`/Products/${product.$id}`} className={viewMode === 'list' ? 'flex flex-1' : ''}>
-                      <div className={`relative overflow-hidden ${
-                        viewMode === 'grid' ? 'aspect-[4/3]' : 'w-24 h-24 flex-shrink-0'
-                      }`}>
-                        <img
-                          src={product.MainImage ? 
-                            `https://cloud.appwrite.io/v1/storage/buckets/67a32bbf003270b1e15c/files/${product.MainImage}/view?project=679b0257003b758db270` :
-                            "/images/pexels-shattha-pilabut-38930-135620.jpg"}
-                          alt={product.Name}
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                          onError={(e) => {
-                            e.currentTarget.src = "/images/pexels-shattha-pilabut-38930-135620.jpg";
-                          }}
-                        />
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                        <div className="absolute top-1 right-1 bg-red-500 text-white text-xs px-1.5 py-0.5 rounded-full font-medium">
-                          Sale
+              {paginatedProducts.map((product, index) => {
+                const stockStatus = product.TrackStock ? getStockStatus(product.Stock || 0, product.MinStock || 5) : 'not_tracked';
+                const isOutOfStock = product.TrackStock && (product.Stock || 0) <= 0;
+                
+                return (
+                  <motion.div
+                    key={product.$id}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.4, delay: index * 0.05 }}
+                    className="group"
+                  >
+                    <div className={`bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden hover:shadow-lg transition-all duration-300 hover:border-blue-300 dark:hover:border-blue-600 ${
+                      viewMode === 'list' ? 'flex' : ''
+                    } ${isOutOfStock ? 'opacity-75' : ''}`}>
+                      <Link href={`/Products/${product.$id}`} className={viewMode === 'list' ? 'flex flex-1' : ''}>
+                        <div className={`relative overflow-hidden ${
+                          viewMode === 'grid' ? 'aspect-[4/3]' : 'w-24 h-24 flex-shrink-0'
+                        }`}>
+                          <img
+                            src={product.MainImage ? 
+                              `https://cloud.appwrite.io/v1/storage/buckets/67a32bbf003270b1e15c/files/${product.MainImage}/view?project=679b0257003b758db270` :
+                              "/images/pexels-shattha-pilabut-38930-135620.jpg"}
+                            alt={product.Name}
+                            className={`w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 ${
+                              isOutOfStock ? 'grayscale' : ''
+                            }`}
+                            onError={(e) => {
+                              e.currentTarget.src = "/images/pexels-shattha-pilabut-38930-135620.jpg";
+                            }}
+                          />
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                          
+                          {/* Stock Status Badge */}
+                          {product.TrackStock && (
+                            <div className={`absolute top-1 left-1 text-white text-xs px-1.5 py-0.5 rounded-full font-medium ${
+                              stockStatus === 'out_of_stock' ? 'bg-red-500' :
+                              stockStatus === 'low_stock' ? 'bg-yellow-500' :
+                              'bg-green-500'
+                            }`}>
+                              {stockStatus === 'out_of_stock' ? 'Out of Stock' :
+                               stockStatus === 'low_stock' ? 'Low Stock' :
+                               'In Stock'}
+                            </div>
+                          )}
+                          
+                          {/* Sale Badge */}
+                          <div className="absolute top-1 right-1 bg-red-500 text-white text-xs px-1.5 py-0.5 rounded-full font-medium">
+                            Sale
+                          </div>
                         </div>
-                      </div>
-                      
-                      <div className={`p-3 ${viewMode === 'list' ? 'flex-1' : ''}`}>
-                        <h3 className="font-semibold text-gray-900 dark:text-white mb-1 line-clamp-1 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors text-sm">
-                          {product.Name}
-                        </h3>
-                        <p className="text-xs text-gray-600 dark:text-gray-400 mb-2 line-clamp-2">
-                          {product.Description}
-                        </p>
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-1">
-                            <span className="font-bold text-base text-gray-900 dark:text-white">
-                              ${product.Price.toFixed(2)}
-                            </span>
-                            {product.OriginalPrice && (
-                              <span className="text-xs text-gray-500 line-through">
-                                ${product.OriginalPrice.toFixed(2)}
+                        
+                        <div className={`p-3 ${viewMode === 'list' ? 'flex-1' : ''}`}>
+                          <h3 className="font-semibold text-gray-900 dark:text-white mb-1 line-clamp-1 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors text-sm">
+                            {product.Name}
+                          </h3>
+                          <p className="text-xs text-gray-600 dark:text-gray-400 mb-2 line-clamp-2">
+                            {product.Description}
+                          </p>
+                          
+                          {/* Stock Information */}
+                          {product.TrackStock && (
+                            <div className="mb-2">
+                              <span className="text-xs text-gray-500 dark:text-gray-400">
+                                {product.Stock || 0} {(product.Stock || 0) === 1 ? 'item' : 'items'} left
                               </span>
-                            )}
-                          </div>
-                          <div className="flex items-center gap-0.5">
-                            <FiStar className="w-3 h-3 text-yellow-400 fill-current" />
-                            <span className="text-xs text-gray-600 dark:text-gray-400">4.5</span>
+                            </div>
+                          )}
+                          
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-1">
+                              <span className="font-bold text-base text-gray-900 dark:text-white">
+                                ${product.Price.toFixed(2)}
+                              </span>
+                              {product.OriginalPrice && (
+                                <span className="text-xs text-gray-500 line-through">
+                                  ${product.OriginalPrice.toFixed(2)}
+                                </span>
+                              )}
+                            </div>
+                            <div className="flex items-center gap-0.5">
+                              <FiStar className="w-3 h-3 text-yellow-400 fill-current" />
+                              <span className="text-xs text-gray-600 dark:text-gray-400">4.5</span>
+                            </div>
                           </div>
                         </div>
+                      </Link>
+                      
+                      <div className={`${viewMode === 'list' ? 'p-3 flex items-center' : 'px-3 pb-3'}`}>
+                        <Button
+                          onClick={(e) => {
+                            e.preventDefault();
+                            handleAddToCart(product);
+                          }}
+                          disabled={isOutOfStock}
+                          className={`w-full transition-colors duration-200 group ${
+                            isOutOfStock 
+                              ? 'bg-gray-400 hover:bg-gray-400 cursor-not-allowed' 
+                              : 'bg-blue-600 hover:bg-blue-700'
+                          } text-white`}
+                          size="sm"
+                        >
+                          <FiShoppingCart className="w-3 h-3 mr-1" />
+                          {isOutOfStock ? 'Out of Stock' : 'Add to Cart'}
+                        </Button>
                       </div>
-                    </Link>
-                    
-                    <div className={`${viewMode === 'list' ? 'p-3 flex items-center' : 'px-3 pb-3'}`}>
-                      <Button
-                        onClick={(e) => {
-                          e.preventDefault();
-                          handleAddToCart(product);
-                        }}
-                        className="w-full bg-blue-600 hover:bg-blue-700 text-white transition-colors duration-200 group"
-                        size="sm"
-                      >
-                        <FiShoppingCart className="w-3 h-3 mr-1" />
-                        Add to Cart
-                      </Button>
                     </div>
-                  </div>
-                </motion.div>
-              ))}
+                  </motion.div>
+                );
+              })}
             </div>
 
             {/* Empty State */}

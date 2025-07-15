@@ -1,6 +1,6 @@
 export interface Notification {
   $id: string;
-  type: 'order' | 'product' | 'system' | 'user' | 'payment' | 'shipping';
+  type: 'order' | 'product' | 'system' | 'user' | 'payment' | 'shipping' | 'stock_alert';
   title: string;
   isRead: boolean;
   isCreated: string;
@@ -8,7 +8,8 @@ export interface Notification {
   userId?: string; // For customer-specific notifications
   orderId?: string; // For order-related notifications
   orderNumber?: string; // For displaying order number
-  actionType?: 'view_order' | 'view_invoice' | 'view_product' | 'track_order' | 'none'; // What happens when clicked
+  productId?: string; // For product-related notifications
+  actionType?: 'view_order' | 'view_invoice' | 'view_product' | 'track_order' | 'manage_stock' | 'none'; // What happens when clicked
 }
 
 export interface NotificationStats {
@@ -21,6 +22,7 @@ export interface NotificationStats {
     user: number;
     payment: number;
     shipping: number;
+    stock_alert: number;
   };
 }
 
@@ -31,5 +33,6 @@ export interface CreateNotificationData {
   userId?: string;
   orderId?: string;
   orderNumber?: string;
+  productId?: string;
   actionType?: Notification['actionType'];
 } 

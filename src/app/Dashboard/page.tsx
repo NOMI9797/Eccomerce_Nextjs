@@ -7,8 +7,9 @@ import AddProduct from "./AddProduct/page";
 import ListProducts from "./ListProduct/page";
 import Categories from "./Categories/page";
 import Orders from "./Orders/page";
+import StockManagement from "./StockManagement/page";
 import AdminRoute from "@/components/AdminRoute";
-import { FiMenu, FiPackage, FiList, FiGrid, FiX, FiHome, FiBarChart, FiUsers, FiTrendingUp, FiTruck, FiExternalLink } from 'react-icons/fi';
+import { FiMenu, FiPackage, FiList, FiGrid, FiX, FiHome, FiBarChart, FiUsers, FiTrendingUp, FiTruck, FiExternalLink, FiShoppingCart, FiDollarSign, FiAlertTriangle, FiRefreshCw } from 'react-icons/fi';
 
 const DashboardContent: React.FC = () => {
   const searchParams = useSearchParams();
@@ -57,8 +58,119 @@ const DashboardContent: React.FC = () => {
       name: "Orders",
       icon: <FiTruck className="w-5 h-5" />,
       color: "red",
-    }
+    },
+    {
+      name: "Stock Management",
+      icon: <FiShoppingCart className="w-5 h-5" />,
+      color: "purple",
+    },
   ];
+
+  const stats = [
+    { title: 'Total Products', value: '248', change: '+12%', icon: FiPackage, color: 'blue' },
+    { title: 'Total Orders', value: '1,429', change: '+18%', icon: FiShoppingCart, color: 'green' },
+    { title: 'Total Revenue', value: '$87,450', change: '+25%', icon: FiDollarSign, color: 'purple' },
+    { title: 'Active Users', value: '2,847', change: '+8%', icon: FiUsers, color: 'orange' },
+  ];
+
+  const recentActivity = [
+    { id: 1, type: 'order', message: 'New order #ORD-2024-001 received', time: '2 minutes ago' },
+    { id: 2, type: 'product', message: 'Product "Wireless Headphones" updated', time: '15 minutes ago' },
+    { id: 3, type: 'stock', message: 'Low stock alert: iPhone 15 Pro (5 left)', time: '30 minutes ago' },
+    { id: 4, type: 'order', message: 'Order #ORD-2024-002 shipped', time: '1 hour ago' },
+  ];
+
+  const renderActiveFeature = () => {
+    switch (selectedFeature) {
+      case "Add Product":
+        return <AddProduct />;
+      case "List Products":
+        return <ListProducts />;
+      case "Categories":
+        return <Categories />;
+      case "Orders":
+        return <Orders />;
+      case "Stock Management":
+        return <StockManagement />;
+      default:
+        return (
+          <div className="space-y-6">
+            {/* Stats Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              {stats.map((stat, index) => (
+                <motion.div
+                  key={stat.title}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: index * 0.1 }}
+                  className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6"
+                >
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                        {stat.title}
+                      </p>
+                      <p className="text-2xl font-bold text-gray-900 dark:text-white mt-1">
+                        {stat.value}
+                      </p>
+                      <p className={`text-sm mt-2 ${
+                        stat.change.startsWith('+') ? 'text-green-600' : 'text-red-600'
+                      }`}>
+                        {stat.change} from last month
+                      </p>
+                    </div>
+                    <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${
+                      stat.color === 'blue' ? 'bg-blue-100 dark:bg-blue-900/50' :
+                      stat.color === 'green' ? 'bg-green-100 dark:bg-green-900/50' :
+                      stat.color === 'purple' ? 'bg-purple-100 dark:bg-purple-900/50' :
+                      'bg-orange-100 dark:bg-orange-900/50'
+                    }`}>
+                      <stat.icon className={`w-6 h-6 ${
+                        stat.color === 'blue' ? 'text-blue-600 dark:text-blue-400' :
+                        stat.color === 'green' ? 'text-green-600 dark:text-green-400' :
+                        stat.color === 'purple' ? 'text-purple-600 dark:text-purple-400' :
+                        'text-orange-600 dark:text-orange-400'
+                      }`} />
+                    </div>
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+
+            {/* Recent Activity */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.4 }}
+              className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6"
+            >
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+                Recent Activity
+              </h3>
+              <div className="space-y-4">
+                {recentActivity.map((activity) => (
+                  <div key={activity.id} className="flex items-start space-x-3">
+                    <div className={`w-2 h-2 rounded-full mt-2 ${
+                      activity.type === 'order' ? 'bg-blue-500' :
+                      activity.type === 'product' ? 'bg-green-500' :
+                      'bg-yellow-500'
+                    }`} />
+                    <div className="flex-1">
+                      <p className="text-sm text-gray-900 dark:text-white">
+                        {activity.message}
+                      </p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                        {activity.time}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </motion.div>
+          </div>
+        );
+    }
+  };
 
   return (
     <div className="flex min-h-screen bg-gray-50 dark:bg-gray-900">
@@ -191,122 +303,7 @@ const DashboardContent: React.FC = () => {
               exit={{ opacity: 0, y: -20 }}
               transition={{ duration: 0.3 }}
             >
-              {selectedFeature === "Add Product" && <AddProduct />}
-              {selectedFeature === "List Products" && <ListProducts />}
-              {selectedFeature === "Categories" && <Categories />}
-              {selectedFeature === "Orders" && <Orders />}
-              {selectedFeature === "Dashboard Overview" && (
-                <div className="space-y-8">
-                  {/* Header */}
-                  <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-                    <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
-                      Dashboard Overview
-                    </h1>
-                    <p className="text-gray-600 dark:text-gray-400">Monitor your store performance and manage operations</p>
-                  </div>
-
-                  {/* Stats Grid */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                    {/* Total Products */}
-                    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Total Products</p>
-                          <p className="text-2xl font-bold text-gray-900 dark:text-white mt-1">123</p>
-                          <div className="flex items-center gap-1 text-green-600 dark:text-green-400 text-sm mt-2">
-                            <FiTrendingUp className="w-4 h-4" />
-                            <span>+12% from last month</span>
-                          </div>
-                        </div>
-                        <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900/50 rounded-lg flex items-center justify-center">
-                          <FiPackage className="w-6 h-6 text-blue-600 dark:text-blue-400" />
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Total Sales */}
-                    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Total Sales</p>
-                          <p className="text-2xl font-bold text-gray-900 dark:text-white mt-1">$45.2K</p>
-                          <div className="flex items-center gap-1 text-green-600 dark:text-green-400 text-sm mt-2">
-                            <FiTrendingUp className="w-4 h-4" />
-                            <span>+8% from last month</span>
-                          </div>
-                        </div>
-                        <div className="w-12 h-12 bg-green-100 dark:bg-green-900/50 rounded-lg flex items-center justify-center">
-                          <FiBarChart className="w-6 h-6 text-green-600 dark:text-green-400" />
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Total Customers */}
-                    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Total Customers</p>
-                          <p className="text-2xl font-bold text-gray-900 dark:text-white mt-1">1,234</p>
-                          <div className="flex items-center gap-1 text-green-600 dark:text-green-400 text-sm mt-2">
-                            <FiTrendingUp className="w-4 h-4" />
-                            <span>+15% from last month</span>
-                          </div>
-                        </div>
-                        <div className="w-12 h-12 bg-purple-100 dark:bg-purple-900/50 rounded-lg flex items-center justify-center">
-                          <FiUsers className="w-6 h-6 text-purple-600 dark:text-purple-400" />
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Pending Orders */}
-                    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Pending Orders</p>
-                          <p className="text-2xl font-bold text-gray-900 dark:text-white mt-1">23</p>
-                          <div className="flex items-center gap-1 text-orange-600 dark:text-orange-400 text-sm mt-2">
-                            <span>Requires attention</span>
-                          </div>
-                        </div>
-                        <div className="w-12 h-12 bg-orange-100 dark:bg-orange-900/50 rounded-lg flex items-center justify-center">
-                          <FiTruck className="w-6 h-6 text-orange-600 dark:text-orange-400" />
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Quick Actions */}
-                  <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-                    <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-6">Quick Actions</h2>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                      {menuItems.slice(1).map((item, index) => (
-                        <button
-                          key={item.name}
-                          onClick={() => handleFeatureSelect(item.name)}
-                          className="p-6 bg-gray-50 dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 rounded-lg border border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500 transition-all duration-200 text-left group"
-                        >
-                          <div className={`w-10 h-10 rounded-lg flex items-center justify-center mb-4 ${
-                            item.color === 'blue' ? 'bg-blue-100 dark:bg-blue-900/50 text-blue-600 dark:text-blue-400' :
-                            item.color === 'green' ? 'bg-green-100 dark:bg-green-900/50 text-green-600 dark:text-green-400' :
-                            item.color === 'purple' ? 'bg-purple-100 dark:bg-purple-900/50 text-purple-600 dark:text-purple-400' :
-                            item.color === 'orange' ? 'bg-orange-100 dark:bg-orange-900/50 text-orange-600 dark:text-orange-400' :
-                            'bg-red-100 dark:bg-red-900/50 text-red-600 dark:text-red-400'
-                          }`}>
-                            {item.icon}
-                          </div>
-                          <h3 className="font-semibold text-gray-900 dark:text-white mb-2">{item.name}</h3>
-                          <p className="text-sm text-gray-600 dark:text-gray-400">
-                            {item.name === "Add Product" && "Add new products to your inventory"}
-                            {item.name === "List Products" && "View and manage existing products"}
-                            {item.name === "Categories" && "Organize products into categories"}
-                            {item.name === "Orders" && "View and manage customer orders"}
-                          </p>
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              )}
+              {renderActiveFeature()}
             </motion.div>
           </AnimatePresence>
         </div>

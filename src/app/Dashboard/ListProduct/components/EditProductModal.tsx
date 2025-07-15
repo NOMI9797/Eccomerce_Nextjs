@@ -8,17 +8,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
+import { FiPackage, FiAlertTriangle } from 'react-icons/fi';
+import { Product, getStockStatus } from '../types/product';
 
 interface EditProductModalProps {
-  product: {
-    $id: string;
-    Name: string;
-    Price: number;
-    CategoryId: string;
-    Description: string;
-    Images: string[];
-    MainImage: string;
-  };
+  product: Product;
   categories: Array<{ $id: string; CategoryName: string; }>;
   isOpen: boolean;
   onClose: () => void;
@@ -37,6 +31,11 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
     price: product.Price,
     categoryId: product.CategoryId,
     description: product.Description,
+    // Stock Management Fields
+    stock: product.Stock || 0,
+    minStock: product.MinStock || 5,
+    maxStock: product.MaxStock || null,
+    trackStock: product.TrackStock !== undefined ? product.TrackStock : true,
   });
   const [existingImages, setExistingImages] = useState<string[]>(product.Images);
   const [newImages, setNewImages] = useState<File[]>([]);
@@ -49,8 +48,30 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
       price: product.Price,
       categoryId: product.CategoryId,
       description: product.Description,
+      stock: product.Stock || 0,
+      minStock: product.MinStock || 5,
+      maxStock: product.MaxStock || null,
+      trackStock: product.TrackStock !== undefined ? product.TrackStock : true,
     });
+    setExistingImages(product.Images);
   }, [product]);
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value, type } = e.target;
+    
+    if (type === 'checkbox') {
+      const checked = (e.target as HTMLInputElement).checked;
+      setFormData((prev) => ({
+        ...prev,
+        [name]: checked,
+      }));
+    } else {
+      setFormData((prev) => ({
+        ...prev,
+        [name]: type === 'number' ? parseFloat(value) || 0 : value,
+      }));
+    }
+  };
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
@@ -73,6 +94,33 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
     setError("");
 
     try {
+      // Validate stock fields if stock tracking is enabled
+      if (formData.trackStock) {
+        const stock = Number(formData.stock);
+        const minStock = Number(formData.minStock);
+        const maxStock = formData.maxStock ? Number(formData.maxStock) : null;
+
+        if (stock < 0) {
+          setError("Stock quantity cannot be negative");
+          return;
+        }
+
+        if (minStock < 0) {
+          setError("Minimum stock level cannot be negative");
+          return;
+        }
+
+        if (maxStock !== null && maxStock < minStock) {
+          setError("Maximum stock level cannot be less than minimum stock level");
+          return;
+        }
+
+        if (maxStock !== null && stock > maxStock) {
+          setError("Current stock cannot exceed maximum stock level");
+          return;
+        }
+      }
+
       // Delete removed images
       const removedImages = product.Images.filter(id => !existingImages.includes(id));
       await Promise.all(
@@ -92,19 +140,30 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
       // Combine existing and new image IDs
       const allImageIds = [...existingImages, ...newImageIds];
 
+      // Prepare update data
+      const updateData: any = {
+        Name: formData.name,
+        Price: formData.price,
+        CategoryId: formData.categoryId,
+        Description: formData.description,
+        Images: allImageIds,
+        MainImage: allImageIds[0], // First image becomes main image
+        Stock: Number(formData.stock),
+        MinStock: Number(formData.minStock),
+        TrackStock: formData.trackStock,
+      };
+
+      // Add MaxStock only if it's provided
+      if (formData.maxStock !== null && formData.maxStock !== undefined) {
+        updateData.MaxStock = Number(formData.maxStock);
+      }
+
       // Update product
       await db.updateDocument(
         '679b031a001983d2ec66',
         '67a2fec400214f3c891b',
         product.$id,
-        {
-          Name: formData.name,
-          Price: formData.price,
-          CategoryId: formData.categoryId,
-          Description: formData.description,
-          Images: allImageIds,
-          MainImage: allImageIds[0] // First image becomes main image
-        }
+        updateData
       );
 
       onUpdate();
@@ -118,9 +177,12 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
 
   if (!isOpen) return null;
 
+  // Calculate current stock status
+  const currentStockStatus = getStockStatus(Number(formData.stock), Number(formData.minStock));
+
   return (
     <div className="fixed inset-0 bg-background/80 backdrop-blur-sm flex items-center justify-center z-50">
-      <div className="bg-background rounded-lg shadow-lg p-6 w-full max-w-2xl">
+      <div className="bg-background rounded-lg shadow-lg p-6 w-full max-w-4xl max-h-[90vh] overflow-y-auto">
         <div className="flex justify-between items-center mb-6">
           <div>
             <h2 className="text-2xl font-semibold">Edit Product</h2>
@@ -140,64 +202,202 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
         )}
 
         <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="name">Product Name</Label>
-              <Input
-                id="name"
-                value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                placeholder="Enter product name"
-                disabled={loading}
-              />
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Left Column - Basic Info */}
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="name">Product Name</Label>
+                <Input
+                  id="name"
+                  name="name"
+                  value={formData.name}
+                  onChange={handleInputChange}
+                  placeholder="Enter product name"
+                  disabled={loading}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="description">Description</Label>
+                <textarea
+                  id="description"
+                  name="description"
+                  value={formData.description}
+                  onChange={handleInputChange}
+                  className={cn(
+                    "flex min-h-[120px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                  )}
+                  placeholder="Enter product description"
+                  disabled={loading}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="price">Price</Label>
+                <Input
+                  id="price"
+                  name="price"
+                  type="number"
+                  value={formData.price}
+                  onChange={handleInputChange}
+                  placeholder="Enter product price"
+                  disabled={loading}
+                  step="0.01"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="category">Category</Label>
+                <Select 
+                  value={formData.categoryId} 
+                  onValueChange={(value) => setFormData({ ...formData, categoryId: value })}
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Select a category" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {categories.map((category) => (
+                      <SelectItem key={category.$id} value={category.$id}>
+                        {category.CategoryName}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="description">Description</Label>
-              <textarea
-                id="description"
-                value={formData.description}
-                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                className={cn(
-                  "flex min-h-[120px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+            {/* Right Column - Stock Management */}
+            <div className="space-y-4">
+              <div className="bg-muted/50 p-4 rounded-lg border">
+                <div className="flex items-center gap-2 mb-4">
+                  <FiPackage className="w-5 h-5 text-blue-600" />
+                  <h3 className="text-lg font-semibold">Stock Management</h3>
+                </div>
+                
+                {/* Track Stock Toggle */}
+                <div className="mb-4">
+                  <label className="flex items-center gap-3">
+                    <input
+                      type="checkbox"
+                      name="trackStock"
+                      checked={formData.trackStock}
+                      onChange={handleInputChange}
+                      disabled={loading}
+                      className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2"
+                    />
+                    <span className="font-medium">Enable stock tracking</span>
+                  </label>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    When enabled, stock levels will be tracked and managed automatically
+                  </p>
+                </div>
+
+                {formData.trackStock && (
+                  <div className="space-y-4">
+                    {/* Current Stock */}
+                    <div className="space-y-2">
+                      <Label htmlFor="stock">Current Stock</Label>
+                      <Input
+                        id="stock"
+                        name="stock"
+                        type="number"
+                        min="0"
+                        value={formData.stock}
+                        onChange={handleInputChange}
+                        placeholder="0"
+                        disabled={loading}
+                      />
+                    </div>
+
+                    {/* Minimum Stock */}
+                    <div className="space-y-2">
+                      <Label htmlFor="minStock">Minimum Stock</Label>
+                      <Input
+                        id="minStock"
+                        name="minStock"
+                        type="number"
+                        min="0"
+                        value={formData.minStock}
+                        onChange={handleInputChange}
+                        placeholder="5"
+                        disabled={loading}
+                      />
+                      <p className="text-xs text-muted-foreground">
+                        Alert when stock falls below this level
+                      </p>
+                    </div>
+
+                    {/* Maximum Stock */}
+                    <div className="space-y-2">
+                      <Label htmlFor="maxStock">Maximum Stock</Label>
+                      <Input
+                        id="maxStock"
+                        name="maxStock"
+                        type="number"
+                        min="0"
+                        value={formData.maxStock || ''}
+                        onChange={handleInputChange}
+                        placeholder="Optional"
+                        disabled={loading}
+                      />
+                      <p className="text-xs text-muted-foreground">
+                        Maximum stock level (optional)
+                      </p>
+                    </div>
+
+                    {/* Stock Status */}
+                    <div className="p-3 bg-background rounded-md border">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-medium">Stock Status:</span>
+                        <span className={cn(
+                          "text-xs px-2 py-1 rounded-full font-medium",
+                          currentStockStatus === 'in_stock' ? 'bg-green-100 text-green-800' :
+                          currentStockStatus === 'low_stock' ? 'bg-yellow-100 text-yellow-800' :
+                          'bg-red-100 text-red-800'
+                        )}>
+                          {currentStockStatus === 'in_stock' ? 'In Stock' :
+                           currentStockStatus === 'low_stock' ? 'Low Stock' :
+                           'Out of Stock'}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Stock Warning */}
+                    {currentStockStatus === 'low_stock' && (
+                      <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-md">
+                        <div className="flex items-center gap-2">
+                          <FiAlertTriangle className="w-4 h-4 text-yellow-600" />
+                          <span className="text-sm text-yellow-800 font-medium">
+                            Low Stock Warning
+                          </span>
+                        </div>
+                        <p className="text-sm text-yellow-700 mt-1">
+                          Current stock ({formData.stock}) is at or below minimum level ({formData.minStock})
+                        </p>
+                      </div>
+                    )}
+
+                    {currentStockStatus === 'out_of_stock' && (
+                      <div className="p-3 bg-red-50 border border-red-200 rounded-md">
+                        <div className="flex items-center gap-2">
+                          <FiAlertTriangle className="w-4 h-4 text-red-600" />
+                          <span className="text-sm text-red-800 font-medium">
+                            Out of Stock
+                          </span>
+                        </div>
+                        <p className="text-sm text-red-700 mt-1">
+                          This product is currently out of stock
+                        </p>
+                      </div>
+                    )}
+                  </div>
                 )}
-                placeholder="Enter product description"
-                disabled={loading}
-              />
+              </div>
             </div>
+          </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="price">Price</Label>
-              <Input
-                id="price"
-                type="number"
-                value={formData.price}
-                onChange={(e) => setFormData({ ...formData, price: parseFloat(e.target.value) })}
-                placeholder="Enter product price"
-                disabled={loading}
-                step="0.01"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="category">Category</Label>
-              <Select 
-                value={formData.categoryId} 
-                onValueChange={(value) => setFormData({ ...formData, categoryId: value })}
-              >
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Select a category" />
-                </SelectTrigger>
-                <SelectContent>
-                  {categories.map((category) => (
-                    <SelectItem key={category.$id} value={category.$id}>
-                      {category.CategoryName}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
+          {/* Images Section */}
+          <div className="space-y-4">
             <div className="space-y-2">
               <Label>Current Images</Label>
               <div className="mt-2 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">

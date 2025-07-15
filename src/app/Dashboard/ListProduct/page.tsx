@@ -9,6 +9,7 @@ import { deleteProduct } from './services/productService';
 import { useRouter } from "next/navigation";
 import ViewProductModal from './components/ViewProductModal';
 import { motion, AnimatePresence } from 'framer-motion';
+import { Product, getStockStatus, getStockBadgeColor } from './types/product';
 import { 
   FiPlus, 
   FiSearch, 
@@ -19,17 +20,9 @@ import {
   FiPackage,
   FiGrid,
   FiTrendingUp,
-  FiDollarSign
+  FiDollarSign,
+  FiAlertTriangle
 } from 'react-icons/fi';
-
-interface Product extends Models.Document {
-  Name: string;
-  Price: number;
-  CategoryId: string;
-  Description: string;
-  Images: string[];
-  MainImage: string;
-}
 
 interface Category extends Models.Document {
   CategoryName: string;
@@ -132,10 +125,36 @@ const ListProducts: React.FC = () => {
     const totalValue = products.reduce((sum, product) => sum + product.Price, 0);
     const categoriesCount = new Set(products.map(p => p.CategoryId)).size;
     
+    // Stock statistics
+    const stockInfo = products.reduce((stats, product) => {
+      if (product.TrackStock) {
+        const stockStatus = getStockStatus(product.Stock || 0, product.MinStock || 5);
+        stats.totalStock += product.Stock || 0;
+        
+        if (stockStatus === 'out_of_stock') {
+          stats.outOfStock += 1;
+        } else if (stockStatus === 'low_stock') {
+          stats.lowStock += 1;
+        } else {
+          stats.inStock += 1;
+        }
+      } else {
+        stats.notTracked += 1;
+      }
+      return stats;
+    }, {
+      totalStock: 0,
+      inStock: 0,
+      lowStock: 0,
+      outOfStock: 0,
+      notTracked: 0
+    });
+    
     return {
       totalProducts,
       totalValue,
-      categoriesCount
+      categoriesCount,
+      stockInfo
     };
   };
 
@@ -146,7 +165,7 @@ const ListProducts: React.FC = () => {
       <div className="flex items-center justify-center min-h-96">
         <div className="text-center">
           <div className="w-16 h-16 border-4 border-blue-200 dark:border-blue-800 border-t-blue-600 dark:border-t-blue-400 rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-gray-600 dark:text-gray-400">Loading inventory...</p>
+          <p className="text-gray-600 dark:text-gray-400">Loading products...</p>
         </div>
       </div>
     );
@@ -154,12 +173,10 @@ const ListProducts: React.FC = () => {
 
   if (error) {
     return (
-      <div className="flex items-center justify-center min-h-96">
-        <div className="text-center max-w-md mx-auto">
-          <div className="bg-red-50 dark:bg-red-900/50 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-300 px-6 py-4 rounded-lg">
-            <h3 className="font-semibold mb-2">Error Loading Products</h3>
-            <p>{error}</p>
-          </div>
+      <div className="text-center py-16">
+        <div className="text-red-500 dark:text-red-400 mb-4">
+          <FiAlertTriangle className="w-16 h-16 mx-auto mb-4" />
+          <p className="text-lg font-semibold">{error}</p>
         </div>
       </div>
     );
@@ -167,28 +184,23 @@ const ListProducts: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      {/* Header Section */}
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
-              Inventory Management
-            </h1>
-            <p className="text-gray-600 dark:text-gray-400">Manage your product catalog and inventory</p>
-          </div>
-          
-          <button 
-            onClick={handleAddProduct}
-            className="bg-blue-600 dark:bg-blue-500 hover:bg-blue-700 dark:hover:bg-blue-600 text-white px-6 py-3 rounded-lg flex items-center gap-3 font-medium transition-colors"
-          >
-            <FiPlus className="w-5 h-5" />
-            Add New Product
-          </button>
+      {/* Header */}
+      <div className="flex justify-between items-center">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Products</h1>
+          <p className="text-gray-600 dark:text-gray-400 mt-1">Manage your product inventory</p>
         </div>
+        <button
+          onClick={handleAddProduct}
+          className="bg-blue-600 dark:bg-blue-700 text-white px-4 py-2 rounded-lg hover:bg-blue-700 dark:hover:bg-blue-600 transition-colors flex items-center gap-2"
+        >
+          <FiPlus className="w-5 h-5" />
+          Add Product
+        </button>
       </div>
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      {/* Statistics Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
         {/* Total Products */}
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
           <div className="flex items-center justify-between">
@@ -202,6 +214,45 @@ const ListProducts: React.FC = () => {
           </div>
         </div>
 
+        {/* In Stock */}
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-600 dark:text-gray-400">In Stock</p>
+              <p className="text-2xl font-bold text-green-600 dark:text-green-400 mt-1">{stats.stockInfo.inStock}</p>
+            </div>
+            <div className="w-12 h-12 bg-green-100 dark:bg-green-900/50 rounded-lg flex items-center justify-center">
+              <FiTrendingUp className="w-6 h-6 text-green-600 dark:text-green-400" />
+            </div>
+          </div>
+        </div>
+
+        {/* Low Stock */}
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Low Stock</p>
+              <p className="text-2xl font-bold text-yellow-600 dark:text-yellow-400 mt-1">{stats.stockInfo.lowStock}</p>
+            </div>
+            <div className="w-12 h-12 bg-yellow-100 dark:bg-yellow-900/50 rounded-lg flex items-center justify-center">
+              <FiAlertTriangle className="w-6 h-6 text-yellow-600 dark:text-yellow-400" />
+            </div>
+          </div>
+        </div>
+
+        {/* Out of Stock */}
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Out of Stock</p>
+              <p className="text-2xl font-bold text-red-600 dark:text-red-400 mt-1">{stats.stockInfo.outOfStock}</p>
+            </div>
+            <div className="w-12 h-12 bg-red-100 dark:bg-red-900/50 rounded-lg flex items-center justify-center">
+              <FiAlertTriangle className="w-6 h-6 text-red-600 dark:text-red-400" />
+            </div>
+          </div>
+        </div>
+
         {/* Total Value */}
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
           <div className="flex items-center justify-between">
@@ -211,19 +262,6 @@ const ListProducts: React.FC = () => {
             </div>
             <div className="w-12 h-12 bg-green-100 dark:bg-green-900/50 rounded-lg flex items-center justify-center">
               <FiDollarSign className="w-6 h-6 text-green-600 dark:text-green-400" />
-            </div>
-          </div>
-        </div>
-
-        {/* Categories */}
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Categories</p>
-              <p className="text-2xl font-bold text-gray-900 dark:text-white mt-1">{stats.categoriesCount}</p>
-            </div>
-            <div className="w-12 h-12 bg-purple-100 dark:bg-purple-900/50 rounded-lg flex items-center justify-center">
-              <FiGrid className="w-6 h-6 text-purple-600 dark:text-purple-400" />
             </div>
           </div>
         </div>
@@ -283,6 +321,12 @@ const ListProducts: React.FC = () => {
                   Price
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                  Stock
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                  Status
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                   Description
                 </th>
                 <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
@@ -292,67 +336,100 @@ const ListProducts: React.FC = () => {
             </thead>
             <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
               <AnimatePresence>
-                {filteredProducts.map((product, index) => (
-                  <motion.tr
-                    key={product.$id}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -20 }}
-                    transition={{ delay: index * 0.05 }}
-                    className="hover:bg-gray-50 dark:hover:bg-gray-700"
-                  >
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center">
-                        <div className="w-12 h-12 bg-gray-100 dark:bg-gray-600 rounded-lg overflow-hidden flex-shrink-0">
-                          <img
-                            src={`https://cloud.appwrite.io/v1/storage/buckets/67a32bbf003270b1e15c/files/${product.MainImage}/view?project=679b0257003b758db270`}
-                            alt={product.Name}
-                            className="w-full h-full object-cover"
-                          />
+                {filteredProducts.map((product, index) => {
+                  const stockStatus = product.TrackStock ? getStockStatus(product.Stock || 0, product.MinStock || 5) : 'not_tracked';
+                  
+                  return (
+                    <motion.tr
+                      key={product.$id}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -20 }}
+                      transition={{ delay: index * 0.05 }}
+                      className="hover:bg-gray-50 dark:hover:bg-gray-700"
+                    >
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="flex items-center">
+                          <div className="w-12 h-12 bg-gray-100 dark:bg-gray-600 rounded-lg overflow-hidden flex-shrink-0">
+                            <img
+                              src={`https://cloud.appwrite.io/v1/storage/buckets/67a32bbf003270b1e15c/files/${product.MainImage}/view?project=679b0257003b758db270`}
+                              alt={product.Name}
+                              className="w-full h-full object-cover"
+                            />
+                          </div>
+                          <div className="ml-4">
+                            <div className="text-sm font-medium text-gray-900 dark:text-white">{product.Name}</div>
+                          </div>
                         </div>
-                        <div className="ml-4">
-                          <div className="text-sm font-medium text-gray-900 dark:text-white">{product.Name}</div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 dark:bg-blue-900/50 text-blue-800 dark:text-blue-300">
+                          {getCategoryName(product.CategoryId)}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">
+                        ${product.Price.toFixed(2)}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                        {product.TrackStock ? (
+                          <div className="flex items-center">
+                            <span className="font-medium text-gray-900 dark:text-white">
+                              {product.Stock || 0}
+                            </span>
+                            {product.MinStock && (
+                              <span className="ml-1 text-xs text-gray-500 dark:text-gray-400">
+                                (min: {product.MinStock})
+                              </span>
+                            )}
+                          </div>
+                        ) : (
+                          <span className="text-gray-400 dark:text-gray-500 text-xs">Not tracked</span>
+                        )}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        {product.TrackStock ? (
+                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStockBadgeColor(stockStatus)}`}>
+                            {stockStatus === 'in_stock' ? 'In Stock' :
+                             stockStatus === 'low_stock' ? 'Low Stock' :
+                             'Out of Stock'}
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300">
+                            Not Tracked
+                          </span>
+                        )}
+                      </td>
+                      <td className="px-6 py-4 text-sm text-gray-500 dark:text-gray-400 max-w-xs truncate">
+                        {product.Description}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                        <div className="flex justify-end space-x-2">
+                          <button
+                            onClick={() => handleView(product)}
+                            className="p-2 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/50 rounded-lg transition-colors"
+                            title="View Product"
+                          >
+                            <FiEye className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={() => handleEdit(product)}
+                            className="p-2 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                            title="Edit Product"
+                          >
+                            <FiEdit className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={() => handleDelete(product.$id, product.MainImage)}
+                            className="p-2 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/50 rounded-lg transition-colors"
+                            title="Delete Product"
+                          >
+                            <FiTrash2 className="w-4 h-4" />
+                          </button>
                         </div>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 dark:bg-blue-900/50 text-blue-800 dark:text-blue-300">
-                        {getCategoryName(product.CategoryId)}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">
-                      ${product.Price.toFixed(2)}
-                    </td>
-                    <td className="px-6 py-4 text-sm text-gray-500 dark:text-gray-400 max-w-xs truncate">
-                      {product.Description}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                      <div className="flex justify-end space-x-2">
-                        <button
-                          onClick={() => handleView(product)}
-                          className="p-2 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/50 rounded-lg transition-colors"
-                          title="View Product"
-                        >
-                          <FiEye className="w-4 h-4" />
-                        </button>
-                        <button
-                          onClick={() => handleEdit(product)}
-                          className="p-2 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg transition-colors"
-                          title="Edit Product"
-                        >
-                          <FiEdit className="w-4 h-4" />
-                        </button>
-                        <button
-                          onClick={() => handleDelete(product.$id, product.MainImage)}
-                          className="p-2 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/50 rounded-lg transition-colors"
-                          title="Delete Product"
-                        >
-                          <FiTrash2 className="w-4 h-4" />
-                        </button>
-                      </div>
-                    </td>
-                  </motion.tr>
-                ))}
+                      </td>
+                    </motion.tr>
+                  );
+                })}
               </AnimatePresence>
             </tbody>
           </table>

@@ -1,8 +1,11 @@
 import { ID, Query } from 'appwrite';
 import { databases } from '../client';
+import db from './index';
+import { Product } from '@/app/Dashboard/ListProduct/types/product';
 
 const databaseId = process.env.NEXT_PUBLIC_APPWRITE_DATABASE_ID!;
 const ordersCollectionId = '686506050032acd2d80e';
+const productsCollectionId = '67a2fec400214f3c891b';
 
 export interface OrderItem {
   productId: string;
@@ -39,12 +42,130 @@ export interface Order extends Omit<OrderDocument, 'items'> {
   items: OrderItem[]; // In our app, we work with the parsed array
 }
 
+// Stock management functions
+const stockManager = {
+  // Check if all items in order have sufficient stock
+  async validateOrderStock(items: OrderItem[]): Promise<{ isValid: boolean; errors: string[] }> {
+    const errors: string[] = [];
+    let isValid = true;
+
+    for (const item of items) {
+      try {
+        const product = await db.getDocument(
+          databaseId,
+          productsCollectionId,
+          item.productId
+        ) as Product;
+
+        if (product.TrackStock) {
+          const availableStock = product.Stock || 0;
+          
+          if (availableStock <= 0) {
+            errors.push(`${item.name} is out of stock`);
+            isValid = false;
+          } else if (item.quantity > availableStock) {
+            errors.push(`${item.name}: Only ${availableStock} items available, but ${item.quantity} requested`);
+            isValid = false;
+          }
+        }
+      } catch (error) {
+        errors.push(`Product ${item.name} not found`);
+        isValid = false;
+      }
+    }
+
+    return { isValid, errors };
+  },
+
+  // Deduct stock for order items
+  async deductStock(items: OrderItem[]): Promise<void> {
+    const stockUpdates: Promise<void>[] = [];
+
+    for (const item of items) {
+      const stockUpdate = async () => {
+        try {
+          const product = await db.getDocument(
+            databaseId,
+            productsCollectionId,
+            item.productId
+          ) as Product;
+
+          if (product.TrackStock) {
+            const newStock = Math.max(0, (product.Stock || 0) - item.quantity);
+            
+            await db.updateDocument(
+              databaseId,
+              productsCollectionId,
+              item.productId,
+              { Stock: newStock }
+            );
+          }
+        } catch (error) {
+          console.error(`Error deducting stock for product ${item.productId}:`, error);
+          throw error;
+        }
+      };
+
+      stockUpdates.push(stockUpdate());
+    }
+
+    // Wait for all stock updates to complete
+    await Promise.all(stockUpdates);
+  },
+
+  // Restore stock for cancelled orders
+  async restoreStock(items: OrderItem[]): Promise<void> {
+    const stockUpdates: Promise<void>[] = [];
+
+    for (const item of items) {
+      const stockUpdate = async () => {
+        try {
+          const product = await db.getDocument(
+            databaseId,
+            productsCollectionId,
+            item.productId
+          ) as Product;
+
+          if (product.TrackStock) {
+            const newStock = (product.Stock || 0) + item.quantity;
+            
+            await db.updateDocument(
+              databaseId,
+              productsCollectionId,
+              item.productId,
+              { Stock: newStock }
+            );
+          }
+        } catch (error) {
+          console.error(`Error restoring stock for product ${item.productId}:`, error);
+          throw error;
+        }
+      };
+
+      stockUpdates.push(stockUpdate());
+    }
+
+    // Wait for all stock updates to complete
+    await Promise.all(stockUpdates);
+  }
+};
+
 export const ordersService = {
   async createOrder(orderData: Omit<Order, '$id' | 'orderNumber' | 'createdAt' | 'updatedAt'>) {
     try {
+      // Step 1: Validate stock availability
+      const stockValidation = await stockManager.validateOrderStock(orderData.items);
+      
+      if (!stockValidation.isValid) {
+        throw new Error(`Stock validation failed: ${stockValidation.errors.join(', ')}`);
+      }
+
+      // Step 2: Deduct stock for all items
+      await stockManager.deductStock(orderData.items);
+
+      // Step 3: Create the order
       const orderNumber = `ORD-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
       
-      // Transform the data to match Appwrite schema
       const transformedData = {
         userId: orderData.userId,
         items: JSON.stringify(orderData.items), // Convert items array to string
@@ -149,6 +270,15 @@ export const ordersService = {
 
   async updateOrderStatus(orderId: string, status: Order['status']) {
     try {
+      // Get current order to check if we need to restore stock
+      const currentOrder = await this.getOrder(orderId);
+      const previousStatus = currentOrder.status;
+
+      // If order is being cancelled, restore stock
+      if (status === 'cancelled' && previousStatus !== 'cancelled') {
+        await stockManager.restoreStock(currentOrder.items);
+      }
+
       const response = await databases.updateDocument(
         databaseId,
         ordersCollectionId,
@@ -193,6 +323,12 @@ export const ordersService = {
 
   async deleteOrder(orderId: string) {
     try {
+      // Get order details before deletion to restore stock
+      const order = await this.getOrder(orderId);
+      
+      // Restore stock for deleted order
+      await stockManager.restoreStock(order.items);
+
       await databases.deleteDocument(
         databaseId,
         ordersCollectionId,
@@ -203,5 +339,10 @@ export const ordersService = {
       console.error('Appwrite service :: deleteOrder :: error', error);
       throw error;
     }
+  },
+
+  // New method to check stock before checkout
+  async validateCheckoutStock(items: OrderItem[]): Promise<{ isValid: boolean; errors: string[] }> {
+    return stockManager.validateOrderStock(items);
   }
 };
