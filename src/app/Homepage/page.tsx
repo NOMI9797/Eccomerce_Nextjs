@@ -14,14 +14,83 @@ import {
   FiShoppingBag, FiSettings, FiLogOut, FiZap, 
   FiUsers, FiShield, FiTruck, FiHeart, 
   FiCreditCard, FiArrowRight, FiMail, FiStar,
-  FiGlobe, FiClock, FiCheckCircle, FiTrendingUp
+  FiGlobe, FiClock, FiCheckCircle, FiTrendingUp,
+  FiLayers, FiCpu, FiWifi, FiSmartphone, FiPlay
 } from "react-icons/fi";
+
+// Floating particles component
+const FloatingParticles = () => {
+  const [particles, setParticles] = useState<Array<{id: number, x: number, y: number, size: number, duration: number}>>([]);
+
+  useEffect(() => {
+    const generateParticles = () => {
+      const newParticles = [];
+      for (let i = 0; i < 50; i++) {
+        newParticles.push({
+          id: i,
+          x: Math.random() * window.innerWidth,
+          y: Math.random() * window.innerHeight,
+          size: Math.random() * 4 + 1,
+          duration: Math.random() * 20 + 10
+        });
+      }
+      setParticles(newParticles);
+    };
+
+    generateParticles();
+    window.addEventListener('resize', generateParticles);
+    return () => window.removeEventListener('resize', generateParticles);
+  }, []);
+
+  return (
+    <div className="fixed inset-0 pointer-events-none z-0">
+      {particles.map((particle) => (
+        <motion.div
+          key={particle.id}
+          className="absolute w-1 h-1 bg-blue-400/20 rounded-full"
+          style={{
+            left: particle.x,
+            top: particle.y,
+            width: particle.size,
+            height: particle.size,
+          }}
+          animate={{
+            y: [particle.y, particle.y - 100, particle.y],
+            opacity: [0, 1, 0],
+          }}
+          transition={{
+            duration: particle.duration,
+            repeat: Infinity,
+            ease: "easeInOut",
+          }}
+        />
+      ))}
+    </div>
+  );
+};
+
+// Geometric background pattern
+const GeometricPattern = () => (
+  <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
+    <div className="absolute inset-0 opacity-5">
+      <svg width="100%" height="100%">
+        <defs>
+          <pattern id="grid" width="100" height="100" patternUnits="userSpaceOnUse">
+            <path d="M 100 0 L 0 0 0 100" fill="none" stroke="currentColor" strokeWidth="1"/>
+          </pattern>
+        </defs>
+        <rect width="100%" height="100%" fill="url(#grid)" />
+      </svg>
+    </div>
+  </div>
+);
 
 export default function LandingPage() {
   const { user, logout, isUserAdmin } = useAuth();
   const router = useRouter();
   const [mounted, setMounted] = useState(false);
   const [email, setEmail] = useState("");
+  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
 
   useEffect(() => {
     setMounted(true);
@@ -29,6 +98,15 @@ export default function LandingPage() {
       router.push("/signup");
     }
   }, [user, router]);
+
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      setMousePosition({ x: e.clientX, y: e.clientY });
+    };
+
+    window.addEventListener('mousemove', handleMouseMove);
+    return () => window.removeEventListener('mousemove', handleMouseMove);
+  }, []);
 
   if (!mounted || user === undefined) return null;
 
@@ -51,105 +129,169 @@ export default function LandingPage() {
   return (
     <>
       {user ? (
-        <div className="relative min-h-screen bg-gray-50 dark:bg-gray-900">
+        <div className="relative min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 dark:from-black dark:via-gray-900 dark:to-black overflow-hidden">
+          {/* Background Elements */}
+          <FloatingParticles />
+          <GeometricPattern />
+          
+          {/* Animated gradient overlay */}
+          <div className="fixed inset-0 bg-gradient-to-br from-blue-600/10 via-purple-600/10 to-pink-600/10 animate-pulse" />
+          
+          {/* Mouse follower effect */}
+          <motion.div
+            className="fixed w-6 h-6 bg-blue-500/20 rounded-full pointer-events-none z-50 mix-blend-difference"
+            style={{
+              left: mousePosition.x - 12,
+              top: mousePosition.y - 12,
+            }}
+            animate={{
+              scale: [1, 1.2, 1],
+            }}
+            transition={{
+              duration: 2,
+              repeat: Infinity,
+            }}
+          />
+
           {/* Header */}
           <Header />
 
-          {/* Global Background Image */}
-          <div className="fixed inset-0 -z-10">
-            <Image
-              src="/images/modern-fashionable-brand-interior-clothing-600nw-1498332482.jpg"
-              alt="Modern Store Interior"
-              fill
-              className="object-cover object-center opacity-15 dark:opacity-10"
-              priority
-              quality={90}
-            />
-          </div>
-
           {/* Main Content */}
-          <main className="relative">
+          <main className="relative z-10">
             {/* Hero Section */}
-            <section className="relative overflow-hidden min-h-screen">
-              {/* Hero Background Overlay */}
-              <div className="absolute inset-0">
-                <div className="absolute inset-0 bg-white/70 dark:bg-gray-900/80 backdrop-blur-sm"></div>
-              </div>
-              
-              <div className="relative z-10 px-4 pt-24 pb-32 min-h-screen flex items-center">
-                <motion.div 
-                  className="max-w-7xl mx-auto text-center w-full"
+            <section className="relative min-h-screen flex items-center justify-center px-4 pt-20">
+              <div className="max-w-7xl mx-auto text-center">
+                {/* Brand Logo/Name with futuristic styling */}
+                <motion.div
+                  className="mb-8"
+                  initial={{ opacity: 0, y: -50 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 1 }}
+                >
+                  <div className="relative inline-block">
+                    <motion.h1 
+                      className="text-6xl md:text-8xl lg:text-9xl font-black bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 bg-clip-text text-transparent mb-2"
+                      animate={{
+                        backgroundPosition: ["0% 50%", "100% 50%", "0% 50%"],
+                      }}
+                      transition={{
+                        duration: 5,
+                        repeat: Infinity,
+                        ease: "linear",
+                      }}
+                      style={{
+                        backgroundSize: "200% auto",
+                      }}
+                    >
+                      KharedLo
+                    </motion.h1>
+                    <motion.div
+                      className="absolute -inset-1 bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 rounded-lg blur opacity-30"
+                      animate={{
+                        opacity: [0.3, 0.6, 0.3],
+                      }}
+                      transition={{
+                        duration: 3,
+                        repeat: Infinity,
+                      }}
+                    />
+                  </div>
+                  <motion.p 
+                    className="text-lg md:text-xl text-blue-200 font-medium tracking-wider"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: 0.5, duration: 1 }}
+                  >
+                    The Future of Shopping
+                  </motion.p>
+                </motion.div>
+
+                {/* Tagline */}
+                <motion.div
+                  className="mb-12"
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.8 }}
+                  transition={{ delay: 0.7, duration: 0.8 }}
                 >
-                  <motion.div
-                    className="inline-flex items-center gap-2 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm border border-gray-200 dark:border-gray-700 rounded-full px-6 py-3 text-gray-700 dark:text-gray-300 shadow-lg mb-8"
-                    initial={{ opacity: 0, scale: 0.9 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    transition={{ delay: 0.2, duration: 0.6 }}
-                  >
-                    <motion.div 
-                      className="w-2 h-2 bg-green-500 rounded-full"
-                      animate={{ scale: [1, 1.2, 1] }}
-                      transition={{ duration: 2, repeat: Infinity }}
-                    />
-                    <span className="text-sm font-medium">New arrivals every week</span>
-                  </motion.div>
-
-                  <motion.h1 
-                    className="text-4xl md:text-6xl lg:text-7xl font-bold text-gray-900 dark:text-white mb-6 leading-tight"
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.4, duration: 0.8 }}
-                  >
-                    Shop the Future
+                  <h2 className="text-2xl md:text-4xl lg:text-5xl font-bold text-white mb-6 leading-tight">
+                    Experience Shopping
                     <br />
-                    <span className="bg-gradient-to-r from-gray-800 to-gray-600 dark:from-gray-200 dark:to-gray-400 bg-clip-text text-transparent">
-                      Today
+                    <span className="bg-gradient-to-r from-cyan-400 to-blue-400 bg-clip-text text-transparent">
+                      Like Never Before
                     </span>
-                  </motion.h1>
+                  </h2>
+                  <p className="text-lg md:text-xl text-gray-300 max-w-3xl mx-auto leading-relaxed">
+                    Discover premium products with cutting-edge technology, seamless experience, 
+                    and futuristic design. Welcome to the next generation of e-commerce.
+                  </p>
+                </motion.div>
 
-                  <motion.p 
-                    className="text-xl md:text-2xl text-gray-700 dark:text-gray-300 mb-12 max-w-3xl mx-auto leading-relaxed"
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.6, duration: 0.8 }}
-                  >
-                    Discover premium quality products curated for the modern lifestyle. 
-                    From cutting-edge tech to timeless fashion.
-                  </motion.p>
-
-                  <motion.div 
-                    className="flex flex-col sm:flex-row gap-4 justify-center items-center"
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.8, duration: 0.8 }}
-                  >
-                    <Link href="/Products">
-                      <Button 
-                        size="lg" 
-                        className="group bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 hover:bg-gray-800 dark:hover:bg-gray-200 px-8 py-4 text-lg font-semibold rounded-lg shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:scale-105"
-                      >
-                        <FiShoppingBag className="mr-2 group-hover:scale-110 transition-transform" />
-                        Start Shopping
-                      </Button>
-                    </Link>
-                    <Button 
-                      size="lg"
-                      variant="outline" 
-                      className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 hover:bg-white dark:hover:bg-gray-800 px-8 py-4 text-lg font-semibold rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105"
+                {/* CTA Buttons */}
+                <motion.div
+                  className="flex flex-col sm:flex-row gap-6 justify-center items-center mb-16"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 1, duration: 0.8 }}
+                >
+                  <Link href="/Products">
+                    <motion.button
+                      className="group relative px-8 py-4 bg-gradient-to-r from-blue-600 to-purple-600 rounded-full text-white font-semibold text-lg shadow-xl hover:shadow-2xl transition-all duration-300 overflow-hidden"
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
                     >
-                      <FiZap className="mr-2" />
-                      Explore Categories
-                    </Button>
-                  </motion.div>
+                      <span className="relative z-10 flex items-center">
+                        <FiShoppingBag className="mr-2 group-hover:rotate-12 transition-transform" />
+                        Explore Products
+                      </span>
+                      <div className="absolute inset-0 bg-gradient-to-r from-purple-600 to-pink-600 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                    </motion.button>
+                  </Link>
+                  
+                  <motion.button
+                    className="group relative px-8 py-4 bg-transparent border-2 border-cyan-400 rounded-full text-cyan-400 font-semibold text-lg hover:bg-cyan-400 hover:text-black transition-all duration-300"
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                  >
+                    <span className="flex items-center">
+                      <FiPlay className="mr-2 group-hover:translate-x-1 transition-transform" />
+                      Watch Demo
+                    </span>
+                  </motion.button>
+                </motion.div>
+
+                {/* Stats Cards */}
+                <motion.div
+                  className="grid grid-cols-2 md:grid-cols-4 gap-6 max-w-4xl mx-auto"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 1.2, duration: 0.8 }}
+                >
+                  {[
+                    { number: "10K+", label: "Happy Customers", icon: FiUsers },
+                    { number: "99.9%", label: "Uptime", icon: FiWifi },
+                    { number: "24/7", label: "Support", icon: FiClock },
+                    { number: "50+", label: "Countries", icon: FiGlobe }
+                  ].map((stat, index) => (
+                    <motion.div
+                      key={stat.label}
+                      className="relative group"
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 1.4 + index * 0.1, duration: 0.8 }}
+                    >
+                      <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-6 text-center hover:bg-white/10 transition-all duration-300">
+                        <stat.icon className="w-8 h-8 text-cyan-400 mx-auto mb-3" />
+                        <div className="text-2xl font-bold text-white mb-1">{stat.number}</div>
+                        <div className="text-gray-300 text-sm">{stat.label}</div>
+                      </div>
+                    </motion.div>
+                  ))}
                 </motion.div>
               </div>
             </section>
 
             {/* Features Section */}
-            <section className="px-4 py-20 bg-white/60 dark:bg-gray-800/60 backdrop-blur-sm">
+            <section className="relative py-20 px-4">
               <div className="max-w-7xl mx-auto">
                 <motion.div 
                   className="text-center mb-16"
@@ -158,79 +300,69 @@ export default function LandingPage() {
                   transition={{ duration: 0.8 }}
                   viewport={{ once: true }}
                 >
-                  <h2 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-4">
-                    Why Choose KharedLo?
+                  <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">
+                    Futuristic Features
                   </h2>
-                  <p className="text-xl text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">
-                    Experience shopping like never before with our premium features and unmatched service.
+                  <p className="text-xl text-gray-300 max-w-2xl mx-auto">
+                    Experience the next generation of online shopping with our cutting-edge technology
                   </p>
                 </motion.div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                   {[
-                    { icon: FiTruck, title: "Fast Delivery", description: "Get your orders delivered within 24 hours", color: "gray" },
-                    { icon: FiShield, title: "Secure Shopping", description: "Your data and payments are always protected", color: "gray" },
-                    { icon: FiHeart, title: "Quality Products", description: "Handpicked items from trusted brands", color: "gray" },
-                    { icon: FiCreditCard, title: "Easy Returns", description: "30-day hassle-free return policy", color: "gray" }
+                    { 
+                      icon: FiCpu, 
+                      title: "AI-Powered Recommendations", 
+                      description: "Smart algorithms that learn your preferences and suggest perfect products",
+                      color: "from-blue-400 to-cyan-400"
+                    },
+                    { 
+                      icon: FiShield, 
+                      title: "Quantum Security", 
+                      description: "Advanced encryption and security protocols to protect your data",
+                      color: "from-purple-400 to-pink-400"
+                    },
+                    { 
+                      icon: FiZap, 
+                      title: "Lightning Fast", 
+                      description: "Optimized for speed with instant loading and seamless navigation",
+                      color: "from-yellow-400 to-orange-400"
+                    },
+                    { 
+                      icon: FiSmartphone, 
+                      title: "Mobile First", 
+                      description: "Responsive design that works perfectly on all devices",
+                      color: "from-green-400 to-teal-400"
+                    },
+                    { 
+                      icon: FiLayers, 
+                      title: "Multi-dimensional UI", 
+                      description: "Immersive user interface with depth and interactive elements",
+                      color: "from-indigo-400 to-purple-400"
+                    },
+                    { 
+                      icon: FiTrendingUp, 
+                      title: "Real-time Analytics", 
+                      description: "Live data and insights to enhance your shopping experience",
+                      color: "from-pink-400 to-rose-400"
+                    }
                   ].map((feature, index) => (
                     <motion.div
                       key={feature.title}
-                      className="bg-white/80 dark:bg-gray-700/80 backdrop-blur-sm rounded-2xl p-8 text-center shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-200 dark:border-gray-600 group"
+                      className="group relative"
                       initial={{ opacity: 0, y: 20 }}
                       whileInView={{ opacity: 1, y: 0 }}
                       transition={{ delay: index * 0.1, duration: 0.8 }}
                       viewport={{ once: true }}
-                      whileHover={{ y: -5 }}
+                      whileHover={{ y: -10 }}
                     >
-                      <div className="w-16 h-16 mx-auto mb-6 rounded-full flex items-center justify-center bg-gray-100 dark:bg-gray-600 text-gray-700 dark:text-gray-300 group-hover:scale-110 transition-transform duration-300">
-                        <feature.icon className="w-8 h-8" />
+                      <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-8 h-full hover:bg-white/10 transition-all duration-300">
+                        <div className={`w-16 h-16 rounded-2xl bg-gradient-to-r ${feature.color} flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300`}>
+                          <feature.icon className="w-8 h-8 text-white" />
+                        </div>
+                        <h3 className="text-xl font-semibold text-white mb-4">{feature.title}</h3>
+                        <p className="text-gray-300 leading-relaxed">{feature.description}</p>
                       </div>
-                      <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-3">{feature.title}</h3>
-                      <p className="text-gray-600 dark:text-gray-300">{feature.description}</p>
-                    </motion.div>
-                  ))}
-                </div>
-              </div>
-            </section>
-
-            {/* Statistics Section */}
-            <section className="px-4 py-20 bg-gray-50/60 dark:bg-gray-900/60 backdrop-blur-sm">
-              <div className="max-w-7xl mx-auto">
-                <motion.div 
-                  className="text-center mb-16"
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.8 }}
-                  viewport={{ once: true }}
-                >
-                  <h2 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-4">
-                    Trusted by Thousands
-                  </h2>
-                  <p className="text-xl text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">
-                    Join our growing community of satisfied customers worldwide.
-                  </p>
-                </motion.div>
-
-                <div className="grid grid-cols-2 lg:grid-cols-4 gap-8">
-                  {[
-                    { number: "10K+", label: "Happy Customers", icon: FiUsers },
-                    { number: "50K+", label: "Products Sold", icon: FiShoppingBag },
-                    { number: "99%", label: "Satisfaction Rate", icon: FiStar },
-                    { number: "24/7", label: "Support Available", icon: FiClock }
-                  ].map((stat, index) => (
-                    <motion.div
-                      key={stat.label}
-                      className="text-center"
-                      initial={{ opacity: 0, scale: 0.8 }}
-                      whileInView={{ opacity: 1, scale: 1 }}
-                      transition={{ delay: index * 0.1, duration: 0.8 }}
-                      viewport={{ once: true }}
-                    >
-                      <div className="w-16 h-16 mx-auto mb-4 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center">
-                        <stat.icon className="w-8 h-8 text-gray-700 dark:text-gray-300" />
-                      </div>
-                      <div className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-2">{stat.number}</div>
-                      <div className="text-gray-600 dark:text-gray-300 font-medium">{stat.label}</div>
                     </motion.div>
                   ))}
                 </div>
@@ -238,24 +370,34 @@ export default function LandingPage() {
             </section>
 
             {/* Newsletter Section */}
-            <section className="px-4 py-20 bg-white/60 dark:bg-gray-800/60 backdrop-blur-sm">
+            <section className="relative py-20 px-4">
               <div className="max-w-4xl mx-auto">
                 <motion.div 
-                  className="bg-gray-900/90 dark:bg-gray-100/90 backdrop-blur-sm rounded-3xl p-8 md:p-12 text-center relative overflow-hidden shadow-2xl"
+                  className="relative bg-gradient-to-r from-blue-600/20 to-purple-600/20 backdrop-blur-sm border border-white/10 rounded-3xl p-8 md:p-12 text-center overflow-hidden"
                   initial={{ opacity: 0, y: 20 }}
                   whileInView={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.8 }}
                   viewport={{ once: true }}
                 >
                   <div className="relative z-10">
-                    <div className="w-16 h-16 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mx-auto mb-6">
-                      <FiMail className="w-8 h-8 text-gray-900 dark:text-gray-100" />
-                    </div>
-                    <h2 className="text-3xl md:text-4xl font-bold text-white dark:text-gray-900 mb-4">
-                      Stay Updated
+                    <motion.div
+                      className="w-20 h-20 bg-gradient-to-r from-cyan-400 to-blue-400 rounded-full flex items-center justify-center mx-auto mb-6"
+                      animate={{
+                        rotateY: [0, 360],
+                      }}
+                      transition={{
+                        duration: 4,
+                        repeat: Infinity,
+                        ease: "linear",
+                      }}
+                    >
+                      <FiMail className="w-10 h-10 text-white" />
+                    </motion.div>
+                    <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
+                      Join the Future
                     </h2>
-                    <p className="text-xl text-gray-200 dark:text-gray-700 mb-8 max-w-2xl mx-auto">
-                      Subscribe to our newsletter and be the first to know about new arrivals, exclusive deals, and special offers.
+                    <p className="text-xl text-gray-300 mb-8 max-w-2xl mx-auto">
+                      Subscribe to get early access to new features, exclusive deals, and updates from the KharedLo universe
                     </p>
                     
                     <form onSubmit={handleNewsletterSubmit} className="flex flex-col sm:flex-row gap-4 max-w-md mx-auto">
@@ -264,67 +406,40 @@ export default function LandingPage() {
                         placeholder="Enter your email"
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
-                        className="flex-1 bg-white/20 dark:bg-gray-800/20 backdrop-blur-sm border-gray-300 dark:border-gray-600 text-white dark:text-gray-900 placeholder:text-gray-300 dark:placeholder:text-gray-600 rounded-lg px-4 py-3"
+                        className="flex-1 bg-white/10 backdrop-blur-sm border-white/20 text-white placeholder:text-gray-300 rounded-xl px-4 py-3 focus:ring-2 focus:ring-blue-400"
                         required
                       />
-                      <Button 
+                      <motion.button 
                         type="submit"
-                        className="bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-700 px-8 py-3 font-semibold rounded-lg shadow-lg hover:shadow-xl transition-all duration-300"
+                        className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-8 py-3 font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-300"
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
                       >
                         Subscribe
-                      </Button>
+                      </motion.button>
                     </form>
                   </div>
                 </motion.div>
               </div>
             </section>
-
-            {/* Trust Indicators */}
-            <section className="px-4 py-16 bg-gray-50/60 dark:bg-gray-900/60 backdrop-blur-sm border-t border-gray-200 dark:border-gray-700">
-              <div className="max-w-7xl mx-auto">
-                <motion.div 
-                  className="text-center mb-12"
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.8 }}
-                  viewport={{ once: true }}
-                >
-                  <h2 className="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white mb-4">
-                    Shop with Confidence
-                  </h2>
-                </motion.div>
-
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
-                  {[
-                    { icon: FiShield, text: "SSL Secured" },
-                    { icon: FiCheckCircle, text: "Privacy Protected" },
-                    { icon: FiTruck, text: "Fast Shipping" },
-                    { icon: FiClock, text: "24/7 Support" }
-                  ].map((trust, index) => (
-                    <motion.div
-                      key={trust.text}
-                      className="flex flex-col items-center text-center"
-                      initial={{ opacity: 0, y: 20 }}
-                      whileInView={{ opacity: 1, y: 0 }}
-                      transition={{ delay: index * 0.1, duration: 0.8 }}
-                      viewport={{ once: true }}
-                    >
-                      <div className="w-12 h-12 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center mb-3">
-                        <trust.icon className="w-6 h-6 text-gray-700 dark:text-gray-300" />
-                      </div>
-                      <span className="text-sm font-medium text-gray-700 dark:text-gray-300">{trust.text}</span>
-                    </motion.div>
-                  ))}
-                </div>
-              </div>
-            </section>
           </main>
         </div>
       ) : (
-        <div className="min-h-screen bg-gray-100 dark:bg-gray-900 flex items-center justify-center">
+        <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center">
           <div className="text-center">
-            <h2 className="text-2xl font-semibold text-gray-900 dark:text-white mb-4">Loading...</h2>
-            <p className="text-gray-600 dark:text-gray-400">Please wait while we load your content.</p>
+            <motion.div
+              className="w-16 h-16 bg-gradient-to-r from-blue-400 to-purple-400 rounded-full mx-auto mb-4"
+              animate={{
+                rotate: 360,
+              }}
+              transition={{
+                duration: 2,
+                repeat: Infinity,
+                ease: "linear",
+              }}
+            />
+            <h2 className="text-2xl font-semibold text-white mb-4">Loading KharedLo...</h2>
+            <p className="text-gray-300">Preparing your futuristic shopping experience</p>
           </div>
         </div>
       )}
