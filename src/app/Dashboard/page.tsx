@@ -9,7 +9,25 @@ import Categories from "./Categories/page";
 import Orders from "./Orders/page";
 import StockManagement from "./StockManagement/page";
 import AdminRoute from "@/components/AdminRoute";
-import { FiMenu, FiPackage, FiList, FiGrid, FiX, FiHome, FiBarChart, FiUsers, FiTrendingUp, FiTruck, FiExternalLink, FiShoppingCart, FiDollarSign, FiAlertTriangle, FiRefreshCw } from 'react-icons/fi';
+import { FiMenu, FiPackage, FiList, FiGrid, FiX, FiHome, FiBarChart, FiUsers, FiTrendingUp, FiTruck, FiExternalLink, FiShoppingCart, FiDollarSign, FiAlertTriangle, FiRefreshCw, FiBell, FiActivity, FiPieChart } from 'react-icons/fi';
+import { 
+  LineChart, 
+  Line, 
+  XAxis, 
+  YAxis, 
+  CartesianGrid, 
+  Tooltip, 
+  Legend, 
+  ResponsiveContainer,
+  PieChart,
+  Pie,
+  Cell,
+  BarChart,
+  Bar,
+  AreaChart,
+  Area
+} from 'recharts';
+import { format, subDays, startOfDay } from 'date-fns';
 
 const DashboardContent: React.FC = () => {
   const searchParams = useSearchParams();
@@ -32,6 +50,48 @@ const DashboardContent: React.FC = () => {
   const handleHomeNavigation = () => {
     router.push('/');
   };
+
+  // Analytics data - in a real app, this would come from your database
+  const generateAnalyticsData = () => {
+    const days = [];
+    for (let i = 29; i >= 0; i--) {
+      const date = subDays(new Date(), i);
+      days.push({
+        date: format(date, 'MMM dd'),
+        revenue: Math.floor(Math.random() * 5000) + 1000,
+        orders: Math.floor(Math.random() * 50) + 10,
+        customers: Math.floor(Math.random() * 30) + 5,
+      });
+    }
+    return days;
+  };
+
+  const revenueData = generateAnalyticsData();
+
+  const orderStatusData = [
+    { name: 'Pending', value: 35, color: '#f59e0b' },
+    { name: 'Processing', value: 45, color: '#3b82f6' },
+    { name: 'Shipped', value: 125, color: '#10b981' },
+    { name: 'Delivered', value: 200, color: '#059669' },
+    { name: 'Cancelled', value: 15, color: '#ef4444' },
+  ];
+
+  const productPerformanceData = [
+    { name: 'Electronics', sales: 4000, profit: 2400 },
+    { name: 'Clothing', sales: 3000, profit: 1398 },
+    { name: 'Books', sales: 2000, profit: 800 },
+    { name: 'Home & Garden', sales: 2780, profit: 908 },
+    { name: 'Sports', sales: 1890, profit: 480 },
+    { name: 'Beauty', sales: 2390, profit: 1200 },
+  ];
+
+  const stockLevelsData = [
+    { name: 'iPhone 15 Pro', stock: 45, minStock: 10, status: 'good' },
+    { name: 'MacBook Air', stock: 8, minStock: 5, status: 'low' },
+    { name: 'AirPods Pro', stock: 2, minStock: 15, status: 'critical' },
+    { name: 'iPad Pro', stock: 25, minStock: 10, status: 'good' },
+    { name: 'Apple Watch', stock: 15, minStock: 8, status: 'good' },
+  ];
 
   const menuItems = [
     {
@@ -73,12 +133,15 @@ const DashboardContent: React.FC = () => {
     { title: 'Active Users', value: '2,847', change: '+8%', icon: FiUsers, color: 'orange' },
   ];
 
-  const recentActivity = [
-    { id: 1, type: 'order', message: 'New order #ORD-2024-001 received', time: '2 minutes ago' },
-    { id: 2, type: 'product', message: 'Product "Wireless Headphones" updated', time: '15 minutes ago' },
-    { id: 3, type: 'stock', message: 'Low stock alert: iPhone 15 Pro (5 left)', time: '30 minutes ago' },
-    { id: 4, type: 'order', message: 'Order #ORD-2024-002 shipped', time: '1 hour ago' },
-  ];
+  // Custom chart colors
+  const chartColors = {
+    primary: '#3b82f6',
+    secondary: '#10b981',
+    accent: '#f59e0b',
+    danger: '#ef4444',
+    purple: '#8b5cf6',
+    teal: '#06b6d4',
+  };
 
   const renderActiveFeature = () => {
     switch (selectedFeature) {
@@ -137,36 +200,164 @@ const DashboardContent: React.FC = () => {
               ))}
             </div>
 
-            {/* Recent Activity */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.4 }}
-              className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6"
-            >
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-                Recent Activity
-              </h3>
-              <div className="space-y-4">
-                {recentActivity.map((activity) => (
-                  <div key={activity.id} className="flex items-start space-x-3">
-                    <div className={`w-2 h-2 rounded-full mt-2 ${
-                      activity.type === 'order' ? 'bg-blue-500' :
-                      activity.type === 'product' ? 'bg-green-500' :
-                      'bg-yellow-500'
-                    }`} />
-                    <div className="flex-1">
-                      <p className="text-sm text-gray-900 dark:text-white">
-                        {activity.message}
-                      </p>
-                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                        {activity.time}
-                      </p>
+            {/* Analytics Charts */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Revenue Chart */}
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.4 }}
+                className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6"
+              >
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                    Revenue Overview
+                  </h3>
+                  <FiTrendingUp className="w-5 h-5 text-green-500" />
+                </div>
+                <div className="h-80">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <AreaChart data={revenueData}>
+                      <defs>
+                        <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor={chartColors.primary} stopOpacity={0.8}/>
+                          <stop offset="95%" stopColor={chartColors.primary} stopOpacity={0}/>
+                        </linearGradient>
+                      </defs>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="date" />
+                      <YAxis />
+                      <Tooltip 
+                        formatter={(value) => [`$${value}`, 'Revenue']}
+                        labelStyle={{ color: '#374151' }}
+                      />
+                      <Area
+                        type="monotone"
+                        dataKey="revenue"
+                        stroke={chartColors.primary}
+                        fillOpacity={1}
+                        fill="url(#colorRevenue)"
+                      />
+                    </AreaChart>
+                  </ResponsiveContainer>
+                </div>
+              </motion.div>
+
+              {/* Order Status Distribution */}
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.5 }}
+                className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6"
+              >
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                    Order Status
+                  </h3>
+                  <FiPieChart className="w-5 h-5 text-blue-500" />
+                </div>
+                <div className="h-80">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie
+                        data={orderStatusData}
+                        cx="50%"
+                        cy="50%"
+                        labelLine={false}
+                        label={({ name, percent }) => `${name} ${((percent || 0) * 100).toFixed(0)}%`}
+                        outerRadius={80}
+                        fill="#8884d8"
+                        dataKey="value"
+                      >
+                        {orderStatusData.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={entry.color} />
+                        ))}
+                      </Pie>
+                      <Tooltip />
+                    </PieChart>
+                  </ResponsiveContainer>
+                </div>
+              </motion.div>
+            </div>
+
+            {/* Additional Analytics */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Product Performance */}
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.6 }}
+                className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6"
+              >
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                    Category Performance
+                  </h3>
+                  <FiBarChart className="w-5 h-5 text-purple-500" />
+                </div>
+                <div className="h-80">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={productPerformanceData}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="name" />
+                      <YAxis />
+                      <Tooltip />
+                      <Legend />
+                      <Bar dataKey="sales" fill={chartColors.secondary} name="Sales" />
+                      <Bar dataKey="profit" fill={chartColors.accent} name="Profit" />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              </motion.div>
+
+              {/* Stock Levels */}
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.7 }}
+                className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6"
+              >
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                    Stock Levels
+                  </h3>
+                  <FiPackage className="w-5 h-5 text-orange-500" />
+                </div>
+                <div className="space-y-4">
+                  {stockLevelsData.map((item, index) => (
+                    <div key={index} className="flex items-center justify-between">
+                      <div className="flex-1">
+                        <div className="flex items-center justify-between mb-1">
+                          <span className="text-sm font-medium text-gray-900 dark:text-white">
+                            {item.name}
+                          </span>
+                          <span className="text-sm text-gray-500 dark:text-gray-400">
+                            {item.stock} / {item.minStock} min
+                          </span>
+                        </div>
+                        <div className="w-full bg-gray-200 rounded-full h-2">
+                          <div
+                            className={`h-2 rounded-full ${
+                              item.status === 'critical' ? 'bg-red-500' :
+                              item.status === 'low' ? 'bg-yellow-500' :
+                              'bg-green-500'
+                            }`}
+                            style={{ width: `${Math.min((item.stock / item.minStock) * 100, 100)}%` }}
+                          />
+                        </div>
+                      </div>
+                      <span className={`ml-4 px-2 py-1 text-xs rounded-full ${
+                        item.status === 'critical' ? 'bg-red-100 text-red-800' :
+                        item.status === 'low' ? 'bg-yellow-100 text-yellow-800' :
+                        'bg-green-100 text-green-800'
+                      }`}>
+                        {item.status}
+                      </span>
                     </div>
-                  </div>
-                ))}
-              </div>
-            </motion.div>
+                  ))}
+                </div>
+              </motion.div>
+            </div>
           </div>
         );
     }
