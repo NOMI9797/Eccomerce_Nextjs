@@ -27,11 +27,10 @@ import {
   FiTrendingUp
 } from 'react-icons/fi';
 import Header from '@/components/Header';
-import AdminRoute from '@/components/AdminRoute';
 
-const AdminNotificationsContent: React.FC = () => {
+const AdminNotificationsPage: React.FC = () => {
   const { notifications, isLoading, markAsRead, markAllAsRead, deleteNotification, fetchNotifications } = useNotifications();
-  const { isUserAdmin } = useAuth();
+  const { user, isUserAdmin } = useAuth();
   const router = useRouter();
   
   const [selectedNotifications, setSelectedNotifications] = useState<string[]>([]);
@@ -39,14 +38,14 @@ const AdminNotificationsContent: React.FC = () => {
   const [typeFilter, setTypeFilter] = useState<'all' | 'order' | 'product' | 'system' | 'user'>('all');
   const [priorityFilter, setPriorityFilter] = useState<'all' | 'high' | 'medium' | 'low'>('all');
 
-  // Redirect non-admin users
+  // Redirect non-admin users to customer page
   useEffect(() => {
     if (!isUserAdmin) {
       router.push('/notifications/customer');
     }
   }, [isUserAdmin, router]);
 
-  // Filter notifications
+  // Filter notifications for admin view
   const filteredNotifications = notifications.filter(notification => {
     const matchesReadFilter = filter === 'all' || 
       (filter === 'read' && notification.isRead) || 
@@ -374,6 +373,10 @@ const AdminNotificationsContent: React.FC = () => {
                     Notifications ({filteredNotifications.length})
                   </h2>
                 </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                  <span className="text-xs text-green-600 dark:text-green-400 font-medium">Live</span>
+                </div>
               </div>
             </div>
 
@@ -488,14 +491,6 @@ const AdminNotificationsContent: React.FC = () => {
         </div>
       </div>
     </>
-  );
-};
-
-const AdminNotificationsPage: React.FC = () => {
-  return (
-    <AdminRoute>
-      <AdminNotificationsContent />
-    </AdminRoute>
   );
 };
 

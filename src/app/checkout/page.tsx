@@ -38,18 +38,14 @@ import { ordersService } from '@/appwrite/db/orders';
 import { notificationService } from '@/appwrite/db/notifications';
 import { useNotifications } from '@/session/NotificationContext';
 import StripeCheckout from './components/StripeCheckout';
-import NotificationToastSystem, { 
-  useNotificationToasts, 
-  createPaymentSuccessToast, 
-  createOrderConfirmationToast 
-} from '@/components/ui/notification-toast-system';
+// Removed NotificationToastSystem - using simple toast notifications instead
 
 export default function CheckoutPage() {
   const { user } = useAuth();
   const { cart, clearCart } = useCart();
   const { fetchNotifications } = useNotifications();
   const router = useRouter();
-  const { toasts, addToast, removeToast } = useNotificationToasts();
+  // Removed useNotificationToasts - using simple toast notifications instead
   const deliveryFee = 10.00;
   const [showInvoice, setShowInvoice] = useState(false);
   const [orderDetails, setOrderDetails] = useState<any>(null);
@@ -205,12 +201,7 @@ export default function CheckoutPage() {
               'Credit/Debit Card (Stripe)'
             );
 
-            // Show rich payment success toast
-            addToast(createPaymentSuccessToast(
-              result.orderNumber,
-              orderTotal,
-              'Credit/Debit Card (Stripe)'
-            ));
+            // Rich payment success toast removed - using simple notifications instead
 
             // Also create order confirmation notification
             await notificationService.createOrderConfirmationNotification(
@@ -221,12 +212,7 @@ export default function CheckoutPage() {
               estimatedDelivery
             );
 
-            // Show order confirmation toast
-            addToast(createOrderConfirmationToast(
-              result.orderNumber,
-              orderTotal,
-              estimatedDelivery
-            ));
+            // Order confirmation toast removed - using simple notifications instead
           } else {
             // Create basic order notifications for COD
             await notificationService.createOrderNotification(
@@ -241,12 +227,7 @@ export default function CheckoutPage() {
               result.orderNumber
             );
 
-            // Show order confirmation toast for COD
-            addToast(createOrderConfirmationToast(
-              result.orderNumber,
-              orderTotal,
-              estimatedDelivery
-            ));
+            // Order confirmation toast for COD removed - using simple notifications instead
           }
 
           // Refresh notifications to show the new ones
@@ -697,13 +678,7 @@ export default function CheckoutPage() {
         </AnimatePresence>
 
         {/* Rich Notification Toast System */}
-        <NotificationToastSystem
-          notifications={toasts}
-          onNotificationClose={removeToast}
-          onNotificationAction={(actionType, notification) => {
-            console.log('Notification action:', actionType, notification);
-          }}
-        />
+        {/* Removed - using simple toast notifications instead */}
       </div>
     </>
   );

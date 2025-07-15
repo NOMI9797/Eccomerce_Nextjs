@@ -186,13 +186,6 @@ export async function resetPassword(
 export const isAdmin = (user: UserWithRole | null): boolean => {
   if (!user || !user.labels) return false;
   
-  // Log for debugging
-  console.log('Checking admin status:', {
-    user: user.$id,
-    labels: user.labels,
-    isAdmin: user.labels.includes(ROLES.ADMIN)
-  });
-  
   // Strict check for admin role
   return Array.isArray(user.labels) && user.labels.includes(ROLES.ADMIN);
 };

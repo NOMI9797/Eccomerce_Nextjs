@@ -81,33 +81,31 @@ const Toast: React.FC<ToastProps> = ({
     <AnimatePresence>
       {isVisible && (
         <motion.div
-          initial={{ opacity: 0, y: 50, scale: 0.95 }}
-          animate={{ opacity: 1, y: 0, scale: 1 }}
-          exit={{ opacity: 0, y: 20, scale: 0.95 }}
-          transition={{ duration: 0.3, ease: "easeOut" }}
-          className={`max-w-sm w-full shadow-lg rounded-lg border p-4 ${getStyles()}`}
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -30 }}
+          transition={{ duration: 0.2 }}
+          className={`max-w-[200px] w-auto shadow-md rounded-md border px-3 py-2 ${getStyles()}`}
         >
-          <div className="flex items-start">
-            <div className={`flex-shrink-0 ${getIconStyles()}`}>
+          <div className="flex items-center gap-2">
+            <div className={`${getIconStyles()}`}>
               {getIcon()}
             </div>
-            <div className="ml-3 w-0 flex-1">
-              <p className="text-sm font-medium">{title}</p>
+            <div className="flex-1 min-w-0">
+              <p className="text-xs font-medium truncate">{title}</p>
               {message && (
-                <p className="mt-1 text-sm opacity-90">{message}</p>
+                <p className="text-xs opacity-70 truncate">{message}</p>
               )}
             </div>
-            <div className="ml-4 flex-shrink-0 flex">
-              <button
-                onClick={() => {
-                  setIsVisible(false);
-                  setTimeout(() => onClose(id), 300);
-                }}
-                className="rounded-md inline-flex text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors"
-              >
-                <FiX className="w-5 h-5" />
-              </button>
-            </div>
+            <button
+              onClick={() => {
+                setIsVisible(false);
+                setTimeout(() => onClose(id), 200);
+              }}
+              className="ml-1 p-0.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
+            >
+              <FiX className="w-3 h-3" />
+            </button>
           </div>
         </motion.div>
       )}

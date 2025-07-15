@@ -5,6 +5,66 @@ import { Notification, CreateNotificationData } from '@/types/notification';
 const DATABASE_ID = '679b031a001983d2ec66';
 const NOTIFICATIONS_COLLECTION_ID = '6874b8bc00118bfbe390';
 
+// In-memory cache for notifications to reduce API calls
+class NotificationCache {
+  private cache = new Map<string, Notification[]>();
+  private unreadCountCache = new Map<string, number>();
+  private lastFetchTime = new Map<string, number>();
+  private readonly CACHE_DURATION = 30000; // 30 seconds
+
+  private getCacheKey(userId?: string): string {
+    return userId ? `user_${userId}` : 'all';
+  }
+
+  isValid(userId?: string): boolean {
+    const key = this.getCacheKey(userId);
+    const lastFetch = this.lastFetchTime.get(key);
+    return lastFetch ? (Date.now() - lastFetch) < this.CACHE_DURATION : false;
+  }
+
+  get(userId?: string): Notification[] | null {
+    const key = this.getCacheKey(userId);
+    if (this.isValid(userId)) {
+      return this.cache.get(key) || null;
+    }
+    return null;
+  }
+
+  set(notifications: Notification[], userId?: string): void {
+    const key = this.getCacheKey(userId);
+    this.cache.set(key, notifications);
+    this.lastFetchTime.set(key, Date.now());
+  }
+
+  getUnreadCount(userId?: string): number | null {
+    const key = this.getCacheKey(userId);
+    if (this.isValid(userId)) {
+      return this.unreadCountCache.get(key) || null;
+    }
+    return null;
+  }
+
+  setUnreadCount(count: number, userId?: string): void {
+    const key = this.getCacheKey(userId);
+    this.unreadCountCache.set(key, count);
+  }
+
+  invalidate(userId?: string): void {
+    const key = this.getCacheKey(userId);
+    this.cache.delete(key);
+    this.unreadCountCache.delete(key);
+    this.lastFetchTime.delete(key);
+  }
+
+  clear(): void {
+    this.cache.clear();
+    this.unreadCountCache.clear();
+    this.lastFetchTime.clear();
+  }
+}
+
+const notificationCache = new NotificationCache();
+
 export const notificationService = {
   // Create a new notification
   async createNotification(data: CreateNotificationData): Promise<Notification> {
@@ -24,6 +84,11 @@ export const notificationService = {
           actionType: data.actionType || 'none'
         }
       );
+      
+      // Invalidate cache for affected users
+      notificationCache.invalidate(data.userId);
+      notificationCache.invalidate(); // Invalidate admin cache
+      
       return notification as unknown as Notification;
     } catch (error) {
       console.error('Error creating notification:', error);
@@ -31,9 +96,15 @@ export const notificationService = {
     }
   },
 
-  // Get all notifications (for admin)
+  // Get all notifications with caching (for admin)
   async getNotifications(limit = 50): Promise<Notification[]> {
     try {
+      // Check cache first
+      const cached = notificationCache.get();
+      if (cached) {
+        return cached;
+      }
+
       const response = await db.listDocuments(
         DATABASE_ID,
         NOTIFICATIONS_COLLECTION_ID,
@@ -42,16 +113,28 @@ export const notificationService = {
           Query.limit(limit)
         ]
       );
-      return response.documents as unknown as Notification[];
+      
+      const notifications = response.documents as unknown as Notification[];
+      
+      // Cache the result
+      notificationCache.set(notifications);
+      
+      return notifications;
     } catch (error) {
       console.error('Error fetching notifications:', error);
       throw error;
     }
   },
 
-  // Get notifications for a specific user (for customers)
+  // Get notifications for a specific user with caching
   async getUserNotifications(userId: string, limit = 50): Promise<Notification[]> {
     try {
+      // Check cache first
+      const cached = notificationCache.get(userId);
+      if (cached) {
+        return cached;
+      }
+
       const response = await db.listDocuments(
         DATABASE_ID,
         NOTIFICATIONS_COLLECTION_ID,
@@ -61,49 +144,117 @@ export const notificationService = {
           Query.limit(limit)
         ]
       );
-      return response.documents as unknown as Notification[];
+      
+      const notifications = response.documents as unknown as Notification[];
+      
+      // Cache the result
+      notificationCache.set(notifications, userId);
+      
+      return notifications;
     } catch (error) {
       console.error('Error fetching user notifications:', error);
       throw error;
     }
   },
 
-  // Get unread count for specific user
+  // Optimized method to get notifications and unread count in one call
+  async getNotificationsWithCount(userId?: string, limit = 50): Promise<{ notifications: Notification[], unreadCount: number }> {
+    try {
+      // Check cache first
+      const cachedNotifications = notificationCache.get(userId);
+      const cachedUnreadCount = notificationCache.getUnreadCount(userId);
+      
+      if (cachedNotifications && cachedUnreadCount !== null) {
+        return { notifications: cachedNotifications, unreadCount: cachedUnreadCount };
+      }
+
+      const queries = [Query.orderDesc('isCreated'), Query.limit(limit)];
+      if (userId) {
+        queries.unshift(Query.equal('userId', userId));
+      }
+
+      const response = await db.listDocuments(
+        DATABASE_ID,
+        NOTIFICATIONS_COLLECTION_ID,
+        queries
+      );
+      
+      const notifications = response.documents as unknown as Notification[];
+      const unreadCount = notifications.filter(n => !n.isRead).length;
+      
+      // Cache the results
+      notificationCache.set(notifications, userId);
+      notificationCache.setUnreadCount(unreadCount, userId);
+      
+      return { notifications, unreadCount };
+    } catch (error) {
+      console.error('Error fetching notifications with count:', error);
+      throw error;
+    }
+  },
+
+  // Get unread count for specific user with caching
   async getUserUnreadCount(userId: string): Promise<number> {
     try {
+      // Check cache first
+      const cached = notificationCache.getUnreadCount(userId);
+      if (cached !== null) {
+        return cached;
+      }
+
       const response = await db.listDocuments(
         DATABASE_ID,
         NOTIFICATIONS_COLLECTION_ID,
         [
           Query.equal('userId', userId),
-          Query.equal('isRead', false)
+          Query.equal('isRead', false),
+          Query.limit(1000) // Reasonable limit for counting
         ]
       );
-      return response.total;
+      
+      const count = response.total;
+      
+      // Cache the result
+      notificationCache.setUnreadCount(count, userId);
+      
+      return count;
     } catch (error) {
       console.error('Error fetching user unread count:', error);
       throw error;
     }
   },
 
-  // Get unread notifications count
+  // Get unread notifications count with caching
   async getUnreadCount(): Promise<number> {
     try {
+      // Check cache first
+      const cached = notificationCache.getUnreadCount();
+      if (cached !== null) {
+        return cached;
+      }
+
       const response = await db.listDocuments(
         DATABASE_ID,
         NOTIFICATIONS_COLLECTION_ID,
         [
-          Query.equal('isRead', false)
+          Query.equal('isRead', false),
+          Query.limit(1000) // Reasonable limit for counting
         ]
       );
-      return response.total;
+      
+      const count = response.total;
+      
+      // Cache the result
+      notificationCache.setUnreadCount(count);
+      
+      return count;
     } catch (error) {
       console.error('Error fetching unread count:', error);
       throw error;
     }
   },
 
-  // Mark notification as read
+  // Mark notification as read with cache invalidation
   async markAsRead(notificationId: string): Promise<void> {
     try {
       await db.updateDocument(
@@ -114,30 +265,65 @@ export const notificationService = {
           isRead: true
         }
       );
+      
+      // Invalidate relevant caches
+      notificationCache.clear(); // Clear all caches since we don't know which user this belongs to
     } catch (error) {
       console.error('Error marking notification as read:', error);
       throw error;
     }
   },
 
-  // Mark all notifications as read
-  async markAllAsRead(): Promise<void> {
+  // Batch mark notifications as read - more efficient
+  async markMultipleAsRead(notificationIds: string[]): Promise<void> {
     try {
-      const notifications = await this.getNotifications();
-      const unreadNotifications = notifications.filter(n => !n.isRead);
-      
-      await Promise.all(
-        unreadNotifications.map(notification => 
-          this.markAsRead(notification.$id)
+      const promises = notificationIds.map(id => 
+        db.updateDocument(
+          DATABASE_ID,
+          NOTIFICATIONS_COLLECTION_ID,
+          id,
+          { isRead: true }
         )
       );
+      
+      await Promise.all(promises);
+      
+      // Invalidate all caches
+      notificationCache.clear();
+    } catch (error) {
+      console.error('Error marking multiple notifications as read:', error);
+      throw error;
+    }
+  },
+
+  // Optimized mark all notifications as read
+  async markAllAsRead(userId?: string): Promise<void> {
+    try {
+      // Get unread notifications first
+      const queries = [Query.equal('isRead', false), Query.limit(1000)];
+      if (userId) {
+        queries.unshift(Query.equal('userId', userId));
+      }
+
+      const response = await db.listDocuments(
+        DATABASE_ID,
+        NOTIFICATIONS_COLLECTION_ID,
+        queries
+      );
+      
+      const unreadNotifications = response.documents;
+      
+      if (unreadNotifications.length > 0) {
+        // Batch update all unread notifications
+        await this.markMultipleAsRead(unreadNotifications.map(n => n.$id));
+      }
     } catch (error) {
       console.error('Error marking all notifications as read:', error);
       throw error;
     }
   },
 
-  // Delete notification
+  // Delete notification with cache invalidation
   async deleteNotification(notificationId: string): Promise<void> {
     try {
       await db.deleteDocument(
@@ -145,10 +331,39 @@ export const notificationService = {
         NOTIFICATIONS_COLLECTION_ID,
         notificationId
       );
+      
+      // Invalidate all caches
+      notificationCache.clear();
     } catch (error) {
       console.error('Error deleting notification:', error);
       throw error;
     }
+  },
+
+  // Batch delete notifications - more efficient
+  async deleteMultipleNotifications(notificationIds: string[]): Promise<void> {
+    try {
+      const promises = notificationIds.map(id => 
+        db.deleteDocument(
+          DATABASE_ID,
+          NOTIFICATIONS_COLLECTION_ID,
+          id
+        )
+      );
+      
+      await Promise.all(promises);
+      
+      // Invalidate all caches
+      notificationCache.clear();
+    } catch (error) {
+      console.error('Error deleting multiple notifications:', error);
+      throw error;
+    }
+  },
+
+  // Clear cache manually (useful for testing or force refresh)
+  clearCache(): void {
+    notificationCache.clear();
   },
 
   // Create admin order notification
@@ -224,12 +439,7 @@ export const notificationService = {
       userId,
       orderId,
       orderNumber,
-      actionType: 'view_invoice',
-      metadata: {
-        paymentAmount,
-        paymentMethod,
-        timestamp: new Date().toISOString()
-      }
+      actionType: 'view_invoice'
     });
   },
 
@@ -241,13 +451,7 @@ export const notificationService = {
       priority: 'high',
       orderId,
       orderNumber,
-      actionType: 'view_order',
-      metadata: {
-        customerName,
-        paymentAmount,
-        paymentMethod,
-        timestamp: new Date().toISOString()
-      }
+      actionType: 'view_order'
     });
   },
 
@@ -260,12 +464,7 @@ export const notificationService = {
       userId,
       orderId,
       orderNumber,
-      actionType: 'view_order',
-      metadata: {
-        totalAmount,
-        estimatedDelivery,
-        timestamp: new Date().toISOString()
-      }
+      actionType: 'view_order'
     });
   },
 
@@ -278,11 +477,7 @@ export const notificationService = {
       userId,
       orderId,
       orderNumber,
-      actionType: 'track_order',
-      metadata: {
-        trackingNumber,
-        timestamp: new Date().toISOString()
-      }
+      actionType: 'track_order'
     });
   },
 

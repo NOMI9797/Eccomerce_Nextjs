@@ -1,5 +1,5 @@
 "use client";
-import React, { createContext, useContext, useState, ReactNode, useEffect } from "react";
+import React, { createContext, useContext, useState, ReactNode, useEffect, useMemo } from "react";
 import { getCurrentUser, signOutUser, isAdmin, checkAuth } from "@/appwrite/auth";
 import { useRouter } from "next/navigation";
 
@@ -17,7 +17,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
 
-  const isUserAdmin = isAdmin(user);
+  // Memoize isUserAdmin to prevent unnecessary re-renders and subscription recreations
+  const isUserAdmin = useMemo(() => isAdmin(user), [user]);
 
   useEffect(() => {
     const loadUser = async () => {

@@ -9,7 +9,6 @@ export interface Notification {
   orderId?: string; // For order-related notifications
   orderNumber?: string; // For displaying order number
   actionType?: 'view_order' | 'view_invoice' | 'view_product' | 'track_order' | 'none'; // What happens when clicked
-  metadata?: Record<string, any>; // Additional data for rich notifications
 }
 
 export interface NotificationStats {
@@ -33,5 +32,4 @@ export interface CreateNotificationData {
   orderId?: string;
   orderNumber?: string;
   actionType?: Notification['actionType'];
-  metadata?: Record<string, any>;
 } 
