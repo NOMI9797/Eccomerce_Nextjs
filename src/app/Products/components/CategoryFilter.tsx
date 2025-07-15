@@ -33,27 +33,27 @@ export default function CategoryFilter({ categories, selectedCategory, onCategor
 
   return (
     <motion.div 
-      className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-6 sticky top-6 shadow-sm"
+      className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4 shadow-sm"
       variants={containerVariants}
       initial="hidden"
       animate="visible"
     >
       {/* Header */}
       <motion.div 
-        className="mb-6 pb-4 border-b border-gray-200 dark:border-gray-700"
+        className="mb-4 pb-3 border-b border-gray-200 dark:border-gray-700"
         initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
       >
-        <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
+        <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-1">
           Categories
         </h3>
-        <p className="text-sm text-gray-600 dark:text-gray-400">Filter by category</p>
+        <p className="text-xs text-gray-600 dark:text-gray-400">Filter by category</p>
       </motion.div>
 
       {/* Category List */}
       <motion.div 
-        className="space-y-2"
+        className="space-y-1.5"
         variants={containerVariants}
       >
         {/* All Products Button */}
@@ -64,19 +64,19 @@ export default function CategoryFilter({ categories, selectedCategory, onCategor
             x: 5
           }}
           whileTap={{ scale: 0.98 }}
-          className={`w-full text-left px-4 py-3 rounded-lg transition-all duration-300 relative overflow-hidden group ${
+          className={`w-full text-left px-3 py-2.5 rounded-lg transition-all duration-300 relative overflow-hidden group ${
             selectedCategory === "all" 
               ? "bg-blue-600 text-white shadow-md" 
               : "text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white border border-gray-200 dark:border-gray-600 hover:border-blue-300 dark:hover:border-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20"
           }`}
           onClick={() => onCategoryChange("all")}
         >
-          <span className="relative z-10 font-medium flex items-center">
-            <span className="mr-3 text-blue-600">🏠</span>
+          <span className="relative z-10 font-medium flex items-center text-sm">
+            <span className="mr-2 text-blue-600">🏠</span>
             All Products
             {selectedCategory === "all" && (
               <motion.span
-                className="ml-auto text-xs bg-white/20 px-2 py-1 rounded-full"
+                className="ml-auto text-xs bg-white/20 px-1.5 py-0.5 rounded-full"
                 initial={{ scale: 0 }}
                 animate={{ scale: 1 }}
                 transition={{ delay: 0.2 }}
@@ -97,21 +97,21 @@ export default function CategoryFilter({ categories, selectedCategory, onCategor
               x: 5
             }}
             whileTap={{ scale: 0.98 }}
-            className={`w-full text-left px-4 py-3 rounded-lg transition-all duration-300 relative overflow-hidden group ${
+            className={`w-full text-left px-3 py-2.5 rounded-lg transition-all duration-300 relative overflow-hidden group ${
               selectedCategory === category.$id 
                 ? "bg-purple-600 text-white shadow-md" 
                 : "text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white border border-gray-200 dark:border-gray-600 hover:border-purple-300 dark:hover:border-purple-400 hover:bg-purple-50 dark:hover:bg-purple-900/20"
             }`}
             onClick={() => onCategoryChange(category.$id)}
           >
-            <span className="relative z-10 font-medium flex items-center">
-              <span className="mr-3">
+            <span className="relative z-10 font-medium flex items-center text-sm">
+              <span className="mr-2">
                 {getCategoryIcon(category.CategoryName)}
               </span>
               {category.CategoryName}
               {selectedCategory === category.$id && (
                 <motion.span
-                  className="ml-auto text-xs bg-white/20 px-2 py-1 rounded-full"
+                  className="ml-auto text-xs bg-white/20 px-1.5 py-0.5 rounded-full"
                   initial={{ scale: 0 }}
                   animate={{ scale: 1 }}
                   transition={{ delay: 0.2 }}
@@ -126,15 +126,15 @@ export default function CategoryFilter({ categories, selectedCategory, onCategor
 
       {/* Stats Section */}
       <motion.div 
-        className="mt-6 pt-4 border-t border-gray-200 dark:border-gray-700"
+        className="mt-4 pt-3 border-t border-gray-200 dark:border-gray-700"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.5, duration: 0.5 }}
       >
         <div className="text-center">
-          <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">Available Categories</p>
+          <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Available Categories</p>
           <motion.span 
-            className="text-2xl font-bold text-gray-900 dark:text-white"
+            className="text-xl font-bold text-gray-900 dark:text-white"
           >
             {categories.length + 1}
           </motion.span>
