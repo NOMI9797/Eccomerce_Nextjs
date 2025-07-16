@@ -8,7 +8,7 @@ import ListProducts from "./ListProduct/page";
 import Categories from "./Categories/page";
 import Orders from "./Orders/page";
 import StockManagement from "./StockManagement/page";
-import UserReviews from "./Reviews/page";
+import ReviewsPage from "./Reviews/page";
 import AdminRoute from "@/components/AdminRoute";
 import { FiMenu, FiPackage, FiList, FiGrid, FiX, FiHome, FiBarChart, FiUsers, FiTrendingUp, FiTruck, FiExternalLink, FiShoppingCart, FiDollarSign, FiAlertTriangle, FiRefreshCw, FiBell, FiActivity, FiPieChart, FiStar } from 'react-icons/fi';
 import { 
@@ -166,7 +166,7 @@ const DashboardContent: React.FC = () => {
       case "Stock Management":
         return <StockManagement />;
       case "Your Reviews":
-        return <UserReviews />;
+        return <ReviewsPage />;
       default:
         return (
           <div className="space-y-6">

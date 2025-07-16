@@ -79,7 +79,8 @@ const ReviewCard: React.FC<ReviewCardProps> = ({
     }
   };
 
-  const getInitials = (name: string) => {
+  const getInitials = (name: string | undefined | null) => {
+    if (!name || name === 'User') return 'U';
     return name
       .split(' ')
       .map(word => word[0])
@@ -101,24 +102,31 @@ const ReviewCard: React.FC<ReviewCardProps> = ({
         <div className="flex items-start gap-3">
           {/* User Avatar */}
           <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-500 rounded-full flex items-center justify-center text-white text-xs font-semibold">
-            {getInitials(review.userName || 'Anonymous')}
+            {getInitials(review.userName)}
           </div>
 
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 mb-1">
-              <StarRating rating={review.rating} size="sm" />
-              <span className="text-sm text-gray-600 dark:text-gray-400">
-                {formatDate(review.createdAt)}
+              <span className="font-medium text-gray-900 dark:text-white">
+                {review.userName || 'User'}
               </span>
+              {review.isVerified && (
+                <div className="flex items-center gap-1 bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 px-2 py-1 rounded-full text-xs font-medium">
+                  <FiShield className="w-3 h-3" />
+                  Verified Purchase
+                </div>
+              )}
             </div>
             
-            <h4 className="font-medium text-gray-900 dark:text-white text-sm mb-1 truncate">
-              {review.title}
-            </h4>
-            
-            <p className="text-sm text-gray-600 dark:text-gray-300 line-clamp-2">
-              {review.comment}
-            </p>
+            <div className="flex items-center gap-3 text-sm text-gray-500 dark:text-gray-400">
+              <span>{formatDate(review.createdAt)}</span>
+              {showProductName && review.productName && (
+                <>
+                  <span>•</span>
+                  <span className="font-medium">{review.productName}</span>
+                </>
+              )}
+            </div>
           </div>
         </div>
       </motion.div>
@@ -137,14 +145,14 @@ const ReviewCard: React.FC<ReviewCardProps> = ({
       <div className="flex items-start justify-between mb-4">
         <div className="flex items-start gap-4">
           {/* User Avatar */}
-          <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-500 rounded-full flex items-center justify-center text-white font-semibold">
-            {getInitials(review.userName || 'Anonymous')}
+          <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-500 rounded-full flex items-center justify-center text-white text-xs font-semibold">
+            {getInitials(review.userName)}
           </div>
 
           <div className="flex-1">
             <div className="flex items-center gap-2 mb-1">
-              <span className="font-semibold text-gray-900 dark:text-white">
-                {review.userName || 'Anonymous'}
+              <span className="font-medium text-gray-900 dark:text-white">
+                {review.userName}
               </span>
               {review.isVerified && (
                 <div className="flex items-center gap-1 bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 px-2 py-1 rounded-full text-xs font-medium">

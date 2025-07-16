@@ -1,150 +1,145 @@
 "use client";
 
-import React, { useEffect, useState } from 'react';
-import { motion } from 'framer-motion';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/session/AuthContext';
-import { reviewsService } from '@/appwrite/db/reviews';
-import { UserReviewSummary } from '@/types/review';
-import ReviewCard from '@/components/ui/ReviewCard';
-import { FiStar, FiEdit3, FiTrash2, FiAlertCircle } from 'react-icons/fi';
-import LoadingSpinner from '@/components/ui/LoadingSpinner';
+import { Review } from '@/types/review';
+import { ReviewsService } from '@/appwrite/db/reviews';
+import { motion, AnimatePresence } from 'framer-motion';
+import { FiStar, FiCheck, FiX, FiCalendar, FiPackage } from 'react-icons/fi';
+import { format } from 'date-fns';
 
-export default function UserReviews() {
+const reviewsService = new ReviewsService();
+
+const ReviewsPage = () => {
   const { user } = useAuth();
-  const [reviewSummary, setReviewSummary] = useState<UserReviewSummary | null>(null);
+  const [reviews, setReviews] = useState<Review[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    loadUserReviews();
-  }, []);
+    if (user) {
+      loadReviews();
+    }
+  }, [user]);
 
-  const loadUserReviews = async () => {
-    if (!user) return;
-    
+  const loadReviews = async () => {
     try {
-      setLoading(true);
-      const summary = await reviewsService.getUserReviews(user.$id);
-      setReviewSummary(summary);
-      setError(null);
-    } catch (err: any) {
-      setError(err.message || 'Failed to load reviews');
-      console.error('Error loading user reviews:', err);
+      const response = await reviewsService.getUserReviews(user?.$id || '');
+      setReviews(response.reviews);
+    } catch (error) {
+      console.error('Error loading reviews:', error);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleDeleteReview = async (reviewId: string) => {
-    if (!window.confirm('Are you sure you want to delete this review?')) return;
-    
-    try {
-      await reviewsService.deleteReview(reviewId);
-      await loadUserReviews();
-    } catch (err: any) {
-      console.error('Error deleting review:', err);
-      setError('Failed to delete review');
-    }
+  const getStarRating = (rating: number) => {
+    return [...Array(5)].map((_, index) => (
+      <FiStar
+        key={index}
+        className={`w-5 h-5 ${
+          index < rating
+            ? 'text-yellow-400 fill-current'
+            : 'text-gray-300 dark:text-gray-600'
+        }`}
+      />
+    ));
   };
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center min-h-[400px]">
-        <LoadingSpinner />
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4 mb-6">
-        <div className="flex items-center gap-3">
-          <FiAlertCircle className="w-5 h-5 text-red-500" />
-          <p className="text-red-700 dark:text-red-400">{error}</p>
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-16 h-16 border-4 border-blue-200 dark:border-blue-800 border-t-blue-600 dark:border-t-blue-400 rounded-full animate-spin mx-auto mb-4" />
+          <p className="text-gray-600 dark:text-gray-400 text-lg">Loading reviews...</p>
         </div>
-      </div>
-    );
-  }
-
-  if (!reviewSummary || reviewSummary.reviews.length === 0) {
-    return (
-      <div className="text-center py-12">
-        <div className="w-16 h-16 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mx-auto mb-4">
-          <FiStar className="w-8 h-8 text-gray-400" />
-        </div>
-        <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
-          No Reviews Yet
-        </h3>
-        <p className="text-gray-500 dark:text-gray-400 max-w-md mx-auto">
-          You haven't written any reviews yet. Start sharing your experiences with products you've purchased!
-        </p>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
-      {/* Reviews Summary */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6"
-      >
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-2xl font-semibold text-gray-900 dark:text-white">
-            Your Reviews
-          </h2>
-          <div className="flex items-center gap-2 text-gray-500 dark:text-gray-400">
-            <FiStar className="w-5 h-5 text-yellow-400" />
-            <span className="font-medium">
-              {reviewSummary.averageRating.toFixed(1)} Average Rating
-            </span>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
-          <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4 border border-blue-100 dark:border-blue-800">
-            <div className="text-2xl font-bold text-blue-600 dark:text-blue-400 mb-1">
-              {reviewSummary.totalReviews}
-            </div>
-            <div className="text-sm text-blue-600 dark:text-blue-400">
-              Total Reviews
-            </div>
-          </div>
-          <div className="bg-green-50 dark:bg-green-900/20 rounded-lg p-4 border border-green-100 dark:border-green-800">
-            <div className="text-2xl font-bold text-green-600 dark:text-green-400 mb-1">
-              {reviewSummary.averageRating.toFixed(1)}
-            </div>
-            <div className="text-sm text-green-600 dark:text-green-400">
-              Average Rating
-            </div>
-          </div>
-          <div className="bg-purple-50 dark:bg-purple-900/20 rounded-lg p-4 border border-purple-100 dark:border-purple-800">
-            <div className="text-2xl font-bold text-purple-600 dark:text-purple-400 mb-1">
-              {reviewSummary.reviews.filter(r => r.isVerified).length}
-            </div>
-            <div className="text-sm text-purple-600 dark:text-purple-400">
-              Verified Reviews
-            </div>
-          </div>
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-8">
+      <div className="max-w-6xl mx-auto">
+        {/* Header */}
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">Your Reviews</h1>
+          <p className="text-gray-600 dark:text-gray-400">
+            Manage and view all your product reviews
+          </p>
         </div>
 
         {/* Reviews List */}
-        <div className="space-y-4">
-          {reviewSummary.reviews.map((review) => (
-            <ReviewCard
-              key={review.$id}
-              review={review}
-              showProductName={true}
-              onDelete={handleDeleteReview}
-              onEdit={(review) => {
-                // Handle edit - navigate to product page or open modal
-                window.location.href = `/Products/${review.productId}`;
-              }}
-            />
-          ))}
+        <div className="grid gap-6">
+          <AnimatePresence>
+            {reviews.length === 0 ? (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-8 text-center"
+              >
+                <p className="text-gray-600 dark:text-gray-400 text-lg">
+                  You haven't written any reviews yet.
+                </p>
+              </motion.div>
+            ) : (
+              reviews.map((review, index) => (
+                <motion.div
+                  key={review.$id}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: index * 0.05 }}
+                  className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6"
+                >
+                  <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
+                    <div className="flex-1">
+                      {/* Review Header */}
+                      <div className="flex items-center gap-2 mb-3">
+                        <div className="flex">
+                          {getStarRating(review.rating)}
+                        </div>
+                        {review.isVerified && (
+                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-300">
+                            <FiCheck className="w-3 h-3 mr-1" />
+                            Verified Purchase
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Review Title */}
+                      <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
+                        {review.title}
+                      </h3>
+
+                      {/* Review Content */}
+                      <p className="text-gray-700 dark:text-gray-300 mb-4 whitespace-pre-wrap">
+                        {review.comment}
+                      </p>
+
+                      {/* Review Metadata */}
+                      <div className="flex flex-wrap gap-4 text-sm text-gray-500 dark:text-gray-400">
+                        <div className="flex items-center">
+                          <FiCalendar className="w-4 h-4 mr-1" />
+                          {format(new Date(review.createdAt), 'MMM d, yyyy')}
+                        </div>
+                        <div className="flex items-center">
+                          <FiPackage className="w-4 h-4 mr-1" />
+                          {review.productName || 'Product'}
+                        </div>
+                        <div className="flex items-center">
+                          <span className="text-gray-700 dark:text-gray-300">
+                            By {review.userName || 'User'}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </motion.div>
+              ))
+            )}
+          </AnimatePresence>
         </div>
-      </motion.div>
+      </div>
     </div>
   );
-} 
+};
+
+export default ReviewsPage; 

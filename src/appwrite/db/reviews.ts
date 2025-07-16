@@ -9,6 +9,7 @@ import {
   ReviewFilters, 
   UserReviewSummary 
 } from '@/types/review';
+import { account } from '../client';
 
 const DATABASE_ID = process.env.NEXT_PUBLIC_APPWRITE_DATABASE_ID!;
 const REVIEWS_COLLECTION_ID = '6876ac68001a9444a2ea';
@@ -32,6 +33,11 @@ export class ReviewsService {
       // Check if user has purchased this product (for verified reviews)
       const isVerified = await this.checkVerifiedPurchase(reviewData.userId, reviewData.productId);
 
+      // Get user data
+      const user = await account.get();
+      // Get user's name from account
+      const userName = user.name;
+
       const review = await databases.createDocument(
         DATABASE_ID,
         REVIEWS_COLLECTION_ID,
@@ -40,6 +46,7 @@ export class ReviewsService {
           reviewId,
           productId: reviewData.productId,
           userId: reviewData.userId,
+          userName: userName || 'User', // Use name from account or fallback to 'User'
           rating: reviewData.rating,
           title: reviewData.title,
           comment: reviewData.comment,
@@ -104,22 +111,8 @@ export class ReviewsService {
         queries
       );
 
-      // Populate user information
-      const reviews = await Promise.all(
-        response.documents.map(async (doc) => {
-          const review = doc as unknown as Review;
-          try {
-            const user = await db.getDocument(DATABASE_ID, USERS_COLLECTION_ID, review.userId);
-            review.userName = user.firstName + ' ' + user.lastName;
-            review.userEmail = user.email;
-          } catch (error) {
-            console.warn('Could not fetch user data for review:', review.reviewId);
-          }
-          return review;
-        })
-      );
-
-      return reviews;
+      // Return reviews with userName already included
+      return response.documents as unknown as Review[];
     } catch (error) {
       console.error('Error fetching product reviews:', error);
       throw error;
@@ -371,20 +364,14 @@ export class ReviewsService {
 
       const reviews = response.documents as unknown as Review[];
 
-      // Populate user and product information
+      // Populate product information only, userName is already stored
       return await Promise.all(
         reviews.map(async (review) => {
           try {
-            const [user, product] = await Promise.all([
-              db.getDocument(DATABASE_ID, USERS_COLLECTION_ID, review.userId),
-              db.getDocument(DATABASE_ID, PRODUCTS_COLLECTION_ID, review.productId)
-            ]);
-            
-            review.userName = user.firstName + ' ' + user.lastName;
-            review.userEmail = user.email;
+            const product = await db.getDocument(DATABASE_ID, PRODUCTS_COLLECTION_ID, review.productId);
             review.productName = product.Name;
           } catch (error) {
-            console.warn('Could not fetch user/product data for review:', review.reviewId);
+            console.warn('Could not fetch product data for review:', review.reviewId);
           }
           return review;
         })

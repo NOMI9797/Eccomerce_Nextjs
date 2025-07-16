@@ -4,6 +4,7 @@ export interface Review {
   reviewId: string;
   productId: string;
   userId: string;
+  userName: string; // Required field now
   rating: number; // 1-5 stars
   title: string;
   comment: string;
@@ -11,8 +12,7 @@ export interface Review {
   isHelpful: string[]; // Array of user IDs who found it helpful
   createdAt: string;
   updatedAt: string;
-  // Populated fields (not in database)
-  userName?: string;
+  // Optional populated fields
   userEmail?: string;
   productName?: string;
 }
