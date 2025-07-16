@@ -119,34 +119,35 @@ export default function ProductDetails() {
             <li>
               <Link 
                 href="/"
-                className="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 transition-colors duration-200 flex items-center"
+                className="text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-white transition-colors duration-200 flex items-center"
               >
                 <FiHome className="w-4 h-4 mr-1" />
                 Home
               </Link>
             </li>
-            <li className="text-gray-400 dark:text-gray-600">/</li>
+            <li className="text-gray-400 dark:text-gray-500">/</li>
             <li>
               <Link 
                 href="/Products"
-                className="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 transition-colors duration-200"
+                className="text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-white transition-colors duration-200"
               >
                 Products
               </Link>
             </li>
-            <li className="text-gray-400 dark:text-gray-600">/</li>
-            <li className="text-gray-900 dark:text-white font-medium">{product.Name}</li>
+            <li className="text-gray-400 dark:text-gray-500">/</li>
+            <li className="text-gray-800 dark:text-white font-medium">{product.Name}</li>
           </ol>
         </nav>
 
         {/* Product Content */}
-        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm">
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 p-8">
             {/* Product Images */}
             <motion.div 
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.6 }}
+              className="bg-white dark:bg-gray-900 rounded-lg p-4"
             >
               <ProductImages images={[product.MainImage]} />
             </motion.div>
@@ -156,6 +157,7 @@ export default function ProductDetails() {
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.6 }}
+              className="text-gray-800 dark:text-gray-100"
             >
               <ProductInfo product={product} />
             </motion.div>
@@ -169,7 +171,7 @@ export default function ProductDetails() {
           transition={{ duration: 0.6, delay: 0.2 }}
           className="mt-12"
         >
-          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-8">
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 p-8">
             <div className="flex items-center justify-between mb-8">
               <div className="flex items-center gap-3">
                 <FiStar className="w-6 h-6 text-yellow-500" />

@@ -93,7 +93,7 @@ export default function ProductsPage() {
       <Header />
       
       {/* Compact Hero Section */}
-      <section className="bg-gradient-to-r from-blue-600 to-purple-600 dark:from-blue-700 dark:to-purple-700 pt-16 pb-6">
+      <section className="bg-gradient-to-r from-purple-600 to-pink-600 dark:from-purple-800 dark:to-pink-800 pt-16 pb-6">
         <div className="max-w-full mx-auto px-3 sm:px-4">
           <div className="text-center">
             <motion.h1 
@@ -105,7 +105,7 @@ export default function ProductsPage() {
               Our Products
             </motion.h1>
             <motion.p 
-              className="text-blue-100 dark:text-purple-100 text-sm"
+              className="text-white/90 text-sm"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.1 }}
