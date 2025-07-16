@@ -5,7 +5,7 @@ import type { Notification } from '@/types/notification';
 import { notificationService } from '@/appwrite/db/notifications';
 import { ToastProps } from '@/components/ui/toast';
 import { useAuth } from './AuthContext';
-import { createRealtimeSubscription } from '@/appwrite/client';
+import { createRealtime } from '@/appwrite/client';
 import { notificationPerformanceMonitor } from '@/lib/notification-performance';
 
 interface NotificationContextType {
@@ -177,7 +177,7 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
   useEffect(() => {
     if (!userId) return;
 
-    let cleanup: (() => void) | undefined;
+    let unsubscribe: (() => void) | undefined;
 
     const setupRealTimeSubscription = async () => {
       try {
@@ -185,7 +185,8 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
         await fetchNotifications();
 
         // Set up real-time subscription
-        cleanup = createRealtimeSubscription(
+        const client = createRealtime();
+        unsubscribe = client.subscribe(
           `databases.679b031a001983d2ec66.collections.6874b8bc00118bfbe390.documents`,
           (response) => {
             const startTime = Date.now();
@@ -248,135 +249,44 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
                       toastType = 'info';
                     }
                     
-                    // Play notification sound for admin users
-                    try {
-                      // Create a short beep sound for admin notifications
-                      const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
-                      const oscillator = audioContext.createOscillator();
-                      const gainNode = audioContext.createGain();
-                      
-                      oscillator.connect(gainNode);
-                      gainNode.connect(audioContext.destination);
-                      
-                      oscillator.frequency.value = notification.priority === 'high' ? 800 : 600;
-                      oscillator.type = 'sine';
-                      
-                      gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
-                      gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.2);
-                      
-                      oscillator.start(audioContext.currentTime);
-                      oscillator.stop(audioContext.currentTime + 0.2);
-                    } catch (error) {
-                      console.log('Could not play notification sound:', error);
-                    }
-                    
+                    // Show toast notification
                     showToast({
                       type: toastType,
                       title: toastTitle,
                       message: toastMessage,
-                      duration: 3000
-                    });
-                    
-                    // Simple browser notification for admin users (minimal)
-                    if ('Notification' in window && Notification.permission === 'granted') {
-                      const browserNotification = new Notification(toastTitle, {
-                        body: toastMessage,
-                        icon: '/favicon.ico',
-                        tag: notification.$id,
-                        requireInteraction: false,
-                        silent: true
-                      });
-                      
-                      // Auto-close browser notification quickly
-                      setTimeout(() => {
-                        browserNotification.close();
-                      }, 2000);
-                    }
-                  } else {
-                    // Customer sees simple toast for their own notifications
-                    let simpleTitle = 'Notification';
-                    let simpleMessage = 'You have a new update';
-                    
-                    if (notification.title.includes('placed successfully')) {
-                      simpleTitle = 'Order Placed';
-                      simpleMessage = 'Successfully placed';
-                    } else if (notification.title.includes('shipped')) {
-                      simpleTitle = 'Order Shipped';
-                      simpleMessage = 'Package dispatched';
-                    } else if (notification.title.includes('delivered')) {
-                      simpleTitle = 'Order Delivered';
-                      simpleMessage = 'Successfully delivered';
-                    } else if (notification.title.includes('Payment')) {
-                      simpleTitle = 'Payment';
-                      simpleMessage = 'Payment processed';
-                    }
-                    
-                    showToast({
-                      type: 'info',
-                      title: simpleTitle,
-                      message: simpleMessage,
-                      duration: 3000
+                      duration: 5000
                     });
                   }
                 }
                 break;
 
               case 'databases.679b031a001983d2ec66.collections.6874b8bc00118bfbe390.documents.*.update':
-                // Notification updated (e.g., marked as read)
-                const shouldUpdateForUser = isUserAdmin || notification.userId === userId;
-                
-                if (shouldUpdateForUser) {
-                  setNotifications(prev => 
-                    prev.map(n => n.$id === notification.$id ? notification : n)
-                  );
-                  
-                  // Update unread count if read status changed
-                  if (notification.isRead) {
-                    setUnreadCount(prev => Math.max(0, prev - 1));
-                  }
-                }
+                // Notification updated
+                setNotifications(prev => prev.map(n => 
+                  n.$id === notification.$id ? notification : n
+                ));
                 break;
 
               case 'databases.679b031a001983d2ec66.collections.6874b8bc00118bfbe390.documents.*.delete':
                 // Notification deleted
                 setNotifications(prev => prev.filter(n => n.$id !== notification.$id));
-                
-                // Update unread count if deleted notification was unread
-                if (!notification.isRead) {
-                  setUnreadCount(prev => Math.max(0, prev - 1));
-                }
                 break;
             }
           }
         );
-
-        // Track successful connection
-        notificationPerformanceMonitor.trackConnectionSuccess();
-        console.log('Real-time notification subscription established');
       } catch (error) {
         console.error('Error setting up real-time subscription:', error);
-        notificationPerformanceMonitor.trackConnectionError();
-        
-        // Fallback to polling if real-time fails
-        const interval = setInterval(() => {
-          fetchNotifications();
-          notificationPerformanceMonitor.trackFallbackPoll();
-        }, 60000); // Fallback poll every minute
-        
-        cleanup = () => clearInterval(interval);
       }
     };
 
     setupRealTimeSubscription();
 
-    // Cleanup function
     return () => {
-      if (cleanup) {
-        cleanup();
-        console.log('Real-time notification subscription closed');
+      if (unsubscribe) {
+        unsubscribe();
       }
     };
-  }, [userId, isUserAdmin]);
+  }, [userId, isUserAdmin, fetchNotifications, showToast]);
 
   // Memoized context value to prevent unnecessary re-renders
   const value = useMemo<NotificationContextType>(() => ({

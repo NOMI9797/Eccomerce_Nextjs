@@ -5,15 +5,15 @@ export const deleteProduct = async (productId: string, imageIds: string[]) => {
   try {
     // Delete the product document
     await db.deleteDocument(
-      '679b031a001983d2ec66',
-      '67a2fec400214f3c891b',
+      process.env.NEXT_PUBLIC_APPWRITE_DATABASE_ID!,
+      process.env.NEXT_PUBLIC_APPWRITE_PRODUCTS_COLLECTION_ID!,
       productId
     );
 
     // Delete all associated images
     await Promise.all(
       imageIds.map(imageId => 
-        storage.deleteFile('67a32bbf003270b1e15c', imageId)
+        storage.deleteFile(process.env.NEXT_PUBLIC_APPWRITE_STORAGE_BUCKET_ID!, imageId)
       )
     );
 

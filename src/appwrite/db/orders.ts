@@ -4,8 +4,8 @@ import db from './index';
 import { Product } from '@/app/Dashboard/ListProduct/types/product';
 
 const databaseId = process.env.NEXT_PUBLIC_APPWRITE_DATABASE_ID!;
-const ordersCollectionId = '686506050032acd2d80e';
-const productsCollectionId = '67a2fec400214f3c891b';
+const ordersCollectionId = process.env.NEXT_PUBLIC_APPWRITE_ORDERS_COLLECTION_ID!;
+const productsCollectionId = process.env.NEXT_PUBLIC_APPWRITE_PRODUCTS_COLLECTION_ID!;
 
 export interface OrderItem {
   productId: string;

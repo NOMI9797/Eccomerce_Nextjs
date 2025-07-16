@@ -6,8 +6,8 @@ export const deleteCategory = async (categoryId: string) => {
   try {
     // First, get all products with this category
     const productsResponse = await db.listDocuments(
-      '679b031a001983d2ec66',
-      '67a2fec400214f3c891b',
+      process.env.NEXT_PUBLIC_APPWRITE_DATABASE_ID!,
+      process.env.NEXT_PUBLIC_APPWRITE_PRODUCTS_COLLECTION_ID!,
       [Query.equal('CategoryId', categoryId)]
     );
 
@@ -18,7 +18,7 @@ export const deleteCategory = async (categoryId: string) => {
         await Promise.all(
           product.Images.map(async (imageId: string) => {
             try {
-              await storage.deleteFile('67a32bbf003270b1e15c', imageId);
+              await storage.deleteFile(process.env.NEXT_PUBLIC_APPWRITE_STORAGE_BUCKET_ID!, imageId);
             } catch (error) {
               console.error('Error deleting image:', error);
             }
@@ -28,16 +28,16 @@ export const deleteCategory = async (categoryId: string) => {
 
       // Delete the product
       await db.deleteDocument(
-        '679b031a001983d2ec66',
-        '67a2fec400214f3c891b',
+        process.env.NEXT_PUBLIC_APPWRITE_DATABASE_ID!,
+        process.env.NEXT_PUBLIC_APPWRITE_PRODUCTS_COLLECTION_ID!,
         product.$id
       );
     }
 
     // Finally, delete the category
     await db.deleteDocument(
-      '679b031a001983d2ec66',
-      '67a2ff0e0029b3db4449',
+      process.env.NEXT_PUBLIC_APPWRITE_DATABASE_ID!,
+      process.env.NEXT_PUBLIC_APPWRITE_CATEGORIES_COLLECTION_ID!,
       categoryId
     );
 

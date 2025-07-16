@@ -8,8 +8,8 @@ export const useProducts = () => {
     queryKey: ['products'],
     queryFn: async () => {
       const response = await db.listDocuments(
-        '679b031a001983d2ec66',
-        '67a2fec400214f3c891b',
+        process.env.NEXT_PUBLIC_APPWRITE_DATABASE_ID!,
+        process.env.NEXT_PUBLIC_APPWRITE_PRODUCTS_COLLECTION_ID!,
         [Query.limit(100)]
       );
       return response.documents;

@@ -3,9 +3,9 @@ import { Client, Storage, Databases, ID, Query } from "node-appwrite";
 
 // Initialize Appwrite
 const client = new Client()
-    .setEndpoint('https://cloud.appwrite.io/v1')
-    .setProject('679b0257003b758db270')
-    .setKey('standard_81c36c20025dc7bfe9ed726a577c33686934c0943a630d7ebf93f9b51f107c31ca3bdcf7e7fdd5dfb73c6f21af630ac07bdc79a461a45839298bc515dfed9b5e17585c85e41139571af843c0f5700d1935e72a741ccf9221faca168c6e0821d39d0bd0a5cc45ab1edab7b5b5e1bcea3afca865abbb037b9418a609f3b81883ea');
+    .setEndpoint(process.env.NEXT_PUBLIC_APPWRITE_ENDPOINT!)
+    .setProject(process.env.NEXT_PUBLIC_APPWRITE_PROJECT_ID!)
+    .setKey(process.env.APPWRITE_API_KEY!);
 
 const storage = new Storage(client);
 const databases = new Databases(client);
@@ -27,7 +27,6 @@ export async function POST(req: Request) {
         const maxStock = formData.get('maxStock') ? parseInt(formData.get('maxStock') as string) : null;
         const trackStock = formData.get('trackStock') === 'true';
 
-        // Validate required fields
         if (!name || !price || !categoryId || !description || imageFiles.length === 0) {
             return NextResponse.json(
                 { error: "All fields are required" },
@@ -71,7 +70,7 @@ export async function POST(req: Request) {
             const uploadedFileIds = await Promise.all(
                 imageFiles.map(async (imageFile) => {
                     const uploadedFile = await storage.createFile(
-                        '67a32bbf003270b1e15c',
+                        process.env.NEXT_PUBLIC_APPWRITE_STORAGE_BUCKET_ID!,
                         ID.unique(),
                         imageFile
                     );
@@ -97,13 +96,10 @@ export async function POST(req: Request) {
                 productData.MaxStock = maxStock;
             }
 
-            // Log the data being sent to createDocument
-            console.log("Attempting to create document with data:", productData);
-
             // Create product with stock management fields
             const product = await databases.createDocument(
-                '679b031a001983d2ec66',  // database ID
-                '67a2fec400214f3c891b',  // collection ID
+                process.env.NEXT_PUBLIC_APPWRITE_DATABASE_ID!,
+                process.env.NEXT_PUBLIC_APPWRITE_PRODUCTS_COLLECTION_ID!,
                 ID.unique(),
                 productData
             );
@@ -113,54 +109,25 @@ export async function POST(req: Request) {
                     message: "Product created successfully", 
                     product,
                     stockInfo: {
-                        stock,
+                        currentStock: stock,
                         minStock,
                         maxStock,
-                        trackStock,
-                        status: stock <= 0 ? 'out_of_stock' : (stock <= minStock ? 'low_stock' : 'in_stock')
+                        trackStock
                     }
                 },
                 { status: 201 }
             );
-        } catch (dbError: any) {
-            // Enhanced error logging
-            console.error("Database Error Details:", {
-                message: dbError.message,
-                type: dbError.type,
-                code: dbError.code,
-                response: dbError.response,
-                stack: dbError.stack
-            });
-
+        } catch (error) {
+            console.error('Error creating product:', error);
             return NextResponse.json(
-                { 
-                    error: "Database operation failed", 
-                    details: dbError.message,
-                    type: dbError.type,
-                    code: dbError.code,
-                    response: dbError.response
-                },
+                { error: "Failed to create product" },
                 { status: 500 }
             );
         }
-
-    } catch (error: any) {
-        console.error("Request Error:", {
-            message: error.message,
-            type: error.type,
-            code: error.code,
-            response: error.response,
-            stack: error.stack
-        });
-
+    } catch (error) {
+        console.error('Error processing request:', error);
         return NextResponse.json(
-            { 
-                error: "Failed to process request", 
-                details: error.message,
-                type: error.type,
-                code: error.code,
-                response: error.response
-            },
+            { error: "Internal server error" },
             { status: 500 }
         );
     }
