@@ -76,13 +76,11 @@ export default function Header() {
           <div className="flex items-center justify-between">
             {/* Logo and Brand */}
             <div className="flex items-center gap-4">
-              <motion.div
-                whileHover={{ scale: 1.05 }}
-                className="text-2xl font-bold text-primary cursor-pointer"
-                onClick={() => router.push('/')}
-              >
-                KharedLo
-              </motion.div>
+              <Link href="/" className="flex items-center space-x-2">
+                <span className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
+                  Styleora
+                </span>
+              </Link>
               
               {/* Real-time status indicator - simple green dot */}
               <div className="flex items-center gap-2">

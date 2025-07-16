@@ -2,31 +2,20 @@ import { GalleryVerticalEnd } from "lucide-react"
 
 import { LoginForm } from "@/components/ui/login-form"
 
-export default function LoginPage() {
+const LoginPage = () => {
   return (
-    <div className="grid min-h-svh lg:grid-cols-2 bg-white dark:bg-gray-900">
-      <div className="flex flex-col gap-4 p-6 md:p-10 bg-white dark:bg-gray-900">
-        <div className="flex justify-center gap-2 md:justify-start">
-          <a href="#" className="flex items-center gap-2 font-medium text-gray-900 dark:text-white">
-            <div className="flex h-6 w-6 items-center justify-center rounded-md bg-primary text-primary-foreground">
-              <GalleryVerticalEnd className="size-4" />
-            </div>
-            KharedLo
-          </a>
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-r from-purple-900 to-pink-900">
+      <div className="w-full max-w-md">
+        <div className="text-center mb-8">
+          <h1 className="text-4xl font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent mb-2">
+            Styleora
+          </h1>
+          <p className="text-gray-200">Sign in to your account</p>
         </div>
-        <div className="flex flex-1 items-center justify-center">
-          <div className="w-full max-w-xs">
-            <LoginForm />
-          </div>
-        </div>
-      </div>
-      <div className="relative hidden bg-muted dark:bg-gray-800 lg:block">
-        <img
-          src="/side.png"
-          alt="Image"
-          className="absolute inset-0 h-full w-full object-cover dark:brightness-[0.2] dark:grayscale"
-        />
+        <LoginForm />
       </div>
     </div>
-  )
-}
+  );
+};
+
+export default LoginPage;

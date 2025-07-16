@@ -17,6 +17,14 @@ import {
   FiGlobe, FiClock, FiCheckCircle, FiTrendingUp,
   FiLayers, FiCpu, FiWifi, FiSmartphone, FiPlay
 } from "react-icons/fi";
+import db from '@/appwrite/db';
+import { Product } from '@/app/Dashboard/ListProduct/types/product';
+import { Models } from 'appwrite';
+import { getImageUrl } from '@/lib/utils';
+
+interface Category extends Models.Document {
+  CategoryName: string;
+}
 
 // Floating particles component
 const FloatingParticles = () => {
@@ -85,12 +93,15 @@ const GeometricPattern = () => (
   </div>
 );
 
-export default function LandingPage() {
+const HomePage = () => {
   const { user, logout, isUserAdmin } = useAuth();
   const router = useRouter();
   const [mounted, setMounted] = useState(false);
   const [email, setEmail] = useState("");
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
+  const [loading, setLoading] = useState(false);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [products, setProducts] = useState<Product[]>([]);
 
   useEffect(() => {
     setMounted(true);
@@ -108,6 +119,36 @@ export default function LandingPage() {
     return () => window.removeEventListener('mousemove', handleMouseMove);
   }, []);
 
+  // Fetch categories and featured products
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+        const [categoriesResponse, productsResponse] = await Promise.all([
+          db.listDocuments(
+            process.env.NEXT_PUBLIC_APPWRITE_DATABASE_ID!,
+            process.env.NEXT_PUBLIC_APPWRITE_CATEGORIES_COLLECTION_ID!
+          ),
+          db.listDocuments(
+            process.env.NEXT_PUBLIC_APPWRITE_DATABASE_ID!,
+            process.env.NEXT_PUBLIC_APPWRITE_PRODUCTS_COLLECTION_ID!,
+            []
+          )
+        ]);
+        
+        setCategories(categoriesResponse.documents as Category[]);
+        setProducts(productsResponse.documents as Product[]);
+      } catch (error) {
+        console.error('Error fetching data:', error);
+        toast.error('Failed to load content');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
+
   if (!mounted || user === undefined) return null;
 
   const handleLogout = async () => {
@@ -120,329 +161,185 @@ export default function LandingPage() {
     }
   };
 
-  const handleNewsletterSubmit = (e: React.FormEvent) => {
+  const handleSubscribe = (e: React.FormEvent) => {
     e.preventDefault();
     toast.success("Thanks for subscribing!");
     setEmail("");
   };
 
   return (
-    <>
-      {user ? (
-        <div className="relative min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 dark:from-black dark:via-gray-900 dark:to-black overflow-hidden">
-          {/* Background Elements */}
-          <FloatingParticles />
-          <GeometricPattern />
-          
-          {/* Animated gradient overlay */}
-          <div className="fixed inset-0 bg-gradient-to-br from-blue-600/10 via-purple-600/10 to-pink-600/10 animate-pulse" />
-          
-          {/* Mouse follower effect */}
-          <motion.div
-            className="fixed w-6 h-6 bg-blue-500/20 rounded-full pointer-events-none z-50 mix-blend-difference"
-            style={{
-              left: mousePosition.x - 12,
-              top: mousePosition.y - 12,
-            }}
-            animate={{
-              scale: [1, 1.2, 1],
-            }}
-            transition={{
-              duration: 2,
-              repeat: Infinity,
-            }}
-          />
-
-          {/* Header */}
-          <Header />
-
-          {/* Main Content */}
-          <main className="relative z-10">
-            {/* Hero Section */}
-            <section className="relative min-h-screen flex items-center justify-center px-4 pt-20">
-              <div className="max-w-7xl mx-auto text-center">
-                {/* Brand Logo/Name with futuristic styling */}
-                <motion.div
-                  className="mb-8"
-                  initial={{ opacity: 0, y: -50 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 1 }}
-                >
-                  <div className="relative inline-block">
-                    <motion.h1 
-                      className="text-6xl md:text-8xl lg:text-9xl font-black bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 bg-clip-text text-transparent mb-2"
-                      animate={{
-                        backgroundPosition: ["0% 50%", "100% 50%", "0% 50%"],
-                      }}
-                      transition={{
-                        duration: 5,
-                        repeat: Infinity,
-                        ease: "linear",
-                      }}
-                      style={{
-                        backgroundSize: "200% auto",
-                      }}
-                    >
-                      KharedLo
-                    </motion.h1>
-                    <motion.div
-                      className="absolute -inset-1 bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 rounded-lg blur opacity-30"
-                      animate={{
-                        opacity: [0.3, 0.6, 0.3],
-                      }}
-                      transition={{
-                        duration: 3,
-                        repeat: Infinity,
-                      }}
-                    />
-                  </div>
-                  <motion.p 
-                    className="text-lg md:text-xl text-blue-200 font-medium tracking-wider"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ delay: 0.5, duration: 1 }}
-                  >
-                    The Future of Shopping
-                  </motion.p>
-                </motion.div>
-
-                {/* Tagline */}
-                <motion.div
-                  className="mb-12"
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.7, duration: 0.8 }}
-                >
-                  <h2 className="text-2xl md:text-4xl lg:text-5xl font-bold text-white mb-6 leading-tight">
-                    Experience Shopping
-                    <br />
-                    <span className="bg-gradient-to-r from-cyan-400 to-blue-400 bg-clip-text text-transparent">
-                      Like Never Before
-                    </span>
-                  </h2>
-                  <p className="text-lg md:text-xl text-gray-300 max-w-3xl mx-auto leading-relaxed">
-                    Discover premium products with cutting-edge technology, seamless experience, 
-                    and futuristic design. Welcome to the next generation of e-commerce.
-                  </p>
-                </motion.div>
-
-                {/* CTA Buttons */}
-                <motion.div
-                  className="flex flex-col sm:flex-row gap-6 justify-center items-center mb-16"
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 1, duration: 0.8 }}
-                >
-                  <Link href="/Products">
-                    <motion.button
-                      className="group relative px-8 py-4 bg-gradient-to-r from-blue-600 to-purple-600 rounded-full text-white font-semibold text-lg shadow-xl hover:shadow-2xl transition-all duration-300 overflow-hidden"
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
-                    >
-                      <span className="relative z-10 flex items-center">
-                        <FiShoppingBag className="mr-2 group-hover:rotate-12 transition-transform" />
-                        Explore Products
-                      </span>
-                      <div className="absolute inset-0 bg-gradient-to-r from-purple-600 to-pink-600 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                    </motion.button>
-                  </Link>
-                  
-                  <motion.button
-                    className="group relative px-8 py-4 bg-transparent border-2 border-cyan-400 rounded-full text-cyan-400 font-semibold text-lg hover:bg-cyan-400 hover:text-black transition-all duration-300"
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                  >
-                    <span className="flex items-center">
-                      <FiPlay className="mr-2 group-hover:translate-x-1 transition-transform" />
-                      Watch Demo
-                    </span>
-                  </motion.button>
-                </motion.div>
-
-                {/* Stats Cards */}
-                <motion.div
-                  className="grid grid-cols-2 md:grid-cols-4 gap-6 max-w-4xl mx-auto"
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 1.2, duration: 0.8 }}
-                >
-                  {[
-                    { number: "10K+", label: "Happy Customers", icon: FiUsers },
-                    { number: "99.9%", label: "Uptime", icon: FiWifi },
-                    { number: "24/7", label: "Support", icon: FiClock },
-                    { number: "50+", label: "Countries", icon: FiGlobe }
-                  ].map((stat, index) => (
-                    <motion.div
-                      key={stat.label}
-                      className="relative group"
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: 1.4 + index * 0.1, duration: 0.8 }}
-                    >
-                      <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-6 text-center hover:bg-white/10 transition-all duration-300">
-                        <stat.icon className="w-8 h-8 text-cyan-400 mx-auto mb-3" />
-                        <div className="text-2xl font-bold text-white mb-1">{stat.number}</div>
-                        <div className="text-gray-300 text-sm">{stat.label}</div>
-                      </div>
-                    </motion.div>
-                  ))}
-                </motion.div>
-              </div>
-            </section>
-
-            {/* Features Section */}
-            <section className="relative py-20 px-4">
-              <div className="max-w-7xl mx-auto">
-                <motion.div 
-                  className="text-center mb-16"
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.8 }}
-                  viewport={{ once: true }}
-                >
-                  <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">
-                    Futuristic Features
-                  </h2>
-                  <p className="text-xl text-gray-300 max-w-2xl mx-auto">
-                    Experience the next generation of online shopping with our cutting-edge technology
-                  </p>
-                </motion.div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                  {[
-                    { 
-                      icon: FiCpu, 
-                      title: "AI-Powered Recommendations", 
-                      description: "Smart algorithms that learn your preferences and suggest perfect products",
-                      color: "from-blue-400 to-cyan-400"
-                    },
-                    { 
-                      icon: FiShield, 
-                      title: "Quantum Security", 
-                      description: "Advanced encryption and security protocols to protect your data",
-                      color: "from-purple-400 to-pink-400"
-                    },
-                    { 
-                      icon: FiZap, 
-                      title: "Lightning Fast", 
-                      description: "Optimized for speed with instant loading and seamless navigation",
-                      color: "from-yellow-400 to-orange-400"
-                    },
-                    { 
-                      icon: FiSmartphone, 
-                      title: "Mobile First", 
-                      description: "Responsive design that works perfectly on all devices",
-                      color: "from-green-400 to-teal-400"
-                    },
-                    { 
-                      icon: FiLayers, 
-                      title: "Multi-dimensional UI", 
-                      description: "Immersive user interface with depth and interactive elements",
-                      color: "from-indigo-400 to-purple-400"
-                    },
-                    { 
-                      icon: FiTrendingUp, 
-                      title: "Real-time Analytics", 
-                      description: "Live data and insights to enhance your shopping experience",
-                      color: "from-pink-400 to-rose-400"
-                    }
-                  ].map((feature, index) => (
-                    <motion.div
-                      key={feature.title}
-                      className="group relative"
-                      initial={{ opacity: 0, y: 20 }}
-                      whileInView={{ opacity: 1, y: 0 }}
-                      transition={{ delay: index * 0.1, duration: 0.8 }}
-                      viewport={{ once: true }}
-                      whileHover={{ y: -10 }}
-                    >
-                      <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-8 h-full hover:bg-white/10 transition-all duration-300">
-                        <div className={`w-16 h-16 rounded-2xl bg-gradient-to-r ${feature.color} flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300`}>
-                          <feature.icon className="w-8 h-8 text-white" />
-                        </div>
-                        <h3 className="text-xl font-semibold text-white mb-4">{feature.title}</h3>
-                        <p className="text-gray-300 leading-relaxed">{feature.description}</p>
-                      </div>
-                    </motion.div>
-                  ))}
-                </div>
-              </div>
-            </section>
-
-            {/* Newsletter Section */}
-            <section className="relative py-20 px-4">
-              <div className="max-w-4xl mx-auto">
-                <motion.div 
-                  className="relative bg-gradient-to-r from-blue-600/20 to-purple-600/20 backdrop-blur-sm border border-white/10 rounded-3xl p-8 md:p-12 text-center overflow-hidden"
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.8 }}
-                  viewport={{ once: true }}
-                >
-                  <div className="relative z-10">
-                    <motion.div
-                      className="w-20 h-20 bg-gradient-to-r from-cyan-400 to-blue-400 rounded-full flex items-center justify-center mx-auto mb-6"
-                      animate={{
-                        rotateY: [0, 360],
-                      }}
-                      transition={{
-                        duration: 4,
-                        repeat: Infinity,
-                        ease: "linear",
-                      }}
-                    >
-                      <FiMail className="w-10 h-10 text-white" />
-                    </motion.div>
-                    <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
-                      Join the Future
-                    </h2>
-                    <p className="text-xl text-gray-300 mb-8 max-w-2xl mx-auto">
-                      Subscribe to get early access to new features, exclusive deals, and updates from the KharedLo universe
-                    </p>
-                    
-                    <form onSubmit={handleNewsletterSubmit} className="flex flex-col sm:flex-row gap-4 max-w-md mx-auto">
-                      <Input
-                        type="email"
-                        placeholder="Enter your email"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        className="flex-1 bg-white/10 backdrop-blur-sm border-white/20 text-white placeholder:text-gray-300 rounded-xl px-4 py-3 focus:ring-2 focus:ring-blue-400"
-                        required
-                      />
-                      <motion.button 
-                        type="submit"
-                        className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-8 py-3 font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-300"
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.95 }}
-                      >
-                        Subscribe
-                      </motion.button>
-                    </form>
-                  </div>
-                </motion.div>
-              </div>
-            </section>
-          </main>
+    <div className="min-h-screen">
+      {/* Hero Section */}
+      <section className="relative h-[90vh] flex items-center justify-center overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-r from-purple-900/90 to-pink-900/90 z-10"></div>
+        <div className="absolute inset-0">
+          <div className="absolute inset-0 bg-[url('/images/fashion-bg.jpg')] bg-cover bg-center"></div>
         </div>
-      ) : (
-        <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center">
-          <div className="text-center">
+        <div className="relative z-20 text-center px-4 max-w-4xl mx-auto">
+          <motion.h1 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8 }}
+            className="text-5xl md:text-7xl font-bold text-white mb-6"
+          >
+            Welcome to <span className="bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">Styleora</span>
+          </motion.h1>
+          <motion.p 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 0.2 }}
+            className="text-xl text-gray-200 mb-8"
+          >
+            Where Style Meets Aura - Discover Your Perfect Fashion Statement
+          </motion.p>
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 0.4 }}
+            className="flex flex-col sm:flex-row gap-4 justify-center"
+          >
+            <Link href="/Products">
+              <button className="px-8 py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-full font-semibold transition-all transform hover:scale-105">
+                Shop Now
+              </button>
+            </Link>
+            <Link href="/signup">
+              <button className="px-8 py-3 bg-transparent border-2 border-white text-white rounded-full font-semibold hover:bg-white/10 transition-all transform hover:scale-105">
+                Join Us
+              </button>
+            </Link>
+          </motion.div>
+        </div>
+      </section>
+
+      {/* Featured Categories */}
+      <section className="py-20 bg-gradient-to-br from-purple-50 to-pink-50">
+        <div className="container mx-auto px-4">
+          <h2 className="text-3xl font-bold text-center mb-12">
+            <span className="bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
+              Trending Categories
+            </span>
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {categories.map((category) => (
+              <motion.div
+                key={category.$id}
+                whileHover={{ y: -5 }}
+                className="relative group"
+              >
+                <Link href={`/Products?category=${category.$id}`}>
+                  <div className="bg-white rounded-2xl shadow-lg overflow-hidden transition-all group-hover:shadow-xl p-8 border border-purple-100">
+                    <div className="absolute inset-0 bg-gradient-to-r from-purple-600/5 to-pink-600/5 group-hover:from-purple-600/10 group-hover:to-pink-600/10 transition-all rounded-2xl"></div>
+                    <h3 className="text-2xl font-bold mb-3 bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
+                      {category.CategoryName}
+                    </h3>
+                    <p className="text-gray-700 font-medium">Explore the latest trends</p>
+                    <div className="mt-4 flex items-center text-purple-600 font-medium">
+                      <span>Shop Now</span>
+                      <FiArrowRight className="ml-2 group-hover:translate-x-2 transition-transform" />
+                    </div>
+                  </div>
+                </Link>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Trust Building Section */}
+      <section className="py-20 bg-white">
+        <div className="container mx-auto px-4">
+          <h2 className="text-3xl font-bold text-center mb-12">
+            <span className="bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
+              Why Choose Styleora
+            </span>
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
             <motion.div
-              className="w-16 h-16 bg-gradient-to-r from-blue-400 to-purple-400 rounded-full mx-auto mb-4"
-              animate={{
-                rotate: 360,
-              }}
-              transition={{
-                duration: 2,
-                repeat: Infinity,
-                ease: "linear",
-              }}
-            />
-            <h2 className="text-2xl font-semibold text-white mb-4">Loading KharedLo...</h2>
-            <p className="text-gray-300">Preparing your futuristic shopping experience</p>
+              whileHover={{ y: -5 }}
+              className="p-6 bg-gradient-to-br from-purple-50 to-pink-50 rounded-2xl text-center"
+            >
+              <div className="w-16 h-16 bg-gradient-to-r from-purple-600 to-pink-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                <FiTruck className="w-8 h-8 text-white" />
+              </div>
+              <h3 className="text-xl font-bold mb-2">Free Shipping</h3>
+              <p className="text-gray-600">On orders over $100</p>
+            </motion.div>
+
+            <motion.div
+              whileHover={{ y: -5 }}
+              className="p-6 bg-gradient-to-br from-purple-50 to-pink-50 rounded-2xl text-center"
+            >
+              <div className="w-16 h-16 bg-gradient-to-r from-purple-600 to-pink-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                <FiShield className="w-8 h-8 text-white" />
+              </div>
+              <h3 className="text-xl font-bold mb-2">Secure Payment</h3>
+              <p className="text-gray-600">100% secure checkout</p>
+            </motion.div>
+
+            <motion.div
+              whileHover={{ y: -5 }}
+              className="p-6 bg-gradient-to-br from-purple-50 to-pink-50 rounded-2xl text-center"
+            >
+              <div className="w-16 h-16 bg-gradient-to-r from-purple-600 to-pink-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                <FiClock className="w-8 h-8 text-white" />
+              </div>
+              <h3 className="text-xl font-bold mb-2">24/7 Support</h3>
+              <p className="text-gray-600">Dedicated support</p>
+            </motion.div>
+
+            <motion.div
+              whileHover={{ y: -5 }}
+              className="p-6 bg-gradient-to-br from-purple-50 to-pink-50 rounded-2xl text-center"
+            >
+              <div className="w-16 h-16 bg-gradient-to-r from-purple-600 to-pink-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                <FiCheckCircle className="w-8 h-8 text-white" />
+              </div>
+              <h3 className="text-xl font-bold mb-2">Easy Returns</h3>
+              <p className="text-gray-600">30-day return policy</p>
+            </motion.div>
+          </div>
+        </div>
+      </section>
+
+      {/* Newsletter Section */}
+      <section className="py-20 bg-gradient-to-r from-purple-900 to-pink-900 text-white">
+        <div className="container mx-auto px-4 text-center">
+          <h2 className="text-3xl font-bold mb-6">Stay in Style</h2>
+          <p className="text-lg mb-8 max-w-2xl mx-auto">
+            Subscribe to get early access to new features, exclusive deals, and updates from the Styleora universe
+          </p>
+          <form onSubmit={handleSubscribe} className="max-w-md mx-auto">
+            <div className="flex gap-4">
+              <input
+                type="email"
+                placeholder="Enter your email"
+                className="flex-1 px-6 py-3 rounded-full bg-white/10 border border-white/20 text-white placeholder-white/60 focus:outline-none focus:ring-2 focus:ring-purple-400"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+              />
+              <button
+                type="submit"
+                className="px-8 py-3 bg-white text-purple-900 rounded-full font-semibold hover:bg-purple-100 transition-all transform hover:scale-105"
+              >
+                Subscribe
+              </button>
+            </div>
+          </form>
+        </div>
+      </section>
+
+      {/* Loading State */}
+      {loading && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
+          <div className="bg-white p-8 rounded-2xl shadow-2xl">
+            <div className="animate-spin w-12 h-12 border-4 border-purple-600 border-t-transparent rounded-full mb-4 mx-auto"></div>
+            <h2 className="text-2xl font-semibold text-center">Loading Styleora...</h2>
           </div>
         </div>
       )}
-    </>
+    </div>
   );
-}
+};
+
+export default HomePage;
