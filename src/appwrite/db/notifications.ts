@@ -3,9 +3,9 @@ import db from './index';
 import { Notification, CreateNotificationData } from '@/types/notification';
 import { Product, getStockStatus } from '@/app/Dashboard/ListProduct/types/product';
 
-const DATABASE_ID = '679b031a001983d2ec66';
-const NOTIFICATIONS_COLLECTION_ID = '6874b8bc00118bfbe390';
-const PRODUCTS_COLLECTION_ID = '67a2fec400214f3c891b';
+const DATABASE_ID = process.env.NEXT_PUBLIC_APPWRITE_DATABASE_ID!;
+const NOTIFICATIONS_COLLECTION_ID = process.env.NEXT_PUBLIC_APPWRITE_NOTIFICATIONS_COLLECTION_ID!;
+const PRODUCTS_COLLECTION_ID = process.env.NEXT_PUBLIC_APPWRITE_PRODUCTS_COLLECTION_ID!;
 
 // In-memory cache for notifications to reduce API calls
 class NotificationCache {

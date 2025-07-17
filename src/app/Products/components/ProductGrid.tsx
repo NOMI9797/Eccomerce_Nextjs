@@ -9,6 +9,7 @@ import { reviewsService } from '@/appwrite/db/reviews';
 import { ReviewStats } from '@/types/review';
 import { FiStar } from 'react-icons/fi';
 import { Product } from '@/app/Dashboard/ListProduct/types/product';
+import { getStorageFileUrl } from '@/lib/appwrite-utils';
 
 interface ProductGridProps {
   products: Product[];
@@ -136,7 +137,7 @@ export default function ProductGrid({
                 <div className="relative overflow-hidden">
                   <motion.img
                     src={product.MainImage ? 
-                      `https://cloud.appwrite.io/v1/storage/buckets/67a32bbf003270b1e15c/files/${product.MainImage}/view?project=679b0257003b758db270` :
+                      getStorageFileUrl(product.MainImage) :
                       "/images/pexels-shattha-pilabut-38930-135620.jpg"}
                     alt={product.Name}
                     className="w-full h-48 object-cover"

@@ -12,8 +12,9 @@ import {
 import { account } from '../client';
 
 const DATABASE_ID = process.env.NEXT_PUBLIC_APPWRITE_DATABASE_ID!;
-const REVIEWS_COLLECTION_ID = '6876ac68001a9444a2ea';
-const PRODUCTS_COLLECTION_ID = '67a2fec400214f3c891b';
+const REVIEWS_COLLECTION_ID = process.env.NEXT_PUBLIC_APPWRITE_REVIEWS_COLLECTION_ID!;
+const PRODUCTS_COLLECTION_ID = process.env.NEXT_PUBLIC_APPWRITE_PRODUCTS_COLLECTION_ID!;
+const ORDERS_COLLECTION_ID = process.env.NEXT_PUBLIC_APPWRITE_ORDERS_COLLECTION_ID!;
 
 
 // Reviews service class
@@ -327,7 +328,7 @@ export class ReviewsService {
       // For now, we'll return false - you can implement this based on your orders system
       const ordersResponse = await databases.listDocuments(
         DATABASE_ID,
-        '686506050032acd2d80e', // Orders collection ID
+        ORDERS_COLLECTION_ID,
         [
           Query.equal('userId', userId),
           Query.limit(100)

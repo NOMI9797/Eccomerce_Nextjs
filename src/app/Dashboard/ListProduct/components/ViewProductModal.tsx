@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from 'react';
+import { getStorageFileUrl } from '@/lib/appwrite-utils';
 
 interface ViewProductModalProps {
   product: {
@@ -63,7 +64,7 @@ const ViewProductModal: React.FC<ViewProductModalProps> = ({
             <div className="col-span-1 lg:col-span-2">
               <img
                 src={selectedImage ? 
-                  `https://cloud.appwrite.io/v1/storage/buckets/67a32bbf003270b1e15c/files/${selectedImage}/view?project=679b0257003b758db270` :
+                  getStorageFileUrl(selectedImage) :
                   "/images/pexels-shattha-pilabut-38930-135620.jpg"}
                 alt="Product Image"
                 className="w-full h-96 object-cover rounded-lg"
@@ -85,7 +86,7 @@ const ViewProductModal: React.FC<ViewProductModalProps> = ({
                   >
                     <img
                       src={imageId ? 
-                        `https://cloud.appwrite.io/v1/storage/buckets/67a32bbf003270b1e15c/files/${imageId}/view?project=679b0257003b758db270` :
+                        getStorageFileUrl(imageId) :
                         "/images/pexels-shattha-pilabut-38930-135620.jpg"}
                       alt={`Product ${index + 1}`}
                       className="w-16 h-16 object-cover rounded-lg cursor-pointer border-2 border-transparent hover:border-blue-500 transition-colors"

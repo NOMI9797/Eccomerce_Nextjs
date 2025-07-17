@@ -186,8 +186,10 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
 
         // Set up real-time subscription
         const client = createRealtime();
+        const databaseId = process.env.NEXT_PUBLIC_APPWRITE_DATABASE_ID!;
+        const notificationsCollectionId = process.env.NEXT_PUBLIC_APPWRITE_NOTIFICATIONS_COLLECTION_ID!;
         unsubscribe = client.subscribe(
-          `databases.679b031a001983d2ec66.collections.6874b8bc00118bfbe390.documents`,
+          `databases.${databaseId}.collections.${notificationsCollectionId}.documents`,
           (response) => {
             const startTime = Date.now();
             const payload = response.payload as unknown;
@@ -199,7 +201,7 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
 
             // Handle different event types
             switch (response.events[0]) {
-              case 'databases.679b031a001983d2ec66.collections.6874b8bc00118bfbe390.documents.*.create':
+              case `databases.${databaseId}.collections.${notificationsCollectionId}.documents.*.create`:
                 // New notification created
                 const shouldShowToUser = isUserAdmin || notification.userId === userId;
                 
@@ -260,14 +262,14 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
                 }
                 break;
 
-              case 'databases.679b031a001983d2ec66.collections.6874b8bc00118bfbe390.documents.*.update':
+              case `databases.${databaseId}.collections.${notificationsCollectionId}.documents.*.update`:
                 // Notification updated
                 setNotifications(prev => prev.map(n => 
                   n.$id === notification.$id ? notification : n
                 ));
                 break;
 
-              case 'databases.679b031a001983d2ec66.collections.6874b8bc00118bfbe390.documents.*.delete':
+              case `databases.${databaseId}.collections.${notificationsCollectionId}.documents.*.delete`:
                 // Notification deleted
                 setNotifications(prev => prev.filter(n => n.$id !== notification.$id));
                 break;

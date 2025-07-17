@@ -23,8 +23,8 @@ const Categories = () => {
     try {
       setLoading(true);
       const response = await db.listDocuments(
-        '679b031a001983d2ec66',
-        '67a2ff0e0029b3db4449'
+        process.env.NEXT_PUBLIC_APPWRITE_DATABASE_ID!,
+        process.env.NEXT_PUBLIC_APPWRITE_CATEGORIES_COLLECTION_ID!
       );
       setCategories(response.documents as Category[]);
     } catch (err) {

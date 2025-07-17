@@ -10,6 +10,7 @@ import { useRouter } from "next/navigation";
 import ViewProductModal from './components/ViewProductModal';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Product, getStockStatus, getStockBadgeColor } from './types/product';
+import { getStorageFileUrl } from '@/lib/appwrite-utils';
 import { 
   FiPlus, 
   FiSearch, 
@@ -45,15 +46,15 @@ const ListProducts: React.FC = () => {
         
         // Fetch categories
         const categoriesResponse = await db.listDocuments(
-          '679b031a001983d2ec66',
-          '67a2ff0e0029b3db4449'
+          process.env.NEXT_PUBLIC_APPWRITE_DATABASE_ID!,
+          process.env.NEXT_PUBLIC_APPWRITE_CATEGORIES_COLLECTION_ID!
         );
         setCategories(categoriesResponse.documents as unknown as Category[]);
 
         // Fetch products
         const productsResponse = await db.listDocuments(
-          '679b031a001983d2ec66',
-          '67a2fec400214f3c891b',
+          process.env.NEXT_PUBLIC_APPWRITE_DATABASE_ID!,
+          process.env.NEXT_PUBLIC_APPWRITE_PRODUCTS_COLLECTION_ID!,
           [Query.orderDesc('$createdAt'), Query.limit(100)]
         );
         setProducts(productsResponse.documents as Product[]);
@@ -88,8 +89,8 @@ const ListProducts: React.FC = () => {
   const handleUpdateSuccess = async () => {
     try {
       const productsResponse = await db.listDocuments(
-        '679b031a001983d2ec66',
-        '67a2fec400214f3c891b',
+        process.env.NEXT_PUBLIC_APPWRITE_DATABASE_ID!,
+        process.env.NEXT_PUBLIC_APPWRITE_PRODUCTS_COLLECTION_ID!,
         [Query.orderDesc('$createdAt'), Query.limit(100)]
       );
       setProducts(productsResponse.documents as Product[]);
@@ -351,7 +352,7 @@ const ListProducts: React.FC = () => {
                         <div className="flex items-center">
                           <div className="w-12 h-12 bg-gray-100 dark:bg-gray-600 rounded-lg overflow-hidden flex-shrink-0">
                             <img
-                              src={`https://cloud.appwrite.io/v1/storage/buckets/67a32bbf003270b1e15c/files/${product.MainImage}/view?project=679b0257003b758db270`}
+                              src={getStorageFileUrl(product.MainImage)}
                               alt={product.Name}
                               className="w-full h-full object-cover"
                             />

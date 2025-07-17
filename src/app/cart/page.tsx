@@ -10,6 +10,7 @@ import { toast } from 'sonner';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FiShoppingCart, FiTrash2, FiPlus, FiMinus, FiArrowRight, FiPackage, FiShoppingBag, FiChevronLeft } from 'react-icons/fi';
 import Link from 'next/link';
+import { getStorageFileUrl, isCompleteUrl } from '@/lib/appwrite-utils';
 
 export default function CartPage() {
   const { cart, removeFromCart, updateQuantity, clearCart } = useCart();
@@ -122,7 +123,7 @@ export default function CartPage() {
                         <div className="flex-shrink-0 w-20 h-20 bg-gray-100 dark:bg-gray-700 rounded-lg overflow-hidden">
                           <img
                             src={item.image ? 
-                              `https://cloud.appwrite.io/v1/storage/buckets/67a32bbf003270b1e15c/files/${item.image}/view?project=679b0257003b758db270` :
+                              (isCompleteUrl(item.image) ? item.image : getStorageFileUrl(item.image)) :
                               "/images/pexels-shattha-pilabut-38930-135620.jpg"}
                             alt={item.name}
                             className="w-full h-full object-cover"

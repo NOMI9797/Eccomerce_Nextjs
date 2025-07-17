@@ -31,6 +31,7 @@ import { notificationService } from '@/appwrite/db/notifications';
 import { useNotifications } from '@/session/NotificationContext';
 import StripeCheckout from './components/StripeCheckout';
 import { CartItem } from '@/appwrite/db/cart';
+import { getStorageFileUrl, isCompleteUrl } from '@/lib/appwrite-utils';
 // Removed NotificationToastSystem - using simple toast notifications instead
 
 export default function CheckoutPage() {
@@ -583,7 +584,7 @@ export default function CheckoutPage() {
                       <div className="w-16 h-16 bg-gray-100 dark:bg-gray-700 rounded-lg overflow-hidden flex-shrink-0">
                         <img
                           src={item.image ? 
-                            `https://cloud.appwrite.io/v1/storage/buckets/67a32bbf003270b1e15c/files/${item.image}/view?project=679b0257003b758db270` :
+                            (isCompleteUrl(item.image) ? item.image : getStorageFileUrl(item.image)) :
                             "/images/pexels-shattha-pilabut-38930-135620.jpg"}
                           alt={item.name}
                           className="w-full h-full object-cover"

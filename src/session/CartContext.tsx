@@ -36,8 +36,8 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   const checkProductStock = async (productId: string): Promise<Product | null> => {
     try {
       const product = await db.getDocument(
-        '679b031a001983d2ec66',
-        '67a2fec400214f3c891b',
+        process.env.NEXT_PUBLIC_APPWRITE_DATABASE_ID!,
+        process.env.NEXT_PUBLIC_APPWRITE_PRODUCTS_COLLECTION_ID!,
         productId
       );
       return product as Product;

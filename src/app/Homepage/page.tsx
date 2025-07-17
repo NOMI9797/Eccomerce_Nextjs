@@ -70,7 +70,7 @@ const HomePage = () => {
       <section className="relative h-[90vh] flex items-center justify-center overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-r from-purple-900/90 to-pink-900/90 z-10"></div>
         <div className="absolute inset-0">
-          <div className="absolute inset-0 bg-[url('/images/fashion-bg.jpg')] bg-cover bg-center"></div>
+                      <div className="absolute inset-0 bg-[url('/images/pexels-shattha-pilabut-38930-135620.jpg')] bg-cover bg-center"></div>
         </div>
         <div className="relative z-20 text-center px-4 max-w-4xl mx-auto">
           <motion.h1 

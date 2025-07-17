@@ -21,8 +21,8 @@ const AddCategoryModal: React.FC<AddCategoryModalProps> = ({ isOpen, onClose, on
 
     try {
       await db.createDocument(
-        '679b031a001983d2ec66',
-        '67a2ff0e0029b3db4449',
+        process.env.NEXT_PUBLIC_APPWRITE_DATABASE_ID!,
+        process.env.NEXT_PUBLIC_APPWRITE_CATEGORIES_COLLECTION_ID!,
         { CategoryName: categoryName }
       );
 

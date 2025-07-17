@@ -16,6 +16,7 @@ import { CartItem } from '@/appwrite/db/cart';
 import Header from '@/components/Header';
 import { FiShoppingCart, FiStar, FiGrid, FiList, FiSearch } from 'react-icons/fi';
 import { Product, getStockStatus } from '@/app/Dashboard/ListProduct/types/product';
+import { getStorageFileUrl } from '@/lib/appwrite-utils';
 
 export default function ProductsPage() {
   const { data: products = [] } = useProducts();
@@ -193,7 +194,7 @@ export default function ProductsPage() {
                         }`}>
                           <img
                             src={product.MainImage ? 
-                              `https://cloud.appwrite.io/v1/storage/buckets/67a32bbf003270b1e15c/files/${product.MainImage}/view?project=679b0257003b758db270` :
+                              getStorageFileUrl(product.MainImage) :
                               "/images/pexels-shattha-pilabut-38930-135620.jpg"}
                             alt={product.Name}
                             className={`w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 ${

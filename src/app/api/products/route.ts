@@ -15,11 +15,20 @@ interface ProductData {
     TrackStock: boolean;
 }
 
+// Validate environment variables
+const APPWRITE_ENDPOINT = process.env.NEXT_PUBLIC_APPWRITE_ENDPOINT;
+const APPWRITE_PROJECT_ID = process.env.NEXT_PUBLIC_APPWRITE_PROJECT_ID;
+const APPWRITE_API_KEY = process.env.APPWRITE_API_KEY;
+
+if (!APPWRITE_ENDPOINT || !APPWRITE_PROJECT_ID || !APPWRITE_API_KEY) {
+    console.error('Missing Appwrite configuration for API routes');
+}
+
 // Initialize Appwrite
 const client = new Client()
-    .setEndpoint(process.env.NEXT_PUBLIC_APPWRITE_ENDPOINT!)
-    .setProject(process.env.NEXT_PUBLIC_APPWRITE_PROJECT_ID!)
-    .setKey(process.env.APPWRITE_API_KEY!);
+    .setEndpoint(APPWRITE_ENDPOINT || '')
+    .setProject(APPWRITE_PROJECT_ID || '')
+    .setKey(APPWRITE_API_KEY || '');
 
 const storage = new Storage(client);
 const databases = new Databases(client);

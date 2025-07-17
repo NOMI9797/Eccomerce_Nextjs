@@ -12,6 +12,7 @@ import { FiPackage, FiAlertTriangle, FiStar, FiShield, FiThumbsUp, FiRefreshCw }
 import { Product, getStockStatus } from '../types/product';
 import { reviewsService } from '@/appwrite/db/reviews';
 import { ReviewStats, Review } from '@/types/review';
+import { getStorageFileUrl } from '@/lib/appwrite-utils';
 
 interface EditProductModalProps {
   product: Product;
@@ -157,14 +158,14 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
       const removedImages = product.Images.filter(id => !existingImages.includes(id));
       await Promise.all(
         removedImages.map(imageId => 
-          storage.deleteFile('67a32bbf003270b1e15c', imageId)
+                        storage.deleteFile(process.env.NEXT_PUBLIC_APPWRITE_STORAGE_BUCKET_ID!, imageId)
         )
       );
 
       // Upload new images
       const newImageIds = await Promise.all(
         newImages.map(async (image) => {
-          const uploadedFile = await storage.createFile('67a32bbf003270b1e15c', image);
+                      const uploadedFile = await storage.createFile(process.env.NEXT_PUBLIC_APPWRITE_STORAGE_BUCKET_ID!, image);
           return uploadedFile.$id;
         })
       );
@@ -203,8 +204,8 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
 
       // Update product
       await db.updateDocument(
-        '679b031a001983d2ec66',
-        '67a2fec400214f3c891b',
+        process.env.NEXT_PUBLIC_APPWRITE_DATABASE_ID!,
+        process.env.NEXT_PUBLIC_APPWRITE_PRODUCTS_COLLECTION_ID!,
         product.$id,
         updateData
       );
@@ -614,7 +615,7 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
                 {existingImages.map((imageId) => (
                   <div key={imageId} className="relative group">
                     <img
-                      src={`https://cloud.appwrite.io/v1/storage/buckets/67a32bbf003270b1e15c/files/${imageId}/view?project=679b0257003b758db270`}
+                                                src={getStorageFileUrl(imageId)}
                       alt="Product"
                       className="w-full aspect-square object-cover rounded-lg shadow-md transition-all duration-300 ease-in-out transform hover:scale-105 hover:shadow-lg"
                     />
