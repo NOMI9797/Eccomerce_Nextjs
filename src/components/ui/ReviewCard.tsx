@@ -48,7 +48,7 @@ const ReviewCard: React.FC<ReviewCardProps> = ({
     try {
       await onHelpfulToggle(review.$id);
       toast.success(hasFoundHelpful ? 'Removed helpful vote' : 'Marked as helpful');
-    } catch (error) {
+    } catch {
       toast.error('Failed to update helpful status');
     } finally {
       setIsHelpfulLoading(false);
@@ -63,7 +63,7 @@ const ReviewCard: React.FC<ReviewCardProps> = ({
       try {
         await onDelete(review.$id);
         toast.success('Review deleted successfully');
-      } catch (error) {
+      } catch {
         toast.error('Failed to delete review');
       } finally {
         setIsDeleting(false);
@@ -74,7 +74,7 @@ const ReviewCard: React.FC<ReviewCardProps> = ({
   const formatDate = (dateString: string) => {
     try {
       return format(new Date(dateString), 'MMM dd, yyyy');
-    } catch (error) {
+    } catch {
       return 'Invalid date';
     }
   };

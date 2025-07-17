@@ -68,7 +68,7 @@ const stockManager = {
             isValid = false;
           }
         }
-      } catch (error) {
+      } catch {
         errors.push(`Product ${item.name} not found`);
         isValid = false;
       }

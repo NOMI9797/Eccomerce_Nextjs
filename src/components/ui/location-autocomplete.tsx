@@ -72,7 +72,7 @@ export function LocationAutocomplete({
             exit={{ opacity: 0, y: -10 }}
             className="absolute z-50 w-full mt-1 bg-black/90 backdrop-blur-xl border border-purple-500/20 rounded-lg shadow-lg overflow-hidden"
           >
-            {filteredSuggestions.map((suggestion, index) => (
+            {filteredSuggestions.map((suggestion) => (
               <motion.button
                 key={suggestion}
                 className="w-full px-4 py-2 text-left text-white hover:bg-purple-500/20 transition-colors duration-200

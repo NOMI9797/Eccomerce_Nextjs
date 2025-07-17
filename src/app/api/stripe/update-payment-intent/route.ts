@@ -31,7 +31,7 @@ export async function POST(request: NextRequest) {
       success: true,
       paymentIntentId: paymentIntent.id,
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error updating payment intent:', error);
     return NextResponse.json(
       { error: 'Failed to update payment intent' },

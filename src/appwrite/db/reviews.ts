@@ -14,7 +14,7 @@ import { account } from '../client';
 const DATABASE_ID = process.env.NEXT_PUBLIC_APPWRITE_DATABASE_ID!;
 const REVIEWS_COLLECTION_ID = '6876ac68001a9444a2ea';
 const PRODUCTS_COLLECTION_ID = '67a2fec400214f3c891b';
-const USERS_COLLECTION_ID = process.env.NEXT_PUBLIC_APPWRITE_USERS_COLLECTION_ID!;
+
 
 // Reviews service class
 export class ReviewsService {
@@ -226,7 +226,7 @@ export class ReviewsService {
           try {
             const product = await db.getDocument(DATABASE_ID, PRODUCTS_COLLECTION_ID, review.productId);
             review.productName = product.Name;
-          } catch (error) {
+          } catch {
             console.warn('Could not fetch product data for review:', review.reviewId);
           }
           return review;
@@ -337,7 +337,7 @@ export class ReviewsService {
       // Check if any order contains this product
       for (const order of ordersResponse.documents) {
         const items = JSON.parse(order.items || '[]');
-        const hasProduct = items.some((item: any) => item.productId === productId);
+        const hasProduct = items.some((item: { productId: string }) => item.productId === productId);
         if (hasProduct) {
           return true;
         }
@@ -370,7 +370,7 @@ export class ReviewsService {
           try {
             const product = await db.getDocument(DATABASE_ID, PRODUCTS_COLLECTION_ID, review.productId);
             review.productName = product.Name;
-          } catch (error) {
+          } catch {
             console.warn('Could not fetch product data for review:', review.reviewId);
           }
           return review;

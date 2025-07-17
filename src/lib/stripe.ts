@@ -28,21 +28,21 @@ export const stripeConfig = {
 // Payment method types
 export interface PaymentMethodResult {
   success: boolean;
-  paymentMethod?: any;
+  paymentMethod?: import('@stripe/stripe-js').PaymentMethod;
   error?: string;
 }
 
 // Payment intent result
 export interface PaymentIntentResult {
   success: boolean;
-  paymentIntent?: any;
+  paymentIntent?: import('@stripe/stripe-js').PaymentIntent;
   error?: string;
 }
 
 // Stripe service functions
 export const stripeService = {
   // Create payment method
-  async createPaymentMethod(stripe: Stripe, cardElement: any, billingDetails: any): Promise<PaymentMethodResult> {
+  async createPaymentMethod(stripe: Stripe, cardElement: import('@stripe/stripe-js').StripeCardElement, billingDetails: { name?: string; email?: string; phone?: string; address?: { line1?: string; city?: string; state?: string; country?: string; postal_code?: string } }): Promise<PaymentMethodResult> {
     try {
       const { error, paymentMethod } = await stripe.createPaymentMethod({
         type: 'card',
@@ -55,13 +55,13 @@ export const stripeService = {
       }
 
       return { success: true, paymentMethod };
-    } catch (err) {
+    } catch {
       return { success: false, error: 'Failed to create payment method' };
     }
   },
 
   // Confirm payment intent
-  async confirmCardPayment(stripe: Stripe, clientSecret: string, paymentMethod: any): Promise<PaymentIntentResult> {
+  async confirmCardPayment(stripe: Stripe, clientSecret: string, paymentMethod: import('@stripe/stripe-js').PaymentMethod): Promise<PaymentIntentResult> {
     try {
       const { error, paymentIntent } = await stripe.confirmCardPayment(clientSecret, {
         payment_method: paymentMethod.id,
@@ -72,7 +72,7 @@ export const stripeService = {
       }
 
       return { success: true, paymentIntent };
-    } catch (err) {
+    } catch {
       return { success: false, error: 'Failed to confirm payment' };
     }
   },

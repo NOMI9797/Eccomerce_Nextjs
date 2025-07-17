@@ -40,8 +40,8 @@ const EditCategoryModal: React.FC<EditCategoryModalProps> = ({
 
       onUpdate();
       onClose();
-    } catch (err: any) {
-      setError(err.message || "Failed to update category");
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Failed to update category");
     } finally {
       setLoading(false);
     }

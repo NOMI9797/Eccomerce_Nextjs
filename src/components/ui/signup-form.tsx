@@ -79,9 +79,9 @@ export function SignupForm({
         });
         router.push('/Homepage');
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Signup error:", error);
-      if (error.message.includes('already exists')) {
+      if (error instanceof Error && error.message.includes('already exists')) {
         toast.error("Account Already Exists", {
           description: "An account with this email already exists. Would you like to log in instead?",
           action: {
@@ -98,7 +98,7 @@ export function SignupForm({
         });
       } else {
         toast.error("Registration Failed", {
-          description: error.message || "Failed to create account. Please try again.",
+          description: error instanceof Error ? error.message : "Failed to create account. Please try again.",
           style: {
             background: '#991b1b',
             color: '#fff',
@@ -115,8 +115,8 @@ export function SignupForm({
   const handleGoogleClick = async () => {
     try {
       await handleGoogleSignIn();
-    } catch (error: any) {
-      toast.error(error.message || "Google sign in failed");
+    } catch (error: unknown) {
+      toast.error(error instanceof Error ? error.message : "Google sign in failed");
     }
   };
 

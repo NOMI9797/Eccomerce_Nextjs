@@ -3,9 +3,10 @@ import { motion } from 'framer-motion';
 import { useCart } from '@/session/CartContext';
 import { Button } from '@/components/ui/button';
 import { CartItem } from '@/appwrite/db/cart';
+import { Product } from '@/app/Dashboard/ListProduct/types/product';
 
 interface ProductInfoProps {
-  product: any;
+  product: Product;
 }
 
 export default function ProductInfo({ product }: ProductInfoProps) {

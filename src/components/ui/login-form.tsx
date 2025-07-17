@@ -40,8 +40,8 @@ export function LoginForm({
         await new Promise((resolve) => setTimeout(resolve, 1000))
         router.push('/Homepage')
       }
-    } catch (error: any) {
-      toast.error(error.message || "Failed to login")
+    } catch (error: unknown) {
+      toast.error(error instanceof Error ? error.message : "Failed to login")
     } finally {
       setIsLoading(false)
     }
@@ -50,8 +50,8 @@ export function LoginForm({
   const handleGoogleClick = async () => {
     try {
       await handleGoogleSignIn()
-    } catch (error: any) {
-      toast.error(error.message || "Google login failed")
+    } catch (error: unknown) {
+      toast.error(error instanceof Error ? error.message : "Google login failed")
     }
   }
 

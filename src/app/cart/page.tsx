@@ -1,12 +1,10 @@
 "use client";
 
 import { useCart } from '@/session/CartContext';
-import { useOrders } from '@/app/hooks/useOrders';
+
 import { useAuth } from '@/session/AuthContext';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import Header from '@/components/Header';
-import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -15,7 +13,6 @@ import Link from 'next/link';
 
 export default function CartPage() {
   const { cart, removeFromCart, updateQuantity, clearCart } = useCart();
-  const { createOrder } = useOrders();
   const { user } = useAuth();
   const router = useRouter();
 
@@ -49,7 +46,7 @@ export default function CartPage() {
               </div>
               <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-4">Your cart is empty</h2>
               <p className="text-gray-600 dark:text-gray-400 mb-8 max-w-md mx-auto">
-                Looks like you haven't added any items to your cart yet. Start shopping to fill it up!
+                Looks like you haven&apos;t added any items to your cart yet. Start shopping to fill it up!
               </p>
               <Link href="/Products">
                 <Button className="inline-flex items-center gap-2">

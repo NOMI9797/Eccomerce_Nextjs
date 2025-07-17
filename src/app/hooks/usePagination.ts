@@ -60,7 +60,7 @@ export function usePagination<T>({
     if (currentPage > totalPages && totalPages > 0) {
       setCurrentPage(1);
     }
-  }, [items.length, totalPages, currentPage]);
+  }, [totalPages, currentPage]);
 
   return {
     currentPage,

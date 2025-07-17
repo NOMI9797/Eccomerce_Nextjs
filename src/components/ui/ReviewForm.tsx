@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { FiStar, FiX, FiCheck, FiAlertCircle } from 'react-icons/fi';
+import { FiX, FiCheck, FiAlertCircle } from 'react-icons/fi';
 import { Button } from './button';
 import { Input } from './input';
 import { Label } from './label';
@@ -12,7 +12,6 @@ import { Review, ReviewFormData, REVIEW_VALIDATION, REVIEW_CONSTANTS } from '@/t
 import { toast } from 'sonner';
 
 interface ReviewFormProps {
-  productId: string;
   productName: string;
   existingReview?: Review | null;
   onSubmit: (data: ReviewFormData) => Promise<void>;
@@ -23,7 +22,6 @@ interface ReviewFormProps {
 }
 
 const ReviewForm: React.FC<ReviewFormProps> = ({
-  productId,
   productName,
   existingReview,
   onSubmit,
@@ -222,7 +220,7 @@ const ReviewForm: React.FC<ReviewFormProps> = ({
                   </p>
                 ) : (
                   <p className="text-sm text-gray-500 dark:text-gray-400">
-                    Help others understand what you liked or didn't like
+                    Help others understand what you liked or didn&apos;t like
                   </p>
                 )}
                 <span className="text-sm text-gray-400">
@@ -270,7 +268,7 @@ const ReviewForm: React.FC<ReviewFormProps> = ({
               <h4 className="font-semibold text-blue-900 dark:text-blue-100 mb-2">Review Guidelines</h4>
               <ul className="text-sm text-blue-800 dark:text-blue-200 space-y-1">
                 <li>• Be honest and helpful to other shoppers</li>
-                <li>• Focus on the product's features and your experience</li>
+                <li>• Focus on the product&apos;s features and your experience</li>
                 <li>• Keep it respectful and constructive</li>
                 <li>• Avoid personal information or inappropriate content</li>
               </ul>

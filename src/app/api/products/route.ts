@@ -1,5 +1,19 @@
 import { NextResponse } from "next/server";
-import { Client, Storage, Databases, ID, Query } from "node-appwrite";
+import { Client, Storage, Databases, ID } from "node-appwrite";
+
+// Type for product data being sent to database
+interface ProductData {
+    Name: string;
+    Price: number;
+    CategoryId: string;
+    Description: string;
+    Images: string[];
+    MainImage: string;
+    Stock: number;
+    MinStock: number;
+    MaxStock?: number;
+    TrackStock: boolean;
+}
 
 // Initialize Appwrite
 const client = new Client()
@@ -79,7 +93,7 @@ export async function POST(req: Request) {
             );
 
             // Prepare product data with stock management fields
-            const productData: any = {
+            const productData: ProductData = {
                 Name: name,
                 Price: price,
                 CategoryId: categoryId,

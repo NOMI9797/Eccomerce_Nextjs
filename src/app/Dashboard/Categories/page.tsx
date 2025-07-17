@@ -15,7 +15,6 @@ interface Category extends Models.Document {
 const Categories = () => {
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
@@ -30,7 +29,6 @@ const Categories = () => {
       setCategories(response.documents as Category[]);
     } catch (err) {
       console.error('Error fetching categories:', err);
-      setError('Failed to load categories');
     } finally {
       setLoading(false);
     }

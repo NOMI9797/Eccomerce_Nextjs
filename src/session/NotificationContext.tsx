@@ -139,6 +139,22 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
     }
   }, [notifications]);
 
+  // Memoized toast functions
+  const removeToast = useCallback((id: string) => {
+    setToasts(prev => prev.filter(toast => toast.id !== id));
+  }, []);
+
+  const showToast = useCallback((toast: Omit<ToastProps, 'id' | 'onClose'>) => {
+    const id = Math.random().toString(36).substr(2, 9);
+    const newToast: ToastProps = {
+      ...toast,
+      id,
+      onClose: removeToast
+    };
+    
+    setToasts(prev => [...prev, newToast]);
+  }, [removeToast]);
+
   // Memoized create order notification function
   const createOrderNotification = useCallback(async (orderId: string, orderNumber: string, customerName: string) => {
     try {
@@ -155,23 +171,7 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
     } catch (error) {
       console.error('Error creating order notification:', error);
     }
-  }, []);
-
-  // Memoized toast functions
-  const showToast = useCallback((toast: Omit<ToastProps, 'id' | 'onClose'>) => {
-    const id = Math.random().toString(36).substr(2, 9);
-    const newToast: ToastProps = {
-      ...toast,
-      id,
-      onClose: removeToast
-    };
-    
-    setToasts(prev => [...prev, newToast]);
-  }, []);
-
-  const removeToast = useCallback((id: string) => {
-    setToasts(prev => prev.filter(toast => toast.id !== id));
-  }, []);
+  }, [showToast]);
 
   // Real-time subscription setup - only depends on stable userId and isUserAdmin
   useEffect(() => {
@@ -190,7 +190,7 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
           `databases.679b031a001983d2ec66.collections.6874b8bc00118bfbe390.documents`,
           (response) => {
             const startTime = Date.now();
-            const payload = response.payload as any;
+            const payload = response.payload as unknown;
             const notification = payload as Notification;
 
             // Track real-time event performance

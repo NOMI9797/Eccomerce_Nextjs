@@ -5,20 +5,12 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
-import { Checkbox } from "@/components/ui/checkbox";
 import Header from '@/components/Header';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   FiCreditCard, 
-  FiTruck, 
   FiMapPin, 
   FiUser, 
-  FiMail, 
-  FiPhone, 
-  FiHome,
-  FiPackage,
-  FiShoppingCart,
-  FiArrowRight,
   FiCheck,
   FiDollarSign,
   FiChevronLeft
@@ -27,7 +19,7 @@ import {
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/session/AuthContext';
-import { useOrders } from '@/app/hooks/useOrders';
+
 import { useLocation } from '@/app/hooks/useLocation';
 import { toast } from 'sonner';
 import { LocationAutocomplete } from '@/components/ui/location-autocomplete';
@@ -38,6 +30,7 @@ import { ordersService } from '@/appwrite/db/orders';
 import { notificationService } from '@/appwrite/db/notifications';
 import { useNotifications } from '@/session/NotificationContext';
 import StripeCheckout from './components/StripeCheckout';
+import { CartItem } from '@/appwrite/db/cart';
 // Removed NotificationToastSystem - using simple toast notifications instead
 
 export default function CheckoutPage() {
@@ -48,7 +41,33 @@ export default function CheckoutPage() {
   // Removed useNotificationToasts - using simple toast notifications instead
   const deliveryFee = 10.00;
   const [showInvoice, setShowInvoice] = useState(false);
-  const [orderDetails, setOrderDetails] = useState<any>(null);
+  const [orderDetails, setOrderDetails] = useState<{
+    orderDetails: {
+      orderId: string;
+      orderNumber: string;
+      date: string;
+      items: CartItem[];
+      subtotal: number;
+      deliveryFee: number;
+      total: number;
+      paymentMethod: string;
+      paymentStatus: string;
+      paymentIntentId?: string;
+    };
+    customerDetails: {
+      firstName: string;
+      lastName: string;
+      email: string;
+      phone: string;
+      address: {
+        street: string;
+        city: string;
+        region: string;
+        country: string;
+        postalCode: string;
+      };
+    };
+  } | null>(null);
   const [paymentMethod, setPaymentMethod] = useState<'stripe' | 'cod'>('cod');
   const [processing, setProcessing] = useState(false);
   const { locationData, loading: locationLoading } = useLocation();
@@ -75,7 +94,7 @@ export default function CheckoutPage() {
     }
   }, [locationData]);
 
-  const { createOrder } = useOrders();
+
 
   // Add form state
   const [firstName, setFirstName] = useState('');
@@ -84,14 +103,7 @@ export default function CheckoutPage() {
   const [email, setEmail] = useState('');
   const [streetAddress, setStreetAddress] = useState('');
 
-  // Add form errors state
-  const [formErrors, setFormErrors] = useState({
-    firstName: '',
-    lastName: '',
-    phone: '',
-    email: '',
-    street: ''
-  });
+
 
   // Add validation function
   const validateForm = () => {
@@ -103,7 +115,7 @@ export default function CheckoutPage() {
   };
 
   // Stripe payment success handler
-  const handleStripePaymentSuccess = async (paymentIntent: any) => {
+  const handleStripePaymentSuccess = async (paymentIntent: { id: string }) => {
     await createOrderWithPayment('paid', paymentIntent.id);
   };
 
@@ -167,8 +179,13 @@ export default function CheckoutPage() {
       // Save order to database
       const result = await ordersService.createOrder(orderData);
 
+      // Ensure we have a valid order ID
+      if (!result.$id) {
+        throw new Error('Failed to create order: No order ID returned');
+      }
+
       // Update payment intent metadata for webhooks (if payment intent ID is provided)
-      if (paymentIntentId && result.$id && user?.$id) {
+      if (paymentIntentId && user?.$id) {
         await updatePaymentIntentMetadata(
           paymentIntentId,
           result.$id,
@@ -179,26 +196,18 @@ export default function CheckoutPage() {
 
       // Create notifications for both admin and customer
       try {
-        if (result.$id && user?.$id) {
-          const orderTotal = cart.items.reduce((total, item) => total + (item.price * item.quantity), 0) + deliveryFee;
-          const estimatedDelivery = new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toLocaleDateString(); // 5 days from now
-
+        if (user?.$id) {
           if (paymentStatus === 'paid') {
             // Create comprehensive payment success notifications
             await notificationService.createPaymentSuccessNotification(
               user.$id,
               result.$id,
-              result.orderNumber,
-              orderTotal,
-              'Credit/Debit Card (Stripe)'
+              result.orderNumber
             );
 
             await notificationService.createAdminPaymentNotification(
               result.$id,
-              result.orderNumber,
-              `${firstName} ${lastName}`,
-              orderTotal,
-              'Credit/Debit Card (Stripe)'
+              result.orderNumber
             );
 
             // Rich payment success toast removed - using simple notifications instead
@@ -207,9 +216,7 @@ export default function CheckoutPage() {
             await notificationService.createOrderConfirmationNotification(
               user.$id,
               result.$id,
-              result.orderNumber,
-              orderTotal,
-              estimatedDelivery
+              result.orderNumber
             );
 
             // Order confirmation toast removed - using simple notifications instead
@@ -278,7 +285,7 @@ export default function CheckoutPage() {
         ? 'Order placed and payment processed successfully!' 
         : 'Order placed successfully!';
       toast.success(successMessage);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error placing order:', error);
       toast.error('Failed to place order. Please try again.');
     } finally {

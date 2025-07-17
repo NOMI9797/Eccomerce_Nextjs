@@ -78,12 +78,7 @@ const RichNotification: React.FC<RichNotificationProps> = ({
     }
   };
 
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD'
-    }).format(amount);
-  };
+
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
@@ -118,17 +113,17 @@ const RichNotification: React.FC<RichNotificationProps> = ({
           <div className="grid grid-cols-2 gap-4 mb-4">
             <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
               <FiDollarSign className="w-4 h-4" />
-              <span>Amount: {formatCurrency(notification.metadata?.paymentAmount || 0)}</span>
+              <span>Payment processed</span>
             </div>
             <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
               <FiCreditCard className="w-4 h-4" />
-              <span>Method: {notification.metadata?.paymentMethod || 'Card'}</span>
+              <span>Card payment</span>
             </div>
           </div>
           
           <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400 mb-4">
             <FiClock className="w-4 h-4" />
-            <span>{formatDate(notification.metadata?.timestamp || notification.isCreated)}</span>
+            <span>{formatDate(notification.isCreated)}</span>
           </div>
           
           <div className="flex items-center justify-between">
@@ -168,24 +163,15 @@ const RichNotification: React.FC<RichNotificationProps> = ({
               <FiPackage className="w-4 h-4" />
               <span>Order #{notification.orderNumber}</span>
             </div>
-            {notification.metadata?.totalAmount && (
-              <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
-                <FiDollarSign className="w-4 h-4" />
-                <span>Total: {formatCurrency(notification.metadata.totalAmount)}</span>
-              </div>
-            )}
-          </div>
-          
-          {notification.metadata?.estimatedDelivery && (
-            <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 mb-4">
-              <FiTruck className="w-4 h-4" />
-              <span>Estimated delivery: {notification.metadata.estimatedDelivery}</span>
+            <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+              <FiDollarSign className="w-4 h-4" />
+              <span>Order confirmed</span>
             </div>
-          )}
+          </div>
           
           <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400 mb-4">
             <FiClock className="w-4 h-4" />
-            <span>{formatDate(notification.metadata?.timestamp || notification.isCreated)}</span>
+            <span>{formatDate(notification.isCreated)}</span>
           </div>
           
           <div className="flex items-center justify-between">
@@ -225,17 +211,15 @@ const RichNotification: React.FC<RichNotificationProps> = ({
               <FiPackage className="w-4 h-4" />
               <span>Order #{notification.orderNumber}</span>
             </div>
-            {notification.metadata?.trackingNumber && (
-              <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
-                <FiMapPin className="w-4 h-4" />
-                <span>Tracking: {notification.metadata.trackingNumber}</span>
-              </div>
-            )}
+            <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+              <FiMapPin className="w-4 h-4" />
+              <span>Order shipped</span>
+            </div>
           </div>
           
           <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400 mb-4">
             <FiClock className="w-4 h-4" />
-            <span>{formatDate(notification.metadata?.timestamp || notification.isCreated)}</span>
+            <span>{formatDate(notification.isCreated)}</span>
           </div>
           
           <div className="flex items-center justify-between">

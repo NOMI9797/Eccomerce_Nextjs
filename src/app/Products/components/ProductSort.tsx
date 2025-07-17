@@ -13,7 +13,7 @@ export default function ProductSort({ value, onChange }: ProductSortProps) {
     { value: "name", label: "Name A-Z", icon: "🔤" }
   ];
 
-  const currentOption = sortOptions.find(option => option.value === value) || sortOptions[0];
+
 
   return (
     <motion.div 

@@ -18,7 +18,6 @@ import {
   FiEdit, 
   FiTrash2, 
   FiPackage,
-  FiGrid,
   FiTrendingUp,
   FiDollarSign,
   FiAlertTriangle

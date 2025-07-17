@@ -1,6 +1,5 @@
 "use client";
 
-import { useEffect } from 'react';
 import { useParams } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { useProduct } from '@/app/hooks/useProduct';
@@ -20,6 +19,7 @@ import { Review, ReviewStats as ReviewStatsType } from '@/types/review';
 import { reviewsService } from '@/appwrite/db/reviews';
 import { Button } from '@/components/ui/button';
 import { FiStar, FiMessageCircle, FiFilter } from 'react-icons/fi';
+import { Product } from '@/app/Dashboard/ListProduct/types/product';
 
 export default function ProductDetails() {
   const params = useParams();
@@ -92,7 +92,7 @@ export default function ProductDetails() {
       <div className="min-h-screen bg-gray-100 dark:bg-gray-900 flex items-center justify-center">
         <div className="text-center">
           <h2 className="text-2xl font-semibold text-gray-900 dark:text-white mb-4">Product Not Found</h2>
-          <p className="text-gray-600 dark:text-gray-400 mb-8">The product you're looking for doesn't exist or has been removed.</p>
+          <p className="text-gray-600 dark:text-gray-400 mb-8">The product you&apos;re looking for doesn&apos;t exist or has been removed.</p>
           <Link 
             href="/Products"
             className="inline-flex items-center px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors duration-200"
@@ -159,7 +159,7 @@ export default function ProductDetails() {
               transition={{ duration: 0.6 }}
               className="text-gray-800 dark:text-gray-100"
             >
-              <ProductInfo product={product} />
+              <ProductInfo product={product as Product} />
             </motion.div>
           </div>
         </div>
@@ -244,7 +244,7 @@ export default function ProductDetails() {
                          loadReviews();
                        }
                      }}
-                     onEdit={userReview && userReview.$id === review.$id ? (review) => {
+                     onEdit={userReview && userReview.$id === review.$id ? () => {
                        // Handle edit - reopen form with existing review
                        setShowReviewForm(true);
                      } : undefined}
@@ -300,7 +300,6 @@ export default function ProductDetails() {
         <ReviewForm
           isOpen={showReviewForm}
           onCancel={() => setShowReviewForm(false)}
-          productId={productId}
           productName={product.Name}
           existingReview={userReview}
           onSubmit={async (data) => {

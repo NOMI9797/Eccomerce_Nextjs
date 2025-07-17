@@ -8,9 +8,10 @@ import { useEffect, useState } from 'react';
 import { reviewsService } from '@/appwrite/db/reviews';
 import { ReviewStats } from '@/types/review';
 import { FiStar } from 'react-icons/fi';
+import { Product } from '@/app/Dashboard/ListProduct/types/product';
 
 interface ProductGridProps {
-  products: any[];
+  products: Product[];
   hasMore?: boolean;
   isLoading?: boolean;
   onLoadMore?: () => void;

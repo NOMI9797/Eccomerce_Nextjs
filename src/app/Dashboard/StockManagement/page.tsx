@@ -11,10 +11,7 @@ import {
   FiRefreshCw, 
   FiEdit,
   FiEye,
-  FiBarChart,
-  FiShoppingCart,
-  FiClock,
-  FiSettings
+  FiBarChart
 } from 'react-icons/fi';
 import { Product, getStockStatus, getStockBadgeColor } from '@/app/Dashboard/ListProduct/types/product';
 import { notificationService } from '@/appwrite/db/notifications';
@@ -23,7 +20,7 @@ import { useCategories } from '@/app/hooks/useCategories';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { cn } from '@/lib/utils';
+
 
 const StockManagement = () => {
   const router = useRouter();

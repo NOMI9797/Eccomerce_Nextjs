@@ -6,7 +6,7 @@ import { useNotifications } from '@/session/NotificationContext';
 import { useAuth } from '@/session/AuthContext';
 import { Notification } from '@/types/notification';
 import { Button } from '@/components/ui/button';
-import { Checkbox } from '@/components/ui/checkbox';
+
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { format } from 'date-fns';
 import { useRouter } from 'next/navigation';
@@ -34,7 +34,7 @@ import { ordersService, Order } from '@/appwrite/db/orders';
 
 const CustomerNotificationsPage: React.FC = () => {
   const { notifications, isLoading, markAsRead, markAllAsRead, deleteNotification, fetchNotifications } = useNotifications();
-  const { user, isUserAdmin } = useAuth();
+  const { isUserAdmin } = useAuth();
   const router = useRouter();
   
   const [selectedNotifications, setSelectedNotifications] = useState<string[]>([]);

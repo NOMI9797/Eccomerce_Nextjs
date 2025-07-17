@@ -143,7 +143,7 @@ export const useNotificationToasts = () => {
 // Notification sound utility
 const playNotificationSound = () => {
   // Create a subtle notification sound
-  const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+  const audioContext = new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
   const oscillator = audioContext.createOscillator();
   const gainNode = audioContext.createGain();
   
@@ -162,9 +162,7 @@ const playNotificationSound = () => {
 
 // Pre-built notification creators for common scenarios
 export const createPaymentSuccessToast = (
-  orderNumber: string, 
-  amount: number, 
-  paymentMethod: string
+  orderNumber: string
 ): Omit<NotificationToast, 'id'> => ({
   $id: `payment-${Date.now()}`,
   type: 'payment',
@@ -174,19 +172,12 @@ export const createPaymentSuccessToast = (
   priority: 'high',
   actionType: 'view_invoice',
   orderNumber,
-  metadata: {
-    paymentAmount: amount,
-    paymentMethod,
-    timestamp: new Date().toISOString()
-  },
   duration: 10000, // 10 seconds for payment success
   autoClose: false // Don't auto-close payment notifications
 });
 
 export const createOrderConfirmationToast = (
-  orderNumber: string, 
-  totalAmount: number, 
-  estimatedDelivery: string
+  orderNumber: string
 ): Omit<NotificationToast, 'id'> => ({
   $id: `order-${Date.now()}`,
   type: 'order',
@@ -196,18 +187,12 @@ export const createOrderConfirmationToast = (
   priority: 'high',
   actionType: 'view_order',
   orderNumber,
-  metadata: {
-    totalAmount,
-    estimatedDelivery,
-    timestamp: new Date().toISOString()
-  },
   duration: 8000,
   autoClose: false
 });
 
 export const createShippingToast = (
-  orderNumber: string, 
-  trackingNumber?: string
+  orderNumber: string
 ): Omit<NotificationToast, 'id'> => ({
   $id: `shipping-${Date.now()}`,
   type: 'shipping',
@@ -217,10 +202,6 @@ export const createShippingToast = (
   priority: 'medium',
   actionType: 'track_order',
   orderNumber,
-  metadata: {
-    trackingNumber,
-    timestamp: new Date().toISOString()
-  },
   duration: 8000,
   autoClose: true
 });

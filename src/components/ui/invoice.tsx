@@ -216,7 +216,7 @@ const Invoice: React.FC<InvoiceProps> = ({ orderDetails, customerDetails, onClos
             <div className="max-w-md mx-auto">
               <h3 className="text-lg font-semibold text-gray-900 mb-2">Thank you for your order!</h3>
               <p className="text-gray-600 text-sm">
-                We'll send you a confirmation email shortly with tracking information once your order is processed.
+                We&apos;ll send you a confirmation email shortly with tracking information once your order is processed.
               </p>
             </div>
           </div>

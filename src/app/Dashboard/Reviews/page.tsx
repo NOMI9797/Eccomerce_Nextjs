@@ -1,11 +1,11 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/session/AuthContext';
 import { Review } from '@/types/review';
 import { ReviewsService } from '@/appwrite/db/reviews';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FiStar, FiCheck, FiX, FiCalendar, FiPackage } from 'react-icons/fi';
+import { FiStar, FiCheck, FiCalendar, FiPackage } from 'react-icons/fi';
 import { format } from 'date-fns';
 
 const reviewsService = new ReviewsService();
@@ -15,13 +15,7 @@ const ReviewsPage = () => {
   const [reviews, setReviews] = useState<Review[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    if (user) {
-      loadReviews();
-    }
-  }, [user]);
-
-  const loadReviews = async () => {
+  const loadReviews = useCallback(async () => {
     try {
       const response = await reviewsService.getUserReviews(user?.$id || '');
       setReviews(response.reviews);
@@ -30,7 +24,13 @@ const ReviewsPage = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [user?.$id]);
+
+  useEffect(() => {
+    if (user) {
+      loadReviews();
+    }
+  }, [user, loadReviews]);
 
   const getStarRating = (rating: number) => {
     return [...Array(5)].map((_, index) => (
@@ -77,7 +77,7 @@ const ReviewsPage = () => {
                 className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-8 text-center"
               >
                 <p className="text-gray-600 dark:text-gray-400 text-lg">
-                  You haven't written any reviews yet.
+                  You haven&apos;t written any reviews yet.
                 </p>
               </motion.div>
             ) : (

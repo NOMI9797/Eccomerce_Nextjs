@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import db from "../../../../appwrite/db";
 import storage from "../../../../appwrite/storage";
 import { Button } from "@/components/ui/button";
@@ -47,6 +47,18 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
   const [reviewsLoading, setReviewsLoading] = useState(true);
   const [reviews, setReviews] = useState<Review[]>([]);
 
+  const loadReviews = useCallback(async () => {
+    try {
+      const reviews = await reviewsService.getProductReviews(product.$id, {
+        limit: 10,
+        sortBy: 'newest'
+      });
+      setReviews(reviews);
+    } catch (error) {
+      console.error('Error loading reviews:', error);
+    }
+  }, [product.$id]);
+
   useEffect(() => {
     setFormData({
       name: product.Name,
@@ -74,7 +86,7 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
     
     fetchReviewStats();
     loadReviews();
-  }, [product]);
+  }, [product, loadReviews]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value, type } = e.target;
@@ -161,7 +173,18 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
       const allImageIds = [...existingImages, ...newImageIds];
 
       // Prepare update data
-      const updateData: any = {
+      const updateData: {
+        Name: string;
+        Price: number;
+        CategoryId: string;
+        Description: string;
+        Images: string[];
+        MainImage: string;
+        Stock: number;
+        MinStock: number;
+        TrackStock: boolean;
+        MaxStock?: number;
+      } = {
         Name: formData.name,
         Price: formData.price,
         CategoryId: formData.categoryId,
@@ -188,22 +211,11 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
 
       onUpdate();
       onClose();
-    } catch (err: any) {
-      setError(err.message || "Failed to update product");
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : "Failed to update product";
+      setError(errorMessage);
     } finally {
       setLoading(false);
-    }
-  };
-
-  const loadReviews = async () => {
-    try {
-      const reviews = await reviewsService.getProductReviews(product.$id, {
-        limit: 10,
-        sortBy: 'newest'
-      });
-      setReviews(reviews);
-    } catch (error) {
-      console.error('Error loading reviews:', error);
     }
   };
 

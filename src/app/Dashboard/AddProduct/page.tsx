@@ -156,8 +156,9 @@ const AddProduct = () => {
       
       // Navigate back to products list
       router.push('/Dashboard?feature=List Products');
-    } catch (err: any) {
-      setError(err.message || "Failed to create product");
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : "Failed to create product";
+      setError(errorMessage);
     } finally {
       setLoading(false);
       setLoadingText("");

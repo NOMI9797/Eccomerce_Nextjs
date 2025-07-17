@@ -10,10 +10,8 @@ import Orders from "./Orders/page";
 import StockManagement from "./StockManagement/page";
 import ReviewsPage from "./Reviews/page";
 import AdminRoute from "@/components/AdminRoute";
-import { FiMenu, FiPackage, FiList, FiGrid, FiX, FiHome, FiBarChart, FiUsers, FiTrendingUp, FiTruck, FiExternalLink, FiShoppingCart, FiDollarSign, FiAlertTriangle, FiRefreshCw, FiBell, FiActivity, FiPieChart, FiStar } from 'react-icons/fi';
+import { FiMenu, FiPackage, FiList, FiGrid, FiX, FiHome, FiBarChart, FiUsers, FiTrendingUp, FiTruck, FiExternalLink, FiShoppingCart, FiDollarSign, FiPieChart, FiStar } from 'react-icons/fi';
 import { 
-  LineChart, 
-  Line, 
   XAxis, 
   YAxis, 
   CartesianGrid, 
@@ -28,7 +26,7 @@ import {
   AreaChart,
   Area
 } from 'recharts';
-import { format, subDays, startOfDay } from 'date-fns';
+import { format, subDays } from 'date-fns';
 
 const DashboardContent: React.FC = () => {
   const searchParams = useSearchParams();

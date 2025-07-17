@@ -2,10 +2,15 @@
 import React, { createContext, useContext, useState, ReactNode, useEffect, useMemo } from "react";
 import { getCurrentUser, signOutUser, isAdmin, checkAuth } from "@/appwrite/auth";
 import { useRouter } from "next/navigation";
+import { Models } from "appwrite";
+
+interface UserWithRole extends Omit<Models.User<Models.Preferences>, 'labels'> {
+  labels: string[];
+}
 
 interface AuthContextType {
-  user: any;
-  setUser: (user: any) => void;
+  user: UserWithRole | null;
+  setUser: (user: UserWithRole | null) => void;
   logout: () => Promise<void>;
   isUserAdmin: boolean;
 }
@@ -13,7 +18,7 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<UserWithRole | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
 

@@ -29,8 +29,8 @@ const AddCategoryModal: React.FC<AddCategoryModalProps> = ({ isOpen, onClose, on
       onAdd();
       onClose();
       setCategoryName("");
-    } catch (err: any) {
-      setError(err.message || "Failed to add category");
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Failed to add category");
     } finally {
       setLoading(false);
     }

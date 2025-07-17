@@ -1,5 +1,5 @@
 import { account } from "../client";
-import { Query, Models, ID } from "appwrite";
+import { Models, ID, OAuthProvider } from "appwrite";
 
 // Define user roles
 export const ROLES = {
@@ -14,7 +14,7 @@ interface UserWithRole extends Omit<Models.User<Models.Preferences>, 'labels'> {
 export async function registerUser(username: string, email: string, password: string): Promise<UserWithRole> {
   try {
     // Create the user
-    const user = await account.create(
+    await account.create(
       ID.unique(),
       email,
       password,
@@ -32,14 +32,15 @@ export async function registerUser(username: string, email: string, password: st
     localStorage.setItem("userId", freshUser.$id);
     
     return freshUser;
-  } catch (error: any) {
-    if (error.type === 'user_already_exists' || 
-        error.message?.includes('unique') || 
-        error.code === 409) {
+  } catch (error: unknown) {
+    const errorObj = error as { type?: string; message?: string; code?: number };
+    if (errorObj.type === 'user_already_exists' || 
+        errorObj.message?.includes('unique') || 
+        errorObj.code === 409) {
       throw new Error('An account with this email already exists. Please try logging in instead.');
     }
     console.error('Registration error:', error);
-    throw new Error(error.message || 'Failed to create account. Please try again.');
+    throw new Error(errorObj.message || 'Failed to create account. Please try again.');
   }
 }
 
@@ -52,12 +53,12 @@ export const handleGoogleSignIn = async (): Promise<void> => {
         localStorage.removeItem("authToken");
         localStorage.removeItem("userId");
       }
-    } catch (error) {
+    } catch {
       // No existing session
     }
     // Use Homepage as callback URL
     const redirectUrl = `${window.location.origin}/Homepage`;
-    await account.createOAuth2Session("google" as any, redirectUrl, redirectUrl);
+    await account.createOAuth2Session(OAuthProvider.Google, redirectUrl, redirectUrl);
   } catch (error) {
     console.error("Google Sign-In failed:", error);
   }
@@ -83,7 +84,7 @@ export const signIn = async (email: string, password: string): Promise<{
         localStorage.removeItem("userId");
         localStorage.removeItem("user");
       }
-    } catch (error) {
+    } catch {
       // No existing session
     }
 
@@ -119,7 +120,7 @@ export const signOutUser = async (): Promise<void> => {
       if (currentSession) {
         await account.deleteSession('current');
       }
-    } catch (error) {
+    } catch {
       // Session might not exist, which is fine
       console.log('No active session found');
     }
@@ -152,7 +153,7 @@ export const checkAuth = async (): Promise<boolean> => {
   try {
     await account.get();
     return true;
-  } catch (error) {
+  } catch {
     return false;
   }
 };

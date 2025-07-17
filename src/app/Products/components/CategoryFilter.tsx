@@ -1,7 +1,12 @@
 import { motion } from 'framer-motion';
 
+interface Category {
+  $id: string;
+  CategoryName: string;
+}
+
 interface CategoryFilterProps {
-  categories: any[];
+  categories: Category[];
   selectedCategory: string;
   onCategoryChange: (category: string) => void;
 }
@@ -88,7 +93,7 @@ export default function CategoryFilter({ categories, selectedCategory, onCategor
         </motion.button>
 
         {/* Category Items */}
-        {categories.map((category, index) => (
+        {categories.map((category) => (
           <motion.button
             key={category.$id}
             variants={itemVariants}

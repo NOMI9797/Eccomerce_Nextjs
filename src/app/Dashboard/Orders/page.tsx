@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useOrders } from '@/app/hooks/useOrders';
-import { Order, OrderItem } from '@/appwrite/db/orders';
+import { Order } from '@/appwrite/db/orders';
 import { notificationService } from '@/appwrite/db/notifications';
 import { Button } from '@/components/ui/button';
 import {

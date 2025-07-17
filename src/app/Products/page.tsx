@@ -10,18 +10,16 @@ import Pagination from './components/Pagination';
 import { useProducts } from '@/app/hooks/useProducts';
 import { useCategories } from '@/app/hooks/useCategories';
 import { usePagination } from '@/app/hooks/usePagination';
-import { useAuth } from '@/session/AuthContext';
 import { useCart } from '@/session/CartContext';
 import { Button } from '@/components/ui/button';
 import { CartItem } from '@/appwrite/db/cart';
 import Header from '@/components/Header';
-import { FiShoppingCart, FiStar, FiGrid, FiList, FiFilter, FiSearch } from 'react-icons/fi';
-import { Product, getStockStatus, getStockBadgeColor } from '@/app/Dashboard/ListProduct/types/product';
+import { FiShoppingCart, FiStar, FiGrid, FiList, FiSearch } from 'react-icons/fi';
+import { Product, getStockStatus } from '@/app/Dashboard/ListProduct/types/product';
 
 export default function ProductsPage() {
-  const { data: products = [], isLoading } = useProducts();
+  const { data: products = [] } = useProducts();
   const { data: categories = [] } = useCategories();
-  const { isUserAdmin } = useAuth();
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [sortBy, setSortBy] = useState<string>("featured");

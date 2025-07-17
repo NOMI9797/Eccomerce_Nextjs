@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { loadStripe, StripeElementsOptions } from '@stripe/stripe-js';
+import { StripeElementsOptions } from '@stripe/stripe-js';
 import {
   Elements,
   CardElement,
@@ -10,13 +10,13 @@ import {
 } from '@stripe/react-stripe-js';
 import { Button } from '@/components/ui/button';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FiCreditCard, FiLock, FiAlertCircle, FiCheckCircle } from 'react-icons/fi';
+import { FiCreditCard, FiLock, FiAlertCircle } from 'react-icons/fi';
 import { toast } from 'sonner';
 import { getStripe, stripeService } from '@/lib/stripe';
 
 interface StripeCheckoutProps {
   amount: number;
-  onPaymentSuccess: (paymentIntent: any) => void;
+  onPaymentSuccess: (paymentIntent: { id: string }) => void;
   onPaymentError: (error: string) => void;
   customerDetails: {
     firstName: string;
@@ -98,9 +98,10 @@ const CheckoutForm: React.FC<StripeCheckoutProps> = ({
         }
 
         setClientSecret(data.clientSecret);
-      } catch (error: any) {
+      } catch (error: unknown) {
         console.error('Error creating payment intent:', error);
-        onPaymentError(error.message || 'Failed to initialize payment');
+        const errorMessage = error instanceof Error ? error.message : 'Failed to initialize payment';
+        onPaymentError(errorMessage);
       }
     };
 
@@ -109,7 +110,7 @@ const CheckoutForm: React.FC<StripeCheckoutProps> = ({
     }
   }, [amount, customerDetails, onPaymentError]);
 
-  const handleCardChange = (event: any) => {
+  const handleCardChange = (event: { complete: boolean; error?: { message: string } }) => {
     setCardComplete(event.complete);
     setCardError(event.error ? event.error.message : '');
   };
@@ -150,8 +151,8 @@ const CheckoutForm: React.FC<StripeCheckoutProps> = ({
         billingDetails
       );
 
-      if (!paymentMethodResult.success) {
-        throw new Error(paymentMethodResult.error);
+      if (!paymentMethodResult.success || !paymentMethodResult.paymentMethod) {
+        throw new Error(paymentMethodResult.error || 'Failed to create payment method');
       }
 
       // Confirm payment
@@ -161,16 +162,16 @@ const CheckoutForm: React.FC<StripeCheckoutProps> = ({
         paymentMethodResult.paymentMethod
       );
 
-      if (!paymentResult.success) {
-        throw new Error(paymentResult.error);
+      if (!paymentResult.success || !paymentResult.paymentIntent) {
+        throw new Error(paymentResult.error || 'Failed to confirm payment');
       }
 
       // Payment successful
-      onPaymentSuccess(paymentResult.paymentIntent);
+      onPaymentSuccess({ id: paymentResult.paymentIntent.id });
       toast.success('Payment successful!');
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Payment error:', error);
-      const errorMessage = error.message || 'Payment failed. Please try again.';
+      const errorMessage = error instanceof Error ? error.message : 'Payment failed. Please try again.';
       onPaymentError(errorMessage);
       toast.error(errorMessage);
     } finally {
@@ -285,7 +286,7 @@ const CheckoutForm: React.FC<StripeCheckoutProps> = ({
 
 // Main Stripe wrapper component
 const StripeCheckout: React.FC<StripeCheckoutProps> = (props) => {
-  const [stripePromise, setStripePromise] = useState<Promise<any> | null>(null);
+  const [stripePromise, setStripePromise] = useState<Promise<import('@stripe/stripe-js').Stripe | null> | null>(null);
 
   useEffect(() => {
     const initializeStripe = async () => {

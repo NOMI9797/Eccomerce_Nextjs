@@ -39,7 +39,7 @@ export async function POST(request: NextRequest) {
       clientSecret: paymentIntent.client_secret,
       paymentIntentId: paymentIntent.id,
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error creating payment intent:', error);
     return NextResponse.json(
       { error: 'Failed to create payment intent' },
@@ -58,7 +58,7 @@ export async function GET() {
       configured: isConfigured,
       message: isConfigured ? 'Stripe is configured' : 'Stripe configuration missing'
     });
-  } catch (error) {
+  } catch {
     return NextResponse.json(
       { error: 'Failed to check Stripe configuration' },
       { status: 500 }

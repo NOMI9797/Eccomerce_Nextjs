@@ -3,6 +3,10 @@ import { ordersService, Order } from '@/appwrite/db/orders';
 import { useAuth } from '@/session/AuthContext';
 import { toast } from 'sonner';
 
+interface ApiError {
+  message: string;
+}
+
 export const useOrders = () => {
   const { user, isUserAdmin } = useAuth();
   const queryClient = useQueryClient();
@@ -32,7 +36,7 @@ export const useOrders = () => {
       queryClient.invalidateQueries({ queryKey: ['orders'] });
       toast.success('Order created successfully');
     },
-    onError: (error: any) => {
+    onError: (error: ApiError) => {
       toast.error(error.message || 'Failed to create order');
     }
   });
@@ -45,7 +49,7 @@ export const useOrders = () => {
       queryClient.invalidateQueries({ queryKey: ['orders'] });
       toast.success('Order status updated');
     },
-    onError: (error: any) => {
+    onError: (error: ApiError) => {
       toast.error(error.message || 'Failed to update order status');
     }
   });
@@ -58,7 +62,7 @@ export const useOrders = () => {
       queryClient.invalidateQueries({ queryKey: ['orders'] });
       toast.success('Payment status updated');
     },
-    onError: (error: any) => {
+    onError: (error: ApiError) => {
       toast.error(error.message || 'Failed to update payment status');
     }
   });
@@ -70,7 +74,7 @@ export const useOrders = () => {
       queryClient.invalidateQueries({ queryKey: ['orders'] });
       toast.success('Order deleted successfully');
     },
-    onError: (error: any) => {
+    onError: (error: ApiError) => {
       toast.error(error.message || 'Failed to delete order');
     }
   });

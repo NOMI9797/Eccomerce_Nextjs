@@ -59,7 +59,7 @@ export default function AdminRoute({ children }: { children: React.ReactNode }) 
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
           <h2 className="text-xl font-semibold mb-2 text-red-600">Access Denied</h2>
-          <p className="text-gray-600">You don't have permission to access this area.</p>
+          <p className="text-gray-600">You don&apos;t have permission to access this area.</p>
           <p className="text-sm mt-2">This area is restricted to administrators only.</p>
         </div>
       </div>

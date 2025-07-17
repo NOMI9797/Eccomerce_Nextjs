@@ -1,4 +1,4 @@
-import { ID, Query } from 'appwrite';
+import { Query } from 'appwrite';
 import db from './index';
 import { Notification, CreateNotificationData } from '@/types/notification';
 import { Product, getStockStatus } from '@/app/Dashboard/ListProduct/types/product';
@@ -564,7 +564,7 @@ export const notificationService = {
   },
 
   // Create comprehensive payment success notification for customer
-  async createPaymentSuccessNotification(userId: string, orderId: string, orderNumber: string, paymentAmount: number, paymentMethod: string): Promise<Notification> {
+  async createPaymentSuccessNotification(userId: string, orderId: string, orderNumber: string): Promise<Notification> {
     return this.createNotification({
       type: 'payment',
       title: `Payment Successful - Order #${orderNumber}`,
@@ -577,7 +577,7 @@ export const notificationService = {
   },
 
   // Create payment success notification for admin
-  async createAdminPaymentNotification(orderId: string, orderNumber: string, customerName: string, paymentAmount: number, paymentMethod: string): Promise<Notification> {
+  async createAdminPaymentNotification(orderId: string, orderNumber: string): Promise<Notification> {
     return this.createNotification({
       type: 'payment',
       title: `Payment Received - Order #${orderNumber}`,
@@ -589,7 +589,7 @@ export const notificationService = {
   },
 
   // Create order confirmation notification for customer
-  async createOrderConfirmationNotification(userId: string, orderId: string, orderNumber: string, totalAmount: number, estimatedDelivery: string): Promise<Notification> {
+  async createOrderConfirmationNotification(userId: string, orderId: string, orderNumber: string): Promise<Notification> {
     return this.createNotification({
       type: 'order',
       title: `Order Confirmed - #${orderNumber}`,
@@ -602,7 +602,7 @@ export const notificationService = {
   },
 
   // Create shipping notification for customer
-  async createShippingNotification(userId: string, orderId: string, orderNumber: string, trackingNumber?: string): Promise<Notification> {
+  async createShippingNotification(userId: string, orderId: string, orderNumber: string): Promise<Notification> {
     return this.createNotification({
       type: 'shipping',
       title: `Order Shipped - #${orderNumber}`,
@@ -626,7 +626,7 @@ export const notificationService = {
   },
 
   // Low Stock Alert Methods
-  async createLowStockAlert(productId: string, productName: string, currentStock: number, minStock: number): Promise<Notification> {
+  async createLowStockAlert(productId: string, productName: string, currentStock: number): Promise<Notification> {
     const isOutOfStock = currentStock <= 0;
     
     return this.createNotification({

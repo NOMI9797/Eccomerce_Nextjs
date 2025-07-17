@@ -18,6 +18,7 @@ import ToastContainer from "./ui/toast-container";
 import CustomerInvoiceModal from "./ui/customer-invoice-modal";
 import { ordersService, Order } from "@/appwrite/db/orders";
 
+
 export default function Header() {
   const { user, logout, isUserAdmin } = useAuth();
   const { cart } = useCart();
@@ -43,7 +44,7 @@ export default function Header() {
     }
   };
 
-  const handleNotificationClick = (notification: any) => {
+  const handleNotificationClick = (notification: { actionType?: string; orderId?: string; isRead?: boolean; $id: string }) => {
     if (notification.actionType === 'view_invoice' && notification.orderId) {
       handleShowInvoice(notification.orderId);
     }
@@ -60,7 +61,7 @@ export default function Header() {
       await logout();
       toast.success("Logged out successfully");
       router.push("/login");
-    } catch (error) {
+    } catch {
       toast.error("Logout failed");
     }
   };

@@ -5,9 +5,27 @@ interface VoiceRecognitionProps {
   onError?: () => void;
 }
 
+interface SpeechRecognitionEvent {
+  results: Array<{
+    [key: number]: {
+      transcript: string;
+    };
+  }>;
+}
+
+interface SpeechRecognitionInterface {
+  continuous: boolean;
+  interimResults: boolean;
+  lang: string;
+  onresult: (event: SpeechRecognitionEvent) => void;
+  onerror: () => void;
+  start: () => void;
+  stop: () => void;
+}
+
 export function useVoiceRecognition({ onResult, onError }: VoiceRecognitionProps) {
   const [hasSupport, setHasSupport] = useState(false);
-  const recognitionRef = useRef<any>(null);
+  const recognitionRef = useRef<SpeechRecognitionInterface | null>(null);
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -18,7 +36,7 @@ export function useVoiceRecognition({ onResult, onError }: VoiceRecognitionProps
         recognition.interimResults = false;
         recognition.lang = 'en-US';
 
-        recognition.onresult = (event: any) => {
+        recognition.onresult = (event: SpeechRecognitionEvent) => {
           const text = event.results[0][0].transcript;
           onResult(text);
         };
@@ -31,7 +49,7 @@ export function useVoiceRecognition({ onResult, onError }: VoiceRecognitionProps
         setHasSupport(true);
       }
     }
-  }, []); // Empty dependency array
+  }, [onResult, onError]); // Include the callbacks in dependencies
 
   const startListening = useCallback(() => {
     try {

@@ -1,107 +1,29 @@
 "use client";
-import Image from "next/image";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Card, CardContent } from "@/components/ui/card";
-import Header from "@/components/Header";
 import Link from "next/link";
 import { useAuth } from "@/session/AuthContext";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { useEffect, useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import { 
-  FiShoppingBag, FiSettings, FiLogOut, FiZap, 
-  FiUsers, FiShield, FiTruck, FiHeart, 
-  FiCreditCard, FiArrowRight, FiMail, FiStar,
-  FiGlobe, FiClock, FiCheckCircle, FiTrendingUp,
-  FiLayers, FiCpu, FiWifi, FiSmartphone, FiPlay
+  FiShield, FiTruck, FiArrowRight, FiClock, FiCheckCircle
 } from "react-icons/fi";
 import db from '@/appwrite/db';
-import { Product } from '@/app/Dashboard/ListProduct/types/product';
 import { Models } from 'appwrite';
-import { getImageUrl } from '@/lib/utils';
 
 interface Category extends Models.Document {
   CategoryName: string;
 }
 
-// Floating particles component
-const FloatingParticles = () => {
-  const [particles, setParticles] = useState<Array<{id: number, x: number, y: number, size: number, duration: number}>>([]);
 
-  useEffect(() => {
-    const generateParticles = () => {
-      const newParticles = [];
-      for (let i = 0; i < 50; i++) {
-        newParticles.push({
-          id: i,
-          x: Math.random() * window.innerWidth,
-          y: Math.random() * window.innerHeight,
-          size: Math.random() * 4 + 1,
-          duration: Math.random() * 20 + 10
-        });
-      }
-      setParticles(newParticles);
-    };
-
-    generateParticles();
-    window.addEventListener('resize', generateParticles);
-    return () => window.removeEventListener('resize', generateParticles);
-  }, []);
-
-  return (
-    <div className="fixed inset-0 pointer-events-none z-0">
-      {particles.map((particle) => (
-        <motion.div
-          key={particle.id}
-          className="absolute w-1 h-1 bg-blue-400/20 rounded-full"
-          style={{
-            left: particle.x,
-            top: particle.y,
-            width: particle.size,
-            height: particle.size,
-          }}
-          animate={{
-            y: [particle.y, particle.y - 100, particle.y],
-            opacity: [0, 1, 0],
-          }}
-          transition={{
-            duration: particle.duration,
-            repeat: Infinity,
-            ease: "easeInOut",
-          }}
-        />
-      ))}
-    </div>
-  );
-};
-
-// Geometric background pattern
-const GeometricPattern = () => (
-  <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
-    <div className="absolute inset-0 opacity-5">
-      <svg width="100%" height="100%">
-        <defs>
-          <pattern id="grid" width="100" height="100" patternUnits="userSpaceOnUse">
-            <path d="M 100 0 L 0 0 0 100" fill="none" stroke="currentColor" strokeWidth="1"/>
-          </pattern>
-        </defs>
-        <rect width="100%" height="100%" fill="url(#grid)" />
-      </svg>
-    </div>
-  </div>
-);
 
 const HomePage = () => {
-  const { user, logout, isUserAdmin } = useAuth();
+  const { user } = useAuth();
   const router = useRouter();
   const [mounted, setMounted] = useState(false);
   const [email, setEmail] = useState("");
-  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
   const [loading, setLoading] = useState(false);
   const [categories, setCategories] = useState<Category[]>([]);
-  const [products, setProducts] = useState<Product[]>([]);
 
   useEffect(() => {
     setMounted(true);
@@ -110,34 +32,19 @@ const HomePage = () => {
     }
   }, [user, router]);
 
-  useEffect(() => {
-    const handleMouseMove = (e: MouseEvent) => {
-      setMousePosition({ x: e.clientX, y: e.clientY });
-    };
 
-    window.addEventListener('mousemove', handleMouseMove);
-    return () => window.removeEventListener('mousemove', handleMouseMove);
-  }, []);
 
   // Fetch categories and featured products
   useEffect(() => {
     const fetchData = async () => {
       try {
         setLoading(true);
-        const [categoriesResponse, productsResponse] = await Promise.all([
-          db.listDocuments(
-            process.env.NEXT_PUBLIC_APPWRITE_DATABASE_ID!,
-            process.env.NEXT_PUBLIC_APPWRITE_CATEGORIES_COLLECTION_ID!
-          ),
-          db.listDocuments(
-            process.env.NEXT_PUBLIC_APPWRITE_DATABASE_ID!,
-            process.env.NEXT_PUBLIC_APPWRITE_PRODUCTS_COLLECTION_ID!,
-            []
-          )
-        ]);
+        const categoriesResponse = await db.listDocuments(
+          process.env.NEXT_PUBLIC_APPWRITE_DATABASE_ID!,
+          process.env.NEXT_PUBLIC_APPWRITE_CATEGORIES_COLLECTION_ID!
+        );
         
         setCategories(categoriesResponse.documents as Category[]);
-        setProducts(productsResponse.documents as Product[]);
       } catch (error) {
         console.error('Error fetching data:', error);
         toast.error('Failed to load content');
@@ -150,16 +57,6 @@ const HomePage = () => {
   }, []);
 
   if (!mounted || user === undefined) return null;
-
-  const handleLogout = async () => {
-    try {
-      await logout();
-      toast.success("Logged out successfully");
-      router.push("/login");
-    } catch (error) {
-      toast.error("Logout failed");
-    }
-  };
 
   const handleSubscribe = (e: React.FormEvent) => {
     e.preventDefault();
