@@ -9,7 +9,7 @@ import { useCart } from '@/session/CartContext';
 import { Button } from '@/components/ui/button';
 import { CartItem } from '@/appwrite/db/cart';
 import Header from '@/components/Header';
-import { FiShoppingCart, FiStar, FiArrowRight, FiChevronLeft, FiChevronRight } from 'react-icons/fi';
+import { FiShoppingCart, FiStar, FiArrowRight, FiChevronLeft, FiChevronRight, FiMail, FiPhone, FiMapPin, FiFacebook, FiTwitter, FiInstagram, FiYoutube } from 'react-icons/fi';
 import { Product, getStockStatus } from '@/app/Dashboard/ListProduct/types/product';
 import { getStorageFileUrl } from '@/lib/appwrite-utils';
 import Image from 'next/image';
@@ -74,7 +74,7 @@ export default function ProductsPage() {
     : categories.find(cat => cat.$id === selectedCategory)?.CategoryName || "Products";
 
   return (
-        <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+    <div className="bg-gray-50 dark:bg-gray-900">
       <Header />
       
       {/* Top Categories Navigation */}
@@ -112,20 +112,22 @@ export default function ProductsPage() {
         </div>
       </div>
 
-      {/* Simple Page Title */}
-      <div className="max-w-7xl mx-auto px-4 py-8">
-        <motion.h1 
-          className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white text-center"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
-        >
-          {showAllProducts ? selectedCategoryName : "Our Products"}
-        </motion.h1>
-      </div>
+      {/* Main Content Area */}
+      <div className="flex-1">
+        {/* Simple Page Title */}
+        <div className="max-w-7xl mx-auto px-4 py-4">
+          <motion.h1 
+            className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white text-center"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+          >
+            {showAllProducts ? selectedCategoryName : "Our Products"}
+          </motion.h1>
+        </div>
 
-            {/* Category Sections or All Products */}
-      <div className="max-w-7xl mx-auto px-4 py-12">
+        {/* Category Sections or All Products */}
+        <div className="max-w-7xl mx-auto px-4 py-6 pb-16">
         {showAllProducts ? (
           // Show all products for selected category
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
@@ -249,8 +251,8 @@ export default function ProductsPage() {
             {/* Category Header */}
             <div className="flex items-center justify-between mb-8">
               <div>
-                <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">{category.CategoryName}</h2>
-                <p className="text-gray-600 dark:text-gray-400">Explore our {category.CategoryName.toLowerCase()} collection</p>
+                <h2 className="text-4xl font-extrabold text-gray-900 dark:text-white mb-3">{category.CategoryName}</h2>
+                <p className="text-gray-600 dark:text-gray-400 text-lg">Explore our {category.CategoryName.toLowerCase()} collection</p>
               </div>
               <div className="flex items-center space-x-2">
                 <button className="p-2 rounded-full border border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
@@ -264,7 +266,7 @@ export default function ProductsPage() {
 
             {/* Products Grid */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-              {products.map((product, productIndex) => {
+              {products.slice(0, 4).map((product, productIndex) => {
                 const stockStatus = product.TrackStock ? getStockStatus(product.Stock || 0, product.MinStock || 5) : 'not_tracked';
                 const isOutOfStock = product.TrackStock && (product.Stock || 0) <= 0;
                 
@@ -407,6 +409,148 @@ export default function ProductsPage() {
           </div>
         </div>
       )}
+      </div>
+
+      {/* Professional Footer */}
+      <footer className="bg-gray-900 text-white">
+        <div className="max-w-7xl mx-auto px-4 py-16">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+            {/* Company Info */}
+            <div className="lg:col-span-2">
+              <h3 className="text-2xl font-bold mb-4 text-amber-400">Styleora</h3>
+              <p className="text-gray-300 mb-6 max-w-md">
+                Where Style Meets Aura - Your premier destination for fashion that speaks to your soul. 
+                Discover curated collections that blend contemporary trends with timeless elegance.
+              </p>
+              <div className="flex space-x-4">
+                <a href="#" className="text-gray-400 hover:text-amber-400 transition-colors">
+                  <FiFacebook className="w-6 h-6" />
+                </a>
+                <a href="#" className="text-gray-400 hover:text-amber-400 transition-colors">
+                  <FiTwitter className="w-6 h-6" />
+                </a>
+                <a href="#" className="text-gray-400 hover:text-amber-400 transition-colors">
+                  <FiInstagram className="w-6 h-6" />
+                </a>
+                <a href="#" className="text-gray-400 hover:text-amber-400 transition-colors">
+                  <FiYoutube className="w-6 h-6" />
+                </a>
+              </div>
+            </div>
+
+            {/* Quick Links */}
+            <div>
+              <h4 className="text-lg font-semibold mb-4 text-amber-400">Quick Links</h4>
+              <ul className="space-y-3">
+                <li>
+                  <Link href="/Products" className="text-gray-300 hover:text-amber-400 transition-colors">
+                    Shop All
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/Products" className="text-gray-300 hover:text-amber-400 transition-colors">
+                    New Arrivals
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/Products" className="text-gray-300 hover:text-amber-400 transition-colors">
+                    Best Sellers
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/Products" className="text-gray-300 hover:text-amber-400 transition-colors">
+                    Sale Items
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/cart" className="text-gray-300 hover:text-amber-400 transition-colors">
+                    Shopping Cart
+                  </Link>
+                </li>
+              </ul>
+            </div>
+
+            {/* Customer Service */}
+            <div>
+              <h4 className="text-lg font-semibold mb-4 text-amber-400">Customer Service</h4>
+              <ul className="space-y-3">
+                <li>
+                  <Link href="#" className="text-gray-300 hover:text-amber-400 transition-colors">
+                    Contact Us
+                  </Link>
+                </li>
+                <li>
+                  <Link href="#" className="text-gray-300 hover:text-amber-400 transition-colors">
+                    Shipping Info
+                  </Link>
+                </li>
+                <li>
+                  <Link href="#" className="text-gray-300 hover:text-amber-400 transition-colors">
+                    Returns & Exchanges
+                  </Link>
+                </li>
+                <li>
+                  <Link href="#" className="text-gray-300 hover:text-amber-400 transition-colors">
+                    Size Guide
+                  </Link>
+                </li>
+                <li>
+                  <Link href="#" className="text-gray-300 hover:text-amber-400 transition-colors">
+                    FAQ
+                  </Link>
+                </li>
+              </ul>
+            </div>
+          </div>
+
+          {/* Contact Information */}
+          <div className="border-t border-gray-800 mt-12 pt-8">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+              <div className="flex items-center space-x-3">
+                <FiMail className="w-5 h-5 text-amber-400" />
+                <div>
+                  <p className="text-sm text-gray-400">Email</p>
+                  <p className="text-gray-300">support@styleora.com</p>
+                </div>
+              </div>
+              <div className="flex items-center space-x-3">
+                <FiPhone className="w-5 h-5 text-amber-400" />
+                <div>
+                  <p className="text-sm text-gray-400">Phone</p>
+                  <p className="text-gray-300">+1 (555) 123-4567</p>
+                </div>
+              </div>
+              <div className="flex items-center space-x-3">
+                <FiMapPin className="w-5 h-5 text-amber-400" />
+                <div>
+                  <p className="text-sm text-gray-400">Address</p>
+                  <p className="text-gray-300">123 Fashion Street, Style City, SC 12345</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Bottom Bar */}
+          <div className="border-t border-gray-800 mt-8 pt-8">
+            <div className="flex flex-col md:flex-row justify-between items-center">
+              <p className="text-gray-400 text-sm">
+                © 2024 Styleora. All rights reserved.
+              </p>
+              <div className="flex space-x-6 mt-4 md:mt-0">
+                <Link href="#" className="text-gray-400 hover:text-amber-400 text-sm transition-colors">
+                  Privacy Policy
+                </Link>
+                <Link href="#" className="text-gray-400 hover:text-amber-400 text-sm transition-colors">
+                  Terms of Service
+                </Link>
+                <Link href="#" className="text-gray-400 hover:text-amber-400 text-sm transition-colors">
+                  Cookie Policy
+                </Link>
+              </div>
+            </div>
+          </div>
+        </div>
+      </footer>
     </div>
   );
 } 

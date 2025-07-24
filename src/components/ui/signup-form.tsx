@@ -122,47 +122,84 @@ export function SignupForm({
 
   return (
     <form onSubmit={handleSubmit} className={cn("flex flex-col gap-6", className)} {...props}>
-      <div className="flex flex-col items-center gap-2 text-center">
-        <h1 className="text-2xl font-bold">Create Your Account</h1>
-        <p className="text-balance text-sm text-muted-foreground">
-          Fill in the details below to get started
-        </p>
-      </div>
       <div className="grid gap-6">
-        <div className="grid gap-2">
-          <Label htmlFor="username">Username</Label>
-          <Input name="username" id="username" placeholder="Your username" required />
+        <div className="grid gap-3">
+          <Label htmlFor="username" className="text-gray-700 font-semibold">Username</Label>
+          <Input 
+            name="username" 
+            id="username" 
+            placeholder="Enter your username" 
+            required 
+            className="border-gray-300 focus:border-amber-500 focus:ring-amber-500 rounded-xl"
+          />
         </div>
-        <div className="grid gap-2">
-          <Label htmlFor="email">Email</Label>
-          <Input name="email" id="email" type="email" placeholder="you@example.com" required />
+        <div className="grid gap-3">
+          <Label htmlFor="email" className="text-gray-700 font-semibold">Email</Label>
+          <Input 
+            name="email" 
+            id="email" 
+            type="email" 
+            placeholder="you@example.com" 
+            required 
+            className="border-gray-300 focus:border-amber-500 focus:ring-amber-500 rounded-xl"
+          />
         </div>
-        <div className="grid gap-2">
-          <Label htmlFor="password">Password</Label>
-          <Input name="password" id="password" type="password" placeholder="Enter your password" required />
+        <div className="grid gap-3">
+          <Label htmlFor="password" className="text-gray-700 font-semibold">Password</Label>
+          <Input 
+            name="password" 
+            id="password" 
+            type="password" 
+            placeholder="Create a strong password" 
+            required 
+            className="border-gray-300 focus:border-amber-500 focus:ring-amber-500 rounded-xl"
+          />
         </div>
-        <div className="grid gap-2">
-          <Label htmlFor="confirmPassword">Confirm Password</Label>
-          <Input name="confirmPassword" id="confirmPassword" type="password" placeholder="Confirm your password" required />
+        <div className="grid gap-3">
+          <Label htmlFor="confirmPassword" className="text-gray-700 font-semibold">Confirm Password</Label>
+          <Input 
+            name="confirmPassword" 
+            id="confirmPassword" 
+            type="password" 
+            placeholder="Confirm your password" 
+            required 
+            className="border-gray-300 focus:border-amber-500 focus:ring-amber-500 rounded-xl"
+          />
         </div>
-        <div className="relative text-center text-sm after:absolute after:inset-0 after:top-1/2 after:z-0 after:flex after:items-center after:border-t after:border-border">
-          <span className="relative z-10 bg-background px-2 text-muted-foreground">
-            Or continue with
-          </span>
+        
+        <div className="relative text-center text-sm my-4">
+          <div className="absolute inset-0 flex items-center">
+            <div className="w-full border-t border-gray-300"></div>
+          </div>
+          <div className="relative flex justify-center text-sm">
+            <span className="px-2 bg-white text-gray-500 font-medium">Or continue with</span>
+          </div>
         </div>
-        <Button type="button" variant="outline" className="w-full" onClick={handleGoogleClick}>
-          <div className="rounded-full bg-white p-1 transition-transform hover:scale-110">
+        
+        <Button 
+          type="button" 
+          variant="outline" 
+          className="w-full border-gray-300 hover:bg-gray-50 rounded-xl py-3" 
+          onClick={handleGoogleClick}
+        >
+          <div className="rounded-full bg-white p-1 transition-transform hover:scale-110 mr-2">
             <FcGoogle className="h-5 w-5" />
           </div>
           Sign up with Google
         </Button>
-        <Button disabled={isLoading} type="submit" className="w-full">
-          {isLoading ? "Creating Account..." : "Sign Up"}
+        
+        <Button 
+          disabled={isLoading} 
+          type="submit" 
+          className="w-full bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-semibold rounded-xl py-3 shadow-lg hover:shadow-xl transition-all duration-300"
+        >
+          {isLoading ? "Creating Account..." : "Create Account"}
         </Button>
       </div>
-      <div className="text-center text-sm">
+      
+      <div className="text-center text-sm text-gray-600">
         Already have an account?{" "}
-        <Link href="/login" className="underline underline-offset-4">
+        <Link href="/login" className="text-amber-600 hover:text-amber-700 font-semibold underline underline-offset-2">
           Log in
         </Link>
       </div>

@@ -57,52 +57,71 @@ export function LoginForm({
 
   return (
     <form onSubmit={handleSubmit} className={cn("flex flex-col gap-6", className)} {...props}>
-      <div className="flex flex-col items-center gap-2 text-center">
-        <h1 className="text-2xl font-bold">Login to your account</h1>
-        <p className="text-balance text-sm text-muted-foreground">
-          Enter your email below to login to your account
-        </p>
-      </div>
       <div className="grid gap-6">
-        <div className="grid gap-2">
-          <Label htmlFor="email">Email</Label>
-          <Input name="email" id="email" type="email" placeholder="m@example.com" required />
+        <div className="grid gap-3">
+          <Label htmlFor="email" className="text-gray-700 font-semibold">Email</Label>
+          <Input 
+            name="email" 
+            id="email" 
+            type="email" 
+            placeholder="you@example.com" 
+            required 
+            className="border-gray-300 focus:border-amber-500 focus:ring-amber-500 rounded-xl"
+          />
         </div>
-        <div className="grid gap-2">
-          <div className="flex items-center">
-            <Label htmlFor="password">Password</Label>
+        <div className="grid gap-3">
+          <div className="flex items-center justify-between">
+            <Label htmlFor="password" className="text-gray-700 font-semibold">Password</Label>
             <a
               href="#"
-              className="ml-auto text-sm underline-offset-4 hover:underline"
+              className="text-sm text-amber-600 hover:text-amber-700 font-medium underline-offset-2 hover:underline"
             >
-              Forgot your password?
+              Forgot password?
             </a>
           </div>
-          <Input name="password" id="password" type="password" required />
+          <Input 
+            name="password" 
+            id="password" 
+            type="password" 
+            placeholder="Enter your password"
+            required 
+            className="border-gray-300 focus:border-amber-500 focus:ring-amber-500 rounded-xl"
+          />
         </div>
-        <Button disabled={isLoading} type="submit" className="w-full">
-          {isLoading ? "Logging in..." : "Login"}
+        
+        <Button 
+          disabled={isLoading} 
+          type="submit" 
+          className="w-full bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-semibold rounded-xl py-3 shadow-lg hover:shadow-xl transition-all duration-300"
+        >
+          {isLoading ? "Signing in..." : "Sign In"}
         </Button>
-        <div className="relative text-center text-sm after:absolute after:inset-0 after:top-1/2 after:z-0 after:flex after:items-center after:border-t after:border-border">
-          <span className="relative z-10 bg-background px-2 text-muted-foreground">
-            Or continue with
-          </span>
+        
+        <div className="relative text-center text-sm my-4">
+          <div className="absolute inset-0 flex items-center">
+            <div className="w-full border-t border-gray-300"></div>
+          </div>
+          <div className="relative flex justify-center text-sm">
+            <span className="px-2 bg-white text-gray-500 font-medium">Or continue with</span>
+          </div>
         </div>
+        
         <Button 
           type="button" 
           variant="outline" 
-          className="w-full flex items-center justify-center gap-2"
+          className="w-full border-gray-300 hover:bg-gray-50 rounded-xl py-3 flex items-center justify-center gap-2"
           onClick={handleGoogleClick}
         >
           <div className="rounded-full bg-white p-1 transition-transform hover:scale-110">
             <FcGoogle className="h-5 w-5" />
           </div>
-          <span>Login with Google</span>
+          <span>Sign in with Google</span>
         </Button>
       </div>
-      <div className="text-center text-sm">
+      
+      <div className="text-center text-sm text-gray-600">
         Don&apos;t have an account?{" "}
-        <Link href="/signup" className="underline underline-offset-4">
+        <Link href="/signup" className="text-amber-600 hover:text-amber-700 font-semibold underline underline-offset-2">
           Sign up
         </Link>
       </div>

@@ -77,24 +77,24 @@ export default function Header() {
             {/* Logo and Brand */}
             <div className="flex items-center gap-4">
               <Link href="/" className="flex items-center space-x-2">
-                <span className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
+                <span className="text-2xl font-bold bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 bg-clip-text text-transparent hover:from-amber-600 hover:via-orange-600 hover:to-amber-700 transition-all duration-300">
                   Styleora
                 </span>
               </Link>
               
-              {/* Real-time status indicator - simple green dot */}
+              {/* Real-time status indicator - enhanced design */}
               <div className="flex items-center gap-2">
                 <div className="relative">
-                  <div className="w-2 h-2 rounded-full bg-green-500">
+                  <div className="w-3 h-3 rounded-full bg-gradient-to-r from-green-400 to-green-500 shadow-lg">
                     <motion.div
                       initial={{ scale: 0, opacity: 0.7 }}
-                      animate={{ scale: 2, opacity: 0 }}
+                      animate={{ scale: 2.5, opacity: 0 }}
                       transition={{ duration: 2, repeat: Infinity }}
-                      className="absolute inset-0 rounded-full bg-green-500"
+                      className="absolute inset-0 rounded-full bg-gradient-to-r from-green-400 to-green-500"
                     />
                   </div>
                 </div>
-                <span className="text-xs text-green-600 dark:text-green-400 font-medium">
+                <span className="text-xs text-green-600 dark:text-green-400 font-semibold tracking-wide">
                   Live
                 </span>
               </div>
