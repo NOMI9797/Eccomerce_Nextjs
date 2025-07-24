@@ -11,6 +11,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { FiShoppingCart, FiTrash2, FiPlus, FiMinus, FiArrowRight, FiPackage, FiShoppingBag, FiChevronLeft } from 'react-icons/fi';
 import Link from 'next/link';
 import { getStorageFileUrl, isCompleteUrl } from '@/lib/appwrite-utils';
+import Image from 'next/image';
 
 export default function CartPage() {
   const { cart, removeFromCart, updateQuantity, clearCart } = useCart();
@@ -120,15 +121,16 @@ export default function CartPage() {
                     >
                       <div className="flex items-center space-x-4">
                         {/* Product Image */}
-                        <div className="flex-shrink-0 w-20 h-20 bg-gray-100 dark:bg-gray-700 rounded-lg overflow-hidden">
-                          <img
+                        <div className="flex-shrink-0 w-20 h-20 bg-gray-100 dark:bg-gray-700 rounded-lg overflow-hidden relative">
+                          <Image
                             src={item.image ? 
                               (isCompleteUrl(item.image) ? item.image : getStorageFileUrl(item.image)) :
                               "/images/pexels-shattha-pilabut-38930-135620.jpg"}
                             alt={item.name}
-                            className="w-full h-full object-cover"
-                            onError={(e) => {
-                              e.currentTarget.src = "/images/pexels-shattha-pilabut-38930-135620.jpg";
+                            fill
+                            className="object-cover"
+                            onError={() => {
+                              // Fallback is handled by the src prop
                             }}
                           />
                         </div>
@@ -139,7 +141,7 @@ export default function CartPage() {
                             {item.name}
                           </h3>
                           <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                            ${item.price.toFixed(2)} each
+                            Rs {item.price.toFixed(2)} each
                           </p>
                         </div>
 
@@ -166,7 +168,7 @@ export default function CartPage() {
                         {/* Price */}
                         <div className="text-right">
                           <p className="text-lg font-semibold text-gray-900 dark:text-white">
-                            ${(item.price * item.quantity).toFixed(2)}
+                            Rs {(item.price * item.quantity).toFixed(2)}
                           </p>
                         </div>
 
@@ -192,19 +194,19 @@ export default function CartPage() {
                 <div className="space-y-4">
                   <div className="flex justify-between text-gray-600 dark:text-gray-400">
                     <span>Subtotal ({cart.items.length} items)</span>
-                    <span>${subtotal.toFixed(2)}</span>
+                    <span>Rs {subtotal.toFixed(2)}</span>
                   </div>
                   
                   <div className="flex justify-between text-gray-600 dark:text-gray-400">
                     <span>Shipping</span>
-                    <span>${shipping.toFixed(2)}</span>
+                    <span>Rs {shipping.toFixed(2)}</span>
                   </div>
                   
                   <hr className="border-gray-200 dark:border-gray-700" />
                   
                   <div className="flex justify-between text-lg font-semibold text-gray-900 dark:text-white">
                     <span>Total</span>
-                    <span>${total.toFixed(2)}</span>
+                    <span>Rs {total.toFixed(2)}</span>
                   </div>
                 </div>
 

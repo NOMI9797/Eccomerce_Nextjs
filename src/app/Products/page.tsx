@@ -3,75 +3,28 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
-import CategoryFilter from './components/CategoryFilter';
-import SearchBar from './components/SearchBar';
-import ProductSort from './components/ProductSort';
-import Pagination from './components/Pagination';
 import { useProducts } from '@/app/hooks/useProducts';
 import { useCategories } from '@/app/hooks/useCategories';
-import { usePagination } from '@/app/hooks/usePagination';
 import { useCart } from '@/session/CartContext';
 import { Button } from '@/components/ui/button';
 import { CartItem } from '@/appwrite/db/cart';
 import Header from '@/components/Header';
-import { FiShoppingCart, FiStar, FiGrid, FiList, FiSearch } from 'react-icons/fi';
+import { FiShoppingCart, FiStar, FiArrowRight, FiChevronLeft, FiChevronRight } from 'react-icons/fi';
 import { Product, getStockStatus } from '@/app/Dashboard/ListProduct/types/product';
 import { getStorageFileUrl } from '@/lib/appwrite-utils';
+import Image from 'next/image';
 
 export default function ProductsPage() {
   const { data: products = [] } = useProducts();
   const { data: categories = [] } = useCategories();
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
-  const [searchQuery, setSearchQuery] = useState("");
-  const [sortBy, setSortBy] = useState<string>("featured");
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [showAllProducts, setShowAllProducts] = useState<boolean>(false);
+  const { addToCart } = useCart();
 
   // Ensure products is an array before filtering
   const productArray = Array.isArray(products) ? products as Product[] : [];
 
-  const filteredProducts = productArray.filter(product => {
-    const matchesCategory = selectedCategory === "all" || product.CategoryId === selectedCategory;
-    const matchesSearch = product.Name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         product.Description.toLowerCase().includes(searchQuery.toLowerCase());
-    return matchesCategory && matchesSearch;
-  });
-
-  const sortedProducts = [...filteredProducts].sort((a, b) => {
-    switch (sortBy) {
-      case "price-low":
-        return a.Price - b.Price;
-      case "price-high":
-        return b.Price - a.Price;
-      case "name":
-        return a.Name.localeCompare(b.Name);
-      default:
-        return 0;
-    }
-  });
-
-  // Pagination logic
-  const {
-    currentPage,
-    totalPages,
-    totalItems,
-    itemsPerPage,
-    paginatedItems: paginatedProducts,
-    goToPage
-  } = usePagination({
-    items: sortedProducts,
-    itemsPerPage: 20,
-    initialPage: 1
-  });
-
-  const handlePageChange = (page: number) => {
-    goToPage(page);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
-
-  const { addToCart } = useCart();
-
   const handleAddToCart = (product: Product) => {
-    // Check stock before adding to cart
     if (product.TrackStock && (product.Stock || 0) <= 0) {
       alert("This product is currently out of stock");
       return;
@@ -87,93 +40,231 @@ export default function ProductsPage() {
     addToCart(cartItem);
   };
 
+  const scrollToCategory = (categoryId: string) => {
+    setSelectedCategory(categoryId);
+    setShowAllProducts(false);
+    
+    // Scroll to the category section
+    const element = document.getElementById(`category-${categoryId}`);
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  };
+
+  // Group products by category
+  const productsByCategory = categories.reduce((acc, category) => {
+    const categoryProducts = productArray.filter(product => product.CategoryId === category.$id);
+    if (categoryProducts.length > 0) {
+      acc[category.$id] = {
+        category,
+        products: categoryProducts.slice(0, 6) // Show max 6 products per category
+      };
+    }
+    return acc;
+  }, {} as Record<string, { category: { $id: string; CategoryName: string }; products: Product[] }>);
+
+  // Filter products based on selected category
+  const filteredProducts = selectedCategory === "all" 
+    ? productArray 
+    : productArray.filter(product => product.CategoryId === selectedCategory);
+
+  // Get selected category name
+  const selectedCategoryName = selectedCategory === "all" 
+    ? "All Products" 
+    : categories.find(cat => cat.$id === selectedCategory)?.CategoryName || "Products";
+
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+        <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <Header />
       
-      {/* Compact Hero Section */}
-      <section className="bg-gradient-to-r from-purple-600 to-pink-600 dark:from-purple-800 dark:to-pink-800 pt-16 pb-6">
-        <div className="max-w-full mx-auto px-3 sm:px-4">
-          <div className="text-center">
-            <motion.h1 
-              className="text-2xl md:text-3xl font-bold text-white mb-2"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6 }}
+      {/* Top Categories Navigation */}
+      <div className="bg-white dark:bg-gray-800 border-b border-gray-100 dark:border-gray-700 sticky top-16 z-10">
+        <div className="max-w-7xl mx-auto px-4 py-3">
+          <div className="flex items-center justify-center space-x-8 overflow-x-auto">
+            <button
+              onClick={() => {
+                setSelectedCategory("all");
+                setShowAllProducts(false);
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+              }}
+              className={`px-4 py-2 text-sm font-medium rounded-full transition-colors whitespace-nowrap ${
+                selectedCategory === "all" 
+                  ? "bg-blue-600 text-white" 
+                  : "text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-50 dark:hover:bg-gray-700"
+              }`}
             >
-              Our Products
-            </motion.h1>
-            <motion.p 
-              className="text-white/90 text-sm"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.1 }}
-            >
-              Discover our curated collection of premium products
-            </motion.p>
+              All Products
+            </button>
+            {categories.map((category) => (
+              <button
+                key={category.$id}
+                onClick={() => scrollToCategory(category.$id)}
+                className={`px-4 py-2 text-sm font-medium rounded-full transition-colors whitespace-nowrap ${
+                  selectedCategory === category.$id 
+                    ? "bg-blue-600 text-white" 
+                    : "text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-50 dark:hover:bg-gray-700"
+                }`}
+              >
+                {category.CategoryName}
+              </button>
+            ))}
           </div>
         </div>
-      </section>
+      </div>
 
-      <div className="max-w-full mx-auto px-3 sm:px-4 py-4">
-        <div className="flex flex-col lg:flex-row gap-4">
-          {/* Sidebar */}
-          <div className="lg:w-56 flex-shrink-0">
-            <div className="sticky top-20">
-              <CategoryFilter 
-                categories={categories}
-                selectedCategory={selectedCategory}
-                onCategoryChange={setSelectedCategory}
-              />
-            </div>
-          </div>
+      {/* Simple Page Title */}
+      <div className="max-w-7xl mx-auto px-4 py-8">
+        <motion.h1 
+          className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white text-center"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6 }}
+        >
+          {showAllProducts ? selectedCategoryName : "Our Products"}
+        </motion.h1>
+      </div>
 
-          {/* Main Content */}
-          <div className="flex-1 min-w-0">
-            {/* Controls Bar */}
-            <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-3 mb-4">
-              <div className="flex flex-col sm:flex-row gap-3 items-center justify-between">
-                <div className="flex items-center gap-3 flex-1">
-                  <SearchBar 
-                    value={searchQuery}
-                    onChange={setSearchQuery}
-                  />
-                  <div className="flex items-center gap-1">
-                    <Button
-                      variant={viewMode === 'grid' ? 'default' : 'outline'}
-                      size="sm"
-                      onClick={() => setViewMode('grid')}
-                    >
-                      <FiGrid className="w-4 h-4" />
-                    </Button>
-                    <Button
-                      variant={viewMode === 'list' ? 'default' : 'outline'}
-                      size="sm"
-                      onClick={() => setViewMode('list')}
-                    >
-                      <FiList className="w-4 h-4" />
-                    </Button>
+            {/* Category Sections or All Products */}
+      <div className="max-w-7xl mx-auto px-4 py-12">
+        {showAllProducts ? (
+          // Show all products for selected category
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {filteredProducts.map((product, productIndex) => {
+              const stockStatus = product.TrackStock ? getStockStatus(product.Stock || 0, product.MinStock || 5) : 'not_tracked';
+              const isOutOfStock = product.TrackStock && (product.Stock || 0) <= 0;
+              
+              return (
+                <motion.div
+                  key={product.$id}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.4, delay: productIndex * 0.05 }}
+                  className="group"
+                >
+                  <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden hover:shadow-lg transition-all duration-300 hover:border-blue-300 dark:hover:border-blue-600">
+                    <Link href={`/Products/${product.$id}`}>
+                      <div className="relative aspect-[4/3] overflow-hidden">
+                        <Image
+                          src={product.MainImage ? 
+                            getStorageFileUrl(product.MainImage) :
+                            "/images/pexels-shattha-pilabut-38930-135620.jpg"}
+                          alt={product.Name}
+                          fill
+                          className="object-cover group-hover:scale-105 transition-transform duration-300"
+                          onError={() => {
+                            // Fallback is handled by the src prop
+                          }}
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                        
+                        {/* Stock Status Badge */}
+                        {product.TrackStock && (
+                          <div className={`absolute top-2 left-2 text-white text-xs px-2 py-1 rounded-full font-medium ${
+                            stockStatus === 'out_of_stock' ? 'bg-red-500' :
+                            stockStatus === 'low_stock' ? 'bg-yellow-500' :
+                            'bg-green-500'
+                          }`}>
+                            {stockStatus === 'out_of_stock' ? 'Out of Stock' :
+                             stockStatus === 'low_stock' ? 'Low Stock' :
+                             'In Stock'}
+                          </div>
+                        )}
+                        
+                        {/* Sale Badge */}
+                        <div className="absolute top-2 right-2 bg-red-500 text-white text-xs px-2 py-1 rounded-full font-medium">
+                          Sale
+                        </div>
+                      </div>
+                      
+                      <div className="p-4">
+                        <h3 className="font-semibold text-gray-900 dark:text-white mb-2 line-clamp-1 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+                          {product.Name}
+                        </h3>
+                        <p className="text-sm text-gray-600 dark:text-gray-400 mb-3 line-clamp-2">
+                          {product.Description}
+                        </p>
+                        
+                        {/* Stock Information */}
+                        {product.TrackStock && (
+                          <div className="mb-3">
+                            <span className="text-xs text-gray-500 dark:text-gray-400">
+                              {product.Stock || 0} {(product.Stock || 0) === 1 ? 'item' : 'items'} left
+                            </span>
+                          </div>
+                        )}
+                        
+                        <div className="flex items-center justify-between mb-3">
+                          <div className="flex items-center gap-2">
+                            <span className="font-bold text-lg text-gray-900 dark:text-white">
+                              Rs {product.Price.toFixed(2)}
+                            </span>
+                            {product.OriginalPrice && (
+                              <span className="text-sm text-gray-500 dark:text-gray-400 line-through">
+                                Rs {product.OriginalPrice.toFixed(2)}
+                              </span>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <FiStar className="w-4 h-4 text-yellow-400 fill-current" />
+                            <span className="text-sm text-gray-600 dark:text-gray-400">4.5</span>
+                          </div>
+                        </div>
+                      </div>
+                    </Link>
+                    
+                    <div className="px-4 pb-4">
+                      <Button
+                        onClick={(e) => {
+                          e.preventDefault();
+                          handleAddToCart(product);
+                        }}
+                        disabled={isOutOfStock}
+                        className={`w-full transition-colors duration-200 ${
+                          isOutOfStock 
+                            ? 'bg-gray-400 hover:bg-gray-400 cursor-not-allowed' 
+                            : 'bg-blue-600 hover:bg-blue-700'
+                        } text-white`}
+                        size="sm"
+                      >
+                        <FiShoppingCart className="w-4 h-4 mr-2" />
+                        {isOutOfStock ? 'Out of Stock' : 'Add to Cart'}
+                      </Button>
+                    </div>
                   </div>
-                </div>
-                <div className="flex items-center gap-3">
-                  <ProductSort 
-                    value={sortBy}
-                    onChange={setSortBy}
-                  />
-                  <span className="text-sm text-gray-600 dark:text-gray-400">
-                    {totalItems} products
-                  </span>
-                </div>
+                </motion.div>
+              );
+            })}
+          </div>
+        ) : (
+                    // Show category sections
+          Object.entries(productsByCategory).map(([categoryId, { category, products }], index) => (
+            <motion.section
+              key={categoryId}
+              id={`category-${categoryId}`}
+              className="mb-16"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: index * 0.1 }}
+            >
+            {/* Category Header */}
+            <div className="flex items-center justify-between mb-8">
+              <div>
+                <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">{category.CategoryName}</h2>
+                <p className="text-gray-600 dark:text-gray-400">Explore our {category.CategoryName.toLowerCase()} collection</p>
+              </div>
+              <div className="flex items-center space-x-2">
+                <button className="p-2 rounded-full border border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                  <FiChevronLeft className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+                </button>
+                <button className="p-2 rounded-full border border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                  <FiChevronRight className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+                </button>
               </div>
             </div>
 
             {/* Products Grid */}
-            <div className={`grid gap-3 ${
-              viewMode === 'grid' 
-                ? 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-6' 
-                : 'grid-cols-1'
-            }`}>
-              {paginatedProducts.map((product, index) => {
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+              {products.map((product, productIndex) => {
                 const stockStatus = product.TrackStock ? getStockStatus(product.Stock || 0, product.MinStock || 5) : 'not_tracked';
                 const isOutOfStock = product.TrackStock && (product.Stock || 0) <= 0;
                 
@@ -182,33 +273,28 @@ export default function ProductsPage() {
                     key={product.$id}
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.4, delay: index * 0.05 }}
+                    transition={{ duration: 0.4, delay: productIndex * 0.05 }}
                     className="group"
                   >
-                    <div className={`bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden hover:shadow-lg transition-all duration-300 hover:border-blue-300 dark:hover:border-blue-600 ${
-                      viewMode === 'list' ? 'flex' : ''
-                    } ${isOutOfStock ? 'opacity-75' : ''}`}>
-                      <Link href={`/Products/${product.$id}`} className={viewMode === 'list' ? 'flex flex-1' : ''}>
-                        <div className={`relative overflow-hidden ${
-                          viewMode === 'grid' ? 'aspect-[4/3]' : 'w-24 h-24 flex-shrink-0'
-                        }`}>
-                          <img
+                    <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden hover:shadow-lg transition-all duration-300 hover:border-blue-300 dark:hover:border-blue-600">
+                      <Link href={`/Products/${product.$id}`}>
+                        <div className="relative aspect-[4/3] overflow-hidden">
+                          <Image
                             src={product.MainImage ? 
                               getStorageFileUrl(product.MainImage) :
                               "/images/pexels-shattha-pilabut-38930-135620.jpg"}
                             alt={product.Name}
-                            className={`w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 ${
-                              isOutOfStock ? 'grayscale' : ''
-                            }`}
-                            onError={(e) => {
-                              e.currentTarget.src = "/images/pexels-shattha-pilabut-38930-135620.jpg";
+                            fill
+                            className="object-cover group-hover:scale-105 transition-transform duration-300"
+                            onError={() => {
+                              // Fallback is handled by the src prop
                             }}
                           />
                           <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                           
                           {/* Stock Status Badge */}
                           {product.TrackStock && (
-                            <div className={`absolute top-1 left-1 text-white text-xs px-1.5 py-0.5 rounded-full font-medium ${
+                            <div className={`absolute top-2 left-2 text-white text-xs px-2 py-1 rounded-full font-medium ${
                               stockStatus === 'out_of_stock' ? 'bg-red-500' :
                               stockStatus === 'low_stock' ? 'bg-yellow-500' :
                               'bg-green-500'
@@ -220,62 +306,62 @@ export default function ProductsPage() {
                           )}
                           
                           {/* Sale Badge */}
-                          <div className="absolute top-1 right-1 bg-red-500 text-white text-xs px-1.5 py-0.5 rounded-full font-medium">
+                          <div className="absolute top-2 right-2 bg-red-500 text-white text-xs px-2 py-1 rounded-full font-medium">
                             Sale
                           </div>
                         </div>
                         
-                        <div className={`p-3 ${viewMode === 'list' ? 'flex-1' : ''}`}>
-                          <h3 className="font-semibold text-gray-900 dark:text-white mb-1 line-clamp-1 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors text-sm">
+                        <div className="p-4">
+                          <h3 className="font-semibold text-gray-900 dark:text-white mb-2 line-clamp-1 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
                             {product.Name}
                           </h3>
-                          <p className="text-xs text-gray-600 dark:text-gray-400 mb-2 line-clamp-2">
+                          <p className="text-sm text-gray-600 dark:text-gray-400 mb-3 line-clamp-2">
                             {product.Description}
                           </p>
                           
                           {/* Stock Information */}
                           {product.TrackStock && (
-                            <div className="mb-2">
+                            <div className="mb-3">
                               <span className="text-xs text-gray-500 dark:text-gray-400">
                                 {product.Stock || 0} {(product.Stock || 0) === 1 ? 'item' : 'items'} left
                               </span>
                             </div>
                           )}
                           
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-1">
-                              <span className="font-bold text-base text-gray-900 dark:text-white">
-                                ${product.Price.toFixed(2)}
+                          <div className="flex items-center justify-between mb-3">
+                            <div className="flex items-center gap-2">
+                                                          <span className="font-bold text-lg text-gray-900 dark:text-white">
+                              Rs {product.Price.toFixed(2)}
+                            </span>
+                            {product.OriginalPrice && (
+                              <span className="text-sm text-gray-500 dark:text-gray-400 line-through">
+                                Rs {product.OriginalPrice.toFixed(2)}
                               </span>
-                              {product.OriginalPrice && (
-                                <span className="text-xs text-gray-500 line-through">
-                                  ${product.OriginalPrice.toFixed(2)}
-                                </span>
-                              )}
+                            )}
                             </div>
-                            <div className="flex items-center gap-0.5">
-                              <FiStar className="w-3 h-3 text-yellow-400 fill-current" />
-                              <span className="text-xs text-gray-600 dark:text-gray-400">4.5</span>
+                            <div className="flex items-center gap-1">
+                              <FiStar className="w-4 h-4 text-yellow-400 fill-current" />
+                              <span className="text-sm text-gray-600 dark:text-gray-400">4.5</span>
                             </div>
                           </div>
                         </div>
                       </Link>
                       
-                      <div className={`${viewMode === 'list' ? 'p-3 flex items-center' : 'px-3 pb-3'}`}>
+                      <div className="px-4 pb-4">
                         <Button
                           onClick={(e) => {
                             e.preventDefault();
                             handleAddToCart(product);
                           }}
                           disabled={isOutOfStock}
-                          className={`w-full transition-colors duration-200 group ${
+                          className={`w-full transition-colors duration-200 ${
                             isOutOfStock 
                               ? 'bg-gray-400 hover:bg-gray-400 cursor-not-allowed' 
                               : 'bg-blue-600 hover:bg-blue-700'
                           } text-white`}
                           size="sm"
                         >
-                          <FiShoppingCart className="w-3 h-3 mr-1" />
+                          <FiShoppingCart className="w-4 h-4 mr-2" />
                           {isOutOfStock ? 'Out of Stock' : 'Add to Cart'}
                         </Button>
                       </div>
@@ -285,36 +371,42 @@ export default function ProductsPage() {
               })}
             </div>
 
-            {/* Empty State */}
-            {paginatedProducts.length === 0 && (
-              <div className="text-center py-8">
-                <div className="w-16 h-16 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mx-auto mb-3">
-                  <FiSearch className="w-8 h-8 text-gray-400" />
-                </div>
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-1">
-                  No products found
-                </h3>
-                <p className="text-gray-600 dark:text-gray-400 text-sm">
-                  Try adjusting your search or filter criteria
-                </p>
-              </div>
-            )}
-
-            {/* Pagination */}
-            {totalPages > 1 && (
-              <div className="mt-6">
-                <Pagination
-                  currentPage={currentPage}
-                  totalPages={totalPages}
-                  onPageChange={handlePageChange}
-                  totalItems={totalItems}
-                  itemsPerPage={itemsPerPage}
-                />
-              </div>
-            )}
+                                      {/* View All Button */}
+             <div className="text-center mt-8">
+               <Button 
+                 variant="outline" 
+                 className="border-blue-600 text-blue-600 hover:bg-blue-50 dark:border-blue-400 dark:text-blue-400 dark:hover:bg-blue-900/20"
+                 onClick={() => {
+                   setSelectedCategory(category.$id);
+                   setShowAllProducts(true);
+                 }}
+               >
+                 View All {category.CategoryName}
+                 <FiArrowRight className="w-4 h-4 ml-2" />
+               </Button>
+             </div>
+           </motion.section>
+         ))
+        )}
+      </div>
+      
+      {/* Back to Categories Button */}
+      {showAllProducts && (
+        <div className="max-w-7xl mx-auto px-4 pb-8">
+          <div className="text-center">
+            <Button 
+              variant="outline" 
+              className="border-gray-600 text-gray-600 hover:bg-gray-50 dark:border-gray-400 dark:text-gray-400 dark:hover:bg-gray-900/20"
+              onClick={() => {
+                setShowAllProducts(false);
+                setSelectedCategory("all");
+              }}
+            >
+              ← Back to Categories
+            </Button>
           </div>
         </div>
-      </div>
+      )}
     </div>
   );
 } 

@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { getStorageFileUrl } from '@/lib/appwrite-utils';
+import Image from 'next/image';
 
 interface ViewProductModalProps {
   product: {
@@ -53,7 +54,7 @@ const ViewProductModal: React.FC<ViewProductModalProps> = ({
                 {categoryName}
               </span>
               <span className="text-2xl font-bold text-green-600">
-                ${product.Price.toFixed(2)}
+                Rs {product.Price.toFixed(2)}
               </span>
             </div>
           </div>
@@ -61,15 +62,16 @@ const ViewProductModal: React.FC<ViewProductModalProps> = ({
           {/* Image Gallery */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
             {/* Main Image */}
-            <div className="col-span-1 lg:col-span-2">
-              <img
+            <div className="col-span-1 lg:col-span-2 relative h-96">
+              <Image
                 src={selectedImage ? 
                   getStorageFileUrl(selectedImage) :
                   "/images/pexels-shattha-pilabut-38930-135620.jpg"}
                 alt="Product Image"
-                className="w-full h-96 object-cover rounded-lg"
-                onError={(e) => {
-                  e.currentTarget.src = "/images/pexels-shattha-pilabut-38930-135620.jpg";
+                fill
+                className="object-cover rounded-lg"
+                onError={() => {
+                  // Fallback is handled by the src prop
                 }}
               />
             </div>
@@ -84,16 +86,19 @@ const ViewProductModal: React.FC<ViewProductModalProps> = ({
                     className={`relative aspect-square rounded-lg overflow-hidden border-2 
                       ${selectedImage === imageId ? 'border-blue-500' : 'border-transparent'}`}
                   >
-                    <img
-                      src={imageId ? 
-                        getStorageFileUrl(imageId) :
-                        "/images/pexels-shattha-pilabut-38930-135620.jpg"}
-                      alt={`Product ${index + 1}`}
-                      className="w-16 h-16 object-cover rounded-lg cursor-pointer border-2 border-transparent hover:border-blue-500 transition-colors"
-                      onError={(e) => {
-                        e.currentTarget.src = "/images/pexels-shattha-pilabut-38930-135620.jpg";
-                      }}
-                    />
+                    <div className="w-16 h-16 relative">
+                      <Image
+                        src={imageId ? 
+                          getStorageFileUrl(imageId) :
+                          "/images/pexels-shattha-pilabut-38930-135620.jpg"}
+                        alt={`Product ${index + 1}`}
+                        fill
+                        className="object-cover rounded-lg cursor-pointer border-2 border-transparent hover:border-blue-500 transition-colors"
+                        onError={() => {
+                          // Fallback is handled by the src prop
+                        }}
+                      />
+                    </div>
                   </button>
                 ))}
               </div>
@@ -125,7 +130,7 @@ const ViewProductModal: React.FC<ViewProductModalProps> = ({
                 </div>
                 <div>
                   <h4 className="text-sm font-medium text-gray-500">Price</h4>
-                  <p className="text-lg font-bold text-green-600">${product.Price.toFixed(2)}</p>
+                  <p className="text-lg font-bold text-green-600">Rs {product.Price.toFixed(2)}</p>
                 </div>
               </div>
             </div>

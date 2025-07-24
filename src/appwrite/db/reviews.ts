@@ -68,6 +68,12 @@ export class ReviewsService {
   // Get all reviews for a product
   async getProductReviews(productId: string, filters: ReviewFilters = {}): Promise<Review[]> {
     try {
+      // Check if environment variables are properly configured
+      if (!DATABASE_ID || !REVIEWS_COLLECTION_ID) {
+        console.warn('Reviews collection not configured, returning empty array');
+        return [];
+      }
+
       const queries = [
         Query.equal('productId', productId),
         Query.limit(filters.limit || 50),
@@ -115,14 +121,27 @@ export class ReviewsService {
       // Return reviews with userName already included
       return response.documents as unknown as Review[];
     } catch (error) {
-      console.error('Error fetching product reviews:', error);
-      throw error;
+      // Silently handle the error and return empty array instead of throwing
+      console.warn('Reviews service not available, returning empty array:', error);
+      return [];
     }
   }
 
   // Get review statistics for a product
   async getProductReviewStats(productId: string): Promise<ReviewStats> {
     try {
+      // Check if environment variables are properly configured
+      if (!DATABASE_ID || !REVIEWS_COLLECTION_ID) {
+        return {
+          totalReviews: 0,
+          averageRating: 0,
+          ratingBreakdown: { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 },
+          verifiedReviews: 0,
+          helpfulReviews: 0,
+          recentReviews: 0
+        };
+      }
+
       const response = await databases.listDocuments(
         DATABASE_ID,
         REVIEWS_COLLECTION_ID,
@@ -176,14 +195,27 @@ export class ReviewsService {
         recentReviews
       };
     } catch (error) {
-      console.error('Error fetching review stats:', error);
-      throw error;
+      // Silently handle the error and return default stats
+      console.warn('Reviews service not available, returning default stats:', error);
+      return {
+        totalReviews: 0,
+        averageRating: 0,
+        ratingBreakdown: { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 },
+        verifiedReviews: 0,
+        helpfulReviews: 0,
+        recentReviews: 0
+      };
     }
   }
 
   // Get user's review for a specific product
   async getUserReviewForProduct(userId: string, productId: string): Promise<Review | null> {
     try {
+      // Check if environment variables are properly configured
+      if (!DATABASE_ID || !REVIEWS_COLLECTION_ID) {
+        return null;
+      }
+
       const response = await databases.listDocuments(
         DATABASE_ID,
         REVIEWS_COLLECTION_ID,
@@ -200,7 +232,7 @@ export class ReviewsService {
 
       return response.documents[0] as unknown as Review;
     } catch (error) {
-      console.error('Error fetching user review:', error);
+      console.warn('Reviews service not available, returning null:', error);
       return null;
     }
   }
@@ -226,7 +258,9 @@ export class ReviewsService {
         reviews.map(async (review) => {
           try {
             const product = await db.getDocument(DATABASE_ID, PRODUCTS_COLLECTION_ID, review.productId);
-            review.productName = product.Name;
+            if (product) {
+              review.productName = product.Name;
+            }
           } catch {
             console.warn('Could not fetch product data for review:', review.reviewId);
           }
@@ -370,7 +404,9 @@ export class ReviewsService {
         reviews.map(async (review) => {
           try {
             const product = await db.getDocument(DATABASE_ID, PRODUCTS_COLLECTION_ID, review.productId);
-            review.productName = product.Name;
+            if (product) {
+              review.productName = product.Name;
+            }
           } catch {
             console.warn('Could not fetch product data for review:', review.reviewId);
           }

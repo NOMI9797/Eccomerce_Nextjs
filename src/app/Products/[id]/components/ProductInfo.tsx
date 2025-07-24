@@ -39,16 +39,16 @@ export default function ProductInfo({ product }: ProductInfoProps) {
       {/* Price */}
       <div className="flex items-baseline space-x-4">
         <span className="text-3xl font-bold text-gray-900">
-          ${product.Price.toFixed(2)}
+          Rs {product.Price.toFixed(2)}
         </span>
         {product.OriginalPrice && (
           <span className="text-xl text-gray-500 line-through">
-            ${product.OriginalPrice.toFixed(2)}
+            Rs {product.OriginalPrice.toFixed(2)}
           </span>
         )}
         {product.OriginalPrice && (
           <span className="text-green-600 font-medium">
-            Save ${(product.OriginalPrice - product.Price).toFixed(2)}
+            Save Rs {(product.OriginalPrice - product.Price).toFixed(2)}
           </span>
         )}
         </div>

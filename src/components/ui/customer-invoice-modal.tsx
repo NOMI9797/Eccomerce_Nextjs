@@ -3,6 +3,7 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FiX, FiPackage, FiCalendar, FiMapPin, FiCreditCard } from 'react-icons/fi';
+import Image from 'next/image';
 import { Order } from '@/appwrite/db/orders';
 import { format } from 'date-fns';
 
@@ -98,7 +99,7 @@ const CustomerInvoiceModal: React.FC<CustomerInvoiceModalProps> = ({ order, isOp
               <FiCreditCard className="text-gray-500 dark:text-gray-400" />
               <div>
                 <p className="text-sm text-gray-500 dark:text-gray-400">Total Amount</p>
-                <p className="font-semibold text-gray-900 dark:text-white text-lg">${order.total.toFixed(2)}</p>
+                <p className="font-semibold text-gray-900 dark:text-white text-lg">Rs {order.total.toFixed(2)}</p>
               </div>
             </div>
           </div>
@@ -127,22 +128,25 @@ const CustomerInvoiceModal: React.FC<CustomerInvoiceModalProps> = ({ order, isOp
               {order.items.map((item, index) => (
                 <div key={index} className="flex items-center gap-4 p-4 border-b border-gray-200 dark:border-gray-600 last:border-b-0">
                   {item.image && (
-                    <img 
-                      src={item.image.startsWith('http') ? item.image : `https://cloud.appwrite.io/v1/storage/buckets/67a32bbf003270b1e15c/files/${item.image}/view?project=679b0257003b758db270`}
-                      alt={item.name} 
-                      className="w-16 h-16 object-cover rounded-lg border border-gray-200 dark:border-gray-600"
-                      onError={(e) => {
-                        e.currentTarget.src = "/images/pexels-shattha-pilabut-38930-135620.jpg";
-                      }}
-                    />
+                    <div className="w-16 h-16 relative">
+                      <Image 
+                        src={item.image.startsWith('http') ? item.image : `https://cloud.appwrite.io/v1/storage/buckets/67a32bbf003270b1e15c/files/${item.image}/view?project=679b0257003b758db270`}
+                        alt={item.name} 
+                        fill
+                        className="object-cover rounded-lg border border-gray-200 dark:border-gray-600"
+                        onError={() => {
+                          // Fallback is handled by the src prop
+                        }}
+                      />
+                    </div>
                   )}
                   <div className="flex-1">
                     <h4 className="font-medium text-gray-900 dark:text-white">{item.name}</h4>
                     <p className="text-sm text-gray-500 dark:text-gray-400">Quantity: {item.quantity}</p>
                   </div>
                   <div className="text-right">
-                    <p className="font-semibold text-gray-900 dark:text-white">${(item.price * item.quantity).toFixed(2)}</p>
-                    <p className="text-sm text-gray-500 dark:text-gray-400">${item.price.toFixed(2)} each</p>
+                    <p className="font-semibold text-gray-900 dark:text-white">Rs {(item.price * item.quantity).toFixed(2)}</p>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">Rs {item.price.toFixed(2)} each</p>
                   </div>
                 </div>
               ))}
@@ -153,7 +157,7 @@ const CustomerInvoiceModal: React.FC<CustomerInvoiceModalProps> = ({ order, isOp
           <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
             <div className="flex justify-between items-center">
               <span className="text-lg font-semibold text-gray-900 dark:text-white">Total</span>
-              <span className="text-2xl font-bold text-blue-600 dark:text-blue-400">${order.total.toFixed(2)}</span>
+                              <span className="text-2xl font-bold text-blue-600 dark:text-blue-400">Rs {order.total.toFixed(2)}</span>
             </div>
           </div>
         </motion.div>

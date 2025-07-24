@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { FiUpload, FiX, FiImage, FiPackage, FiAlertTriangle } from 'react-icons/fi';
+import Image from 'next/image';
 
 interface Category {
   $id: string;
@@ -38,14 +39,16 @@ const AddProduct = () => {
   useEffect(() => {
     const fetchCategories = async () => {
       try {
+        console.log('Fetching categories...');
         const response = await db.listDocuments(
           process.env.NEXT_PUBLIC_APPWRITE_DATABASE_ID!,
           process.env.NEXT_PUBLIC_APPWRITE_CATEGORIES_COLLECTION_ID!
         );
+        console.log('Categories loaded:', response.documents.length);
         setCategories(response.documents as unknown as Category[]);
       } catch (err) {
         console.error('Error fetching categories:', err);
-        setError('Failed to load categories');
+        setError('Failed to load categories. Please check your Appwrite configuration.');
       }
     };
 
@@ -82,8 +85,15 @@ const AddProduct = () => {
     e.preventDefault();
     setError("");
 
-    if (!formData.name || !formData.price || !formData.category || !formData.description) {
-      setError("Please fill in all required fields");
+    // Check each required field individually
+    const missingFields = [];
+    if (!formData.name.trim()) missingFields.push('Product Name');
+    if (!formData.price.trim()) missingFields.push('Price');
+    if (!formData.category.trim()) missingFields.push('Category');
+    if (!formData.description.trim()) missingFields.push('Description');
+    
+    if (missingFields.length > 0) {
+      setError(`Please fill in the following required fields: ${missingFields.join(', ')}`);
       return;
     }
 
@@ -401,11 +411,12 @@ const AddProduct = () => {
                 <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
                   {images.map((image, index) => (
                     <div key={index} className="relative group">
-                      <div className="aspect-square bg-gray-100 dark:bg-gray-600 rounded-lg overflow-hidden">
-                        <img
+                      <div className="aspect-square bg-gray-100 dark:bg-gray-600 rounded-lg overflow-hidden relative">
+                        <Image
                           src={URL.createObjectURL(image)}
                           alt={`Preview ${index + 1}`}
-                          className="w-full h-full object-cover"
+                          fill
+                          className="object-cover"
                         />
                       </div>
                       <button

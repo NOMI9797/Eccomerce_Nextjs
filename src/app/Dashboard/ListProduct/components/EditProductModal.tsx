@@ -13,6 +13,7 @@ import { Product, getStockStatus } from '../types/product';
 import { reviewsService } from '@/appwrite/db/reviews';
 import { ReviewStats, Review } from '@/types/review';
 import { getStorageFileUrl } from '@/lib/appwrite-utils';
+import Image from 'next/image';
 
 interface EditProductModalProps {
   product: Product;
@@ -614,11 +615,14 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
               <div className="mt-2 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
                 {existingImages.map((imageId) => (
                   <div key={imageId} className="relative group">
-                    <img
-                                                src={getStorageFileUrl(imageId)}
-                      alt="Product"
-                      className="w-full aspect-square object-cover rounded-lg shadow-md transition-all duration-300 ease-in-out transform hover:scale-105 hover:shadow-lg"
-                    />
+                    <div className="w-full aspect-square rounded-lg shadow-md transition-all duration-300 ease-in-out transform hover:scale-105 hover:shadow-lg overflow-hidden relative">
+                      <Image
+                        src={getStorageFileUrl(imageId)}
+                        alt="Product"
+                        fill
+                        className="object-cover"
+                      />
+                    </div>
                     <button
                       type="button"
                       onClick={() => removeExistingImage(imageId)}
@@ -658,11 +662,14 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
                 <div className="mt-4 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
                   {newImages.map((image, index) => (
                     <div key={index} className="relative group">
-                      <img
-                        src={URL.createObjectURL(image)}
-                        alt={`New ${index + 1}`}
-                        className="w-full aspect-square object-cover rounded-lg shadow-md transition-all duration-300 ease-in-out transform hover:scale-105 hover:shadow-lg"
-                      />
+                      <div className="w-full aspect-square rounded-lg shadow-md transition-all duration-300 ease-in-out transform hover:scale-105 hover:shadow-lg overflow-hidden relative">
+                        <Image
+                          src={URL.createObjectURL(image)}
+                          alt={`New ${index + 1}`}
+                          fill
+                          className="object-cover"
+                        />
+                      </div>
                       <button
                         type="button"
                         onClick={() => removeNewImage(index)}

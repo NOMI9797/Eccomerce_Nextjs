@@ -11,20 +11,28 @@ export const useProducts = () => {
       const collectionId = process.env.NEXT_PUBLIC_APPWRITE_PRODUCTS_COLLECTION_ID;
       
       if (!databaseId || !collectionId) {
-        throw new Error('Missing Appwrite configuration. Please check your environment variables.');
+        console.warn('Missing Appwrite configuration. Please check your environment variables.');
+        return [];
       }
       
-      const response = await db.listDocuments(
-        databaseId,
-        collectionId,
-        [Query.limit(100)]
-      );
-      return response.documents;
+      try {
+        const response = await db.listDocuments(
+          databaseId,
+          collectionId,
+          [Query.limit(100)]
+        );
+        return response.documents || [];
+      } catch (error) {
+        console.error('Failed to fetch products:', error);
+        return [];
+      }
     },
     staleTime: 5 * 60 * 1000, // Data stays fresh for 5 minutes
     gcTime: 30 * 60 * 1000, // Cache persists for 30 minutes
     refetchOnWindowFocus: false, // Prevent refetch on window focus
-    refetchOnMount: false // Use cached data when component remounts
+    refetchOnMount: false, // Use cached data when component remounts
+    retry: 1, // Only retry once to reduce delays
+    retryDelay: 1000, // Wait 1 second before retry
   });
 };
 

@@ -234,7 +234,7 @@ const CheckoutForm: React.FC<StripeCheckoutProps> = ({
         <div className="flex items-center justify-between">
           <span className="text-sm text-gray-600 dark:text-gray-400">Total Amount:</span>
           <span className="text-lg font-semibold text-gray-900 dark:text-white">
-            ${amount.toFixed(2)}
+                            Rs {amount.toFixed(2)}
           </span>
         </div>
       </div>
@@ -270,7 +270,7 @@ const CheckoutForm: React.FC<StripeCheckoutProps> = ({
               className="flex items-center gap-2"
             >
               <FiCreditCard className="w-4 h-4" />
-              Pay ${amount.toFixed(2)}
+              Pay Rs {amount.toFixed(2)}
             </motion.div>
           )}
         </AnimatePresence>

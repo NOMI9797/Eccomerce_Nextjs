@@ -20,6 +20,7 @@ import { useCategories } from '@/app/hooks/useCategories';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import Image from 'next/image';
 
 
 const StockManagement = () => {
@@ -342,11 +343,12 @@ const StockManagement = () => {
                   >
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center">
-                        <div className="w-10 h-10 bg-gray-100 dark:bg-gray-600 rounded-lg overflow-hidden flex-shrink-0">
-                          <img
+                        <div className="w-10 h-10 bg-gray-100 dark:bg-gray-600 rounded-lg overflow-hidden flex-shrink-0 relative">
+                          <Image
                             src={`https://cloud.appwrite.io/v1/storage/buckets/67a32bbf003270b1e15c/files/${product.MainImage}/view?project=679b0257003b758db270`}
                             alt={product.Name}
-                            className="w-full h-full object-cover"
+                            fill
+                            className="object-cover"
                           />
                         </div>
                         <div className="ml-4">
@@ -378,7 +380,7 @@ const StockManagement = () => {
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">
-                      ${product.Price.toFixed(2)}
+                                              Rs {product.Price.toFixed(2)}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                       <div className="flex justify-end space-x-2">

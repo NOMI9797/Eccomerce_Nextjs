@@ -32,6 +32,7 @@ import { useNotifications } from '@/session/NotificationContext';
 import StripeCheckout from './components/StripeCheckout';
 import { CartItem } from '@/appwrite/db/cart';
 import { getStorageFileUrl, isCompleteUrl } from '@/lib/appwrite-utils';
+import Image from 'next/image';
 // Removed NotificationToastSystem - using simple toast notifications instead
 
 export default function CheckoutPage() {
@@ -153,6 +154,12 @@ export default function CheckoutPage() {
     setProcessing(true);
 
     try {
+      // Log cart items for debugging
+      console.log('Cart items being processed:', cart.items.map(item => ({
+        name: item.name,
+        productId: item.productId,
+        quantity: item.quantity
+      })));
       // Create order data
       const orderData = {
         userId: user?.$id || '',
@@ -288,7 +295,19 @@ export default function CheckoutPage() {
       toast.success(successMessage);
     } catch (error: unknown) {
       console.error('Error placing order:', error);
-      toast.error('Failed to place order. Please try again.');
+      
+      // Provide more specific error messages
+      if (error instanceof Error) {
+        if (error.message.includes('Stock validation failed')) {
+          toast.error('Some items in your cart are no longer available. Please refresh your cart and try again.');
+        } else if (error.message.includes('Product') && error.message.includes('not found')) {
+          toast.error('Some products have been removed from our catalog. Please refresh your cart.');
+        } else {
+          toast.error(`Failed to place order: ${error.message}`);
+        }
+      } else {
+        toast.error('Failed to place order. Please try again.');
+      }
     } finally {
       setProcessing(false);
     }
@@ -581,22 +600,23 @@ export default function CheckoutPage() {
                 <div className="space-y-4 mb-6">
                   {cart.items.map((item) => (
                     <div key={item.productId} className="flex gap-4">
-                      <div className="w-16 h-16 bg-gray-100 dark:bg-gray-700 rounded-lg overflow-hidden flex-shrink-0">
-                        <img
+                      <div className="w-16 h-16 bg-gray-100 dark:bg-gray-700 rounded-lg overflow-hidden flex-shrink-0 relative">
+                        <Image
                           src={item.image ? 
                             (isCompleteUrl(item.image) ? item.image : getStorageFileUrl(item.image)) :
                             "/images/pexels-shattha-pilabut-38930-135620.jpg"}
                           alt={item.name}
-                          className="w-full h-full object-cover"
-                          onError={(e) => {
-                            e.currentTarget.src = "/images/pexels-shattha-pilabut-38930-135620.jpg";
+                          fill
+                          className="object-cover"
+                          onError={() => {
+                            // Fallback is handled by the src prop
                           }}
                         />
                       </div>
                       <div className="flex-1 min-w-0">
                         <h3 className="font-medium text-gray-900 dark:text-white truncate">{item.name}</h3>
                         <p className="text-sm text-gray-500 dark:text-gray-400">Qty: {item.quantity}</p>
-                        <p className="text-sm font-medium text-gray-900 dark:text-white">${(item.price * item.quantity).toFixed(2)}</p>
+                        <p className="text-sm font-medium text-gray-900 dark:text-white">Rs {(item.price * item.quantity).toFixed(2)}</p>
                       </div>
                     </div>
                   ))}
@@ -605,15 +625,15 @@ export default function CheckoutPage() {
                 <div className="border-t border-gray-200 dark:border-gray-700 pt-4 space-y-3">
                   <div className="flex justify-between text-sm">
                     <span className="text-gray-600 dark:text-gray-400">Subtotal</span>
-                    <span className="text-gray-900 dark:text-white">${cart.items.reduce((total, item) => total + (item.price * item.quantity), 0).toFixed(2)}</span>
+                    <span className="text-gray-900 dark:text-white">Rs {cart.items.reduce((total, item) => total + (item.price * item.quantity), 0).toFixed(2)}</span>
                   </div>
                   <div className="flex justify-between text-sm">
                     <span className="text-gray-600 dark:text-gray-400">Delivery</span>
-                    <span className="text-gray-900 dark:text-white">${deliveryFee.toFixed(2)}</span>
+                    <span className="text-gray-900 dark:text-white">Rs {deliveryFee.toFixed(2)}</span>
                   </div>
                   <div className="flex justify-between text-lg font-semibold border-t border-gray-200 dark:border-gray-700 pt-3">
                     <span className="text-gray-900 dark:text-white">Total</span>
-                    <span className="text-gray-900 dark:text-white">${(cart.items.reduce((total, item) => total + (item.price * item.quantity), 0) + deliveryFee).toFixed(2)}</span>
+                    <span className="text-gray-900 dark:text-white">Rs {(cart.items.reduce((total, item) => total + (item.price * item.quantity), 0) + deliveryFee).toFixed(2)}</span>
                   </div>
                 </div>
                 

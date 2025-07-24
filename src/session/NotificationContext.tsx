@@ -184,10 +184,16 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
         // Initial fetch
         await fetchNotifications();
 
-        // Set up real-time subscription
+        // Set up real-time subscription only if environment variables are available
+        const databaseId = process.env.NEXT_PUBLIC_APPWRITE_DATABASE_ID;
+        const notificationsCollectionId = process.env.NEXT_PUBLIC_APPWRITE_NOTIFICATIONS_COLLECTION_ID;
+        
+        if (!databaseId || !notificationsCollectionId) {
+          console.warn('Missing Appwrite configuration for real-time notifications');
+          return;
+        }
+
         const client = createRealtime();
-        const databaseId = process.env.NEXT_PUBLIC_APPWRITE_DATABASE_ID!;
-        const notificationsCollectionId = process.env.NEXT_PUBLIC_APPWRITE_NOTIFICATIONS_COLLECTION_ID!;
         unsubscribe = client.subscribe(
           `databases.${databaseId}.collections.${notificationsCollectionId}.documents`,
           (response) => {

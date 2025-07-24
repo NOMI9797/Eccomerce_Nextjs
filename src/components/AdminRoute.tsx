@@ -3,7 +3,7 @@
 import { useAuth } from "@/session/AuthContext";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { getCurrentUser } from "@/appwrite/auth";
+import { refreshUserData } from "@/appwrite/auth";
 
 export default function AdminRoute({ children }: { children: React.ReactNode }) {
   const { user, isUserAdmin, setUser } = useAuth();
@@ -18,15 +18,24 @@ export default function AdminRoute({ children }: { children: React.ReactNode }) 
           return;
         }
 
-        // Force a fresh check of user status from server
-        const freshUser = await getCurrentUser();
-        setUser(freshUser); // Update context with fresh user data
+        // Try to refresh user data without failing authentication
+        const freshUser = await refreshUserData();
+        
+        if (freshUser) {
+          setUser(freshUser); // Update context with fresh user data
+        } else if (!user || !isUserAdmin) {
+          // Only redirect if we don't have any valid user data
+          console.log('Access denied: No valid user data available');
+          router.push('/login');
+          return;
+        }
 
-        // Strictly check for admin status
-        if (!isUserAdmin) {
+        // Check admin status with current user data
+        const currentUser = freshUser || user;
+        if (!currentUser || !isUserAdmin) {
           console.log('Access denied: User is not an admin', {
-            userId: freshUser.$id,
-            labels: freshUser.labels
+            userId: currentUser?.$id,
+            labels: currentUser?.labels
           });
           router.push('/Homepage');
           return;

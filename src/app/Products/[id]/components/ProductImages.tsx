@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { motion } from 'framer-motion';
+import Image from 'next/image';
 
 interface ProductImagesProps {
   images: string[];
@@ -19,19 +20,24 @@ export default function ProductImages({ images }: ProductImagesProps) {
         animate={{ opacity: 1 }}
         transition={{ duration: 0.4 }}
       >
-        <motion.img
-          src={selectedImage ? 
-            `https://cloud.appwrite.io/v1/storage/buckets/67a32bbf003270b1e15c/files/${selectedImage}/view?project=679b0257003b758db270` :
-            "/images/pexels-shattha-pilabut-38930-135620.jpg"}
-          alt="Product"
-          className="w-full h-full object-cover"
-          onError={(e) => {
-            e.currentTarget.src = "/images/pexels-shattha-pilabut-38930-135620.jpg";
-          }}
+        <motion.div
           initial={{ scale: 1.1 }}
           animate={{ scale: 1 }}
           transition={{ duration: 0.4 }}
-        />
+          className="w-full h-full"
+        >
+          <Image
+            src={selectedImage ? 
+              `https://cloud.appwrite.io/v1/storage/buckets/67a32bbf003270b1e15c/files/${selectedImage}/view?project=679b0257003b758db270` :
+              "/images/pexels-shattha-pilabut-38930-135620.jpg"}
+            alt="Product"
+            fill
+            className="object-cover"
+            onError={() => {
+              // Fallback is handled by the src prop
+            }}
+          />
+        </motion.div>
         
         {/* Sale Badge */}
         <div className="absolute top-4 right-4">
@@ -56,16 +62,19 @@ export default function ProductImages({ images }: ProductImagesProps) {
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
             >
-              <img
-                src={image ? 
-                  `https://cloud.appwrite.io/v1/storage/buckets/67a32bbf003270b1e15c/files/${image}/view?project=679b0257003b758db270` :
-                  "/images/pexels-shattha-pilabut-38930-135620.jpg"}
-                alt={`Product thumbnail ${index + 1}`}
-                className="w-full h-full object-cover"
-                onError={(e) => {
-                  e.currentTarget.src = "/images/pexels-shattha-pilabut-38930-135620.jpg";
-                }}
-              />
+              <div className="w-full h-full relative">
+                <Image
+                  src={image ? 
+                    `https://cloud.appwrite.io/v1/storage/buckets/67a32bbf003270b1e15c/files/${image}/view?project=679b0257003b758db270` :
+                    "/images/pexels-shattha-pilabut-38930-135620.jpg"}
+                  alt={`Product thumbnail ${index + 1}`}
+                  fill
+                  className="object-cover"
+                  onError={() => {
+                    // Fallback is handled by the src prop
+                  }}
+                />
+              </div>
             </motion.button>
           ))}
         </div>

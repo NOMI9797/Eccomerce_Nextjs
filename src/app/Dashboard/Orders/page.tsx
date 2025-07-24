@@ -23,6 +23,7 @@ import {
 import { format } from 'date-fns';
 import { toast } from 'sonner';
 import { motion, AnimatePresence } from 'framer-motion';
+import Image from 'next/image';
 import { 
   FiPackage, 
   FiTruck, 
@@ -41,6 +42,30 @@ import {
   FiPhone,
   FiMapPin
 } from 'react-icons/fi';
+
+// Utility function to safely construct image URLs
+const getSafeImageUrl = (imageId: string | undefined): string => {
+  if (!imageId) {
+    return "/images/pexels-shattha-pilabut-38930-135620.jpg";
+  }
+  
+  try {
+    // If it's already a full URL, return it
+    if (imageId.startsWith('http')) {
+      return imageId;
+    }
+    
+    // Construct Appwrite storage URL
+    const url = `https://cloud.appwrite.io/v1/storage/buckets/67a32bbf003270b1e15c/files/${imageId}/view?project=679b0257003b758db270`;
+    
+    // Validate the URL
+    new URL(url);
+    return url;
+  } catch (error) {
+    console.warn('Invalid image URL:', imageId, error);
+    return "/images/pexels-shattha-pilabut-38930-135620.jpg";
+  }
+};
 
 // Utility functions
 const getStatusIcon = (status: string) => {
@@ -205,11 +230,18 @@ const ViewOrderModal = ({ order, onClose }: { order: Order | null; onClose: () =
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center gap-4">
                           {item.image && (
-                            <img 
-                              src={item.image} 
-                              alt={item.name} 
-                              className="w-16 h-16 object-cover rounded-lg border border-gray-200 dark:border-gray-600" 
-                            />
+                            <div className="w-16 h-16 relative">
+                              <Image 
+                                src={getSafeImageUrl(item.image)} 
+                                alt={item.name} 
+                                fill
+                                className="object-cover rounded-lg border border-gray-200 dark:border-gray-600"
+                                onError={(e) => {
+                                  // Fallback to default image if the URL is invalid
+                                  e.currentTarget.src = "/images/pexels-shattha-pilabut-38930-135620.jpg";
+                                }}
+                              />
+                            </div>
                           )}
                           <div>
                             <h4 className="font-medium text-gray-900 dark:text-white">{item.name}</h4>
@@ -218,13 +250,13 @@ const ViewOrderModal = ({ order, onClose }: { order: Order | null; onClose: () =
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <span className="text-gray-900 dark:text-white font-medium">${item.price.toFixed(2)}</span>
+                        <span className="text-gray-900 dark:text-white font-medium">Rs {item.price.toFixed(2)}</span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <span className="text-gray-900 dark:text-white">{item.quantity}</span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <span className="text-gray-900 dark:text-white font-semibold">${(item.price * item.quantity).toFixed(2)}</span>
+                        <span className="text-gray-900 dark:text-white font-semibold">Rs {(item.price * item.quantity).toFixed(2)}</span>
                       </td>
                     </tr>
                   ))}
@@ -236,7 +268,7 @@ const ViewOrderModal = ({ order, onClose }: { order: Order | null; onClose: () =
             <div className="bg-gray-50 dark:bg-gray-600 px-6 py-4 border-t border-gray-200 dark:border-gray-600">
               <div className="flex justify-between items-center">
                 <span className="text-lg font-semibold text-gray-900 dark:text-white">Total Amount</span>
-                <span className="text-2xl font-bold text-blue-600 dark:text-blue-400">${order.total.toFixed(2)}</span>
+                <span className="text-2xl font-bold text-blue-600 dark:text-blue-400">Rs {order.total.toFixed(2)}</span>
               </div>
             </div>
           </div>
@@ -601,7 +633,7 @@ export default function OrdersPage() {
                         </div>
                       </TableCell>
                       <TableCell className="font-semibold text-gray-900 dark:text-white">
-                        ${order.total.toFixed(2)}
+                        Rs {order.total.toFixed(2)}
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center gap-2">

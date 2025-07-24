@@ -6,8 +6,7 @@ import { useAuth } from "@/session/AuthContext";
 import { useCart } from "@/session/CartContext";
 import { useNotifications } from "@/session/NotificationContext";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { FiShoppingCart, FiUser, FiLogOut, FiSettings, FiSearch, FiMenu, FiX, FiHome } from "react-icons/fi";
+import { FiShoppingCart, FiUser, FiLogOut, FiSettings, FiMenu, FiX, FiHome } from "react-icons/fi";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
@@ -23,7 +22,7 @@ export default function Header() {
   const { user, logout, isUserAdmin } = useAuth();
   const { cart } = useCart();
   const { toasts, notifications, unreadCount, markAsRead, markAllAsRead, deleteNotification, removeToast } = useNotifications();
-  const [isSearchFocused, setIsSearchFocused] = useState(false);
+
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [isInvoiceModalOpen, setIsInvoiceModalOpen] = useState(false);
@@ -72,7 +71,7 @@ export default function Header() {
 
   return (
     <>
-      <header className="sticky top-0 z-[100] bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b">
+      <header className="sticky top-0 z-[100] bg-white/95 dark:bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-white/60 dark:supports-[backdrop-filter]:bg-background/60 border-b border-gray-100 dark:border-gray-800">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             {/* Logo and Brand */}
@@ -101,29 +100,15 @@ export default function Header() {
               </div>
             </div>
 
-            {/* Search Bar - Desktop */}
-            <div className="hidden md:flex flex-1 max-w-lg mx-8">
-              <div className="relative w-full">
-                <FiSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
-                <Input
-                  type="text"
-                  placeholder="Search products..."
-                  className={`pl-10 transition-all duration-300 ${
-                    isSearchFocused ? 'ring-2 ring-primary' : ''
-                  }`}
-                  onFocus={() => setIsSearchFocused(true)}
-                  onBlur={() => setIsSearchFocused(false)}
-                />
-              </div>
-            </div>
+
 
             {/* Desktop Navigation */}
-            <div className="hidden lg:flex items-center gap-4">
-              <nav className="flex items-center gap-6">
+            <div className="hidden lg:flex items-center gap-6">
+              <nav className="flex items-center gap-8">
                 <Button
                   variant="ghost"
                   onClick={() => router.push('/Homepage')}
-                  className="text-sm font-medium hover:text-primary flex items-center gap-2"
+                  className="text-base font-semibold text-gray-700 dark:text-gray-200 hover:text-blue-600 dark:hover:text-blue-400 flex items-center gap-2 px-4 py-2"
                 >
                   <FiHome className="w-4 h-4" />
                   Homepage
@@ -131,7 +116,7 @@ export default function Header() {
                 <Button
                   variant="ghost"
                   onClick={() => router.push('/Products')}
-                  className="text-sm font-medium hover:text-primary"
+                  className="text-base font-semibold text-gray-700 dark:text-gray-200 hover:text-blue-600 dark:hover:text-blue-400 px-4 py-2"
                 >
                   Products
                 </Button>
@@ -139,7 +124,7 @@ export default function Header() {
                   <Button
                     variant="ghost"
                     onClick={() => router.push('/Dashboard')}
-                    className="text-sm font-medium hover:text-primary"
+                    className="text-base font-semibold text-gray-700 dark:text-gray-200 hover:text-blue-600 dark:hover:text-blue-400 px-4 py-2"
                   >
                     Dashboard
                   </Button>
@@ -147,11 +132,11 @@ export default function Header() {
                 <Button
                   variant="ghost"
                   onClick={() => router.push('/cart')}
-                  className="relative text-sm font-medium hover:text-primary"
+                  className="relative text-base font-semibold text-gray-700 dark:text-gray-200 hover:text-blue-600 dark:hover:text-blue-400 px-4 py-2"
                 >
                   <FiShoppingCart className="w-5 h-5" />
                   {cartItemsCount > 0 && (
-                    <span className="absolute -top-2 -right-2 bg-primary text-primary-foreground rounded-full w-5 h-5 flex items-center justify-center text-xs">
+                    <span className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs font-bold">
                       {cartItemsCount}
                     </span>
                   )}
@@ -216,17 +201,7 @@ export default function Header() {
             </Button>
           </div>
 
-          {/* Mobile Search */}
-          <div className="md:hidden mt-4">
-            <div className="relative">
-              <FiSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
-              <Input
-                type="text"
-                placeholder="Search products..."
-                className="pl-10"
-              />
-            </div>
-          </div>
+
         </div>
 
         {/* Mobile Menu */}
@@ -245,9 +220,9 @@ export default function Header() {
                     router.push('/Homepage');
                     setIsMobileMenuOpen(false);
                   }}
-                  className="justify-start text-sm font-medium"
+                  className="justify-start text-base font-semibold text-gray-700 dark:text-gray-200 hover:text-blue-600 dark:hover:text-blue-400"
                 >
-                  <FiHome className="w-4 h-4" />
+                  <FiHome className="w-4 h-4 mr-2" />
                   Homepage
                 </Button>
                 <Button
@@ -256,7 +231,7 @@ export default function Header() {
                     router.push('/Products');
                     setIsMobileMenuOpen(false);
                   }}
-                  className="justify-start text-sm font-medium"
+                  className="justify-start text-base font-semibold text-gray-700 dark:text-gray-200 hover:text-blue-600 dark:hover:text-blue-400"
                 >
                   Products
                 </Button>
@@ -267,7 +242,7 @@ export default function Header() {
                       router.push('/Dashboard');
                       setIsMobileMenuOpen(false);
                     }}
-                    className="justify-start text-sm font-medium"
+                    className="justify-start text-base font-semibold text-gray-700 dark:text-gray-200 hover:text-blue-600 dark:hover:text-blue-400"
                   >
                     Dashboard
                   </Button>
@@ -278,7 +253,7 @@ export default function Header() {
                     router.push('/cart');
                     setIsMobileMenuOpen(false);
                   }}
-                  className="justify-start text-sm font-medium"
+                  className="justify-start text-base font-semibold text-gray-700 dark:text-gray-200 hover:text-blue-600 dark:hover:text-blue-400"
                 >
                   <FiShoppingCart className="w-5 h-5 mr-2" />
                   Cart ({cartItemsCount})

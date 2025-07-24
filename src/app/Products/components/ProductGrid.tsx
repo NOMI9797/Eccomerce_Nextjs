@@ -176,7 +176,7 @@ export default function ProductGrid({
                         textShadow: '0 0 10px rgba(0, 255, 255, 0.6)'
                       }}
                     >
-                      ${product.Price.toFixed(2)}
+                      Rs {product.Price.toFixed(2)}
                     </motion.span>
                   </div>
                   {/* Rating Display */}

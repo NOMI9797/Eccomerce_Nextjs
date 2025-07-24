@@ -67,11 +67,11 @@ export default function RelatedProducts({ categoryId, currentProductId }: Relate
                   </h3>
                   <div className="flex items-baseline gap-2">
                     <span className="text-xl font-bold text-gray-900">
-                        ${product.Price.toFixed(2)}
+                        Rs {product.Price.toFixed(2)}
                     </span>
                     {product.OriginalPrice && (
                       <span className="text-sm text-gray-500 line-through">
-                        ${product.OriginalPrice.toFixed(2)}
+                        Rs {product.OriginalPrice.toFixed(2)}
                       </span>
                     )}
                   </div>

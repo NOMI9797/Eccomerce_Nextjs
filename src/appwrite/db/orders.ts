@@ -51,11 +51,15 @@ const stockManager = {
 
     for (const item of items) {
       try {
+        console.log(`Validating stock for product: ${item.name} (ID: ${item.productId})`);
+        
         const product = await db.getDocument(
           databaseId,
           productsCollectionId,
           item.productId
         ) as Product;
+
+        console.log(`Found product: ${product.Name} (Stock: ${product.Stock}, TrackStock: ${product.TrackStock})`);
 
         if (product.TrackStock) {
           const availableStock = product.Stock || 0;
@@ -68,8 +72,20 @@ const stockManager = {
             isValid = false;
           }
         }
-      } catch {
-        errors.push(`Product ${item.name} not found`);
+      } catch (error) {
+        console.error(`Error validating stock for product ${item.name} (ID: ${item.productId}):`, error);
+        
+        // Check if it's a "not found" error or a network/connection error
+        if (error && typeof error === 'object' && 'code' in error) {
+          const errorCode = (error as { code: number }).code;
+          if (errorCode === 404) {
+            errors.push(`Product ${item.name} has been removed from our catalog`);
+          } else {
+            errors.push(`Unable to verify stock for ${item.name} (connection error)`);
+          }
+        } else {
+          errors.push(`Product ${item.name} not found (ID: ${item.productId})`);
+        }
         isValid = false;
       }
     }
@@ -153,10 +169,17 @@ const stockManager = {
 export const ordersService = {
   async createOrder(orderData: Omit<Order, '$id' | 'orderNumber' | 'createdAt' | 'updatedAt'>) {
     try {
+      console.log('Creating order with items:', orderData.items.map(item => ({
+        name: item.name,
+        productId: item.productId,
+        quantity: item.quantity
+      })));
+      
       // Step 1: Validate stock availability
       const stockValidation = await stockManager.validateOrderStock(orderData.items);
       
       if (!stockValidation.isValid) {
+        console.error('Stock validation failed:', stockValidation.errors);
         throw new Error(`Stock validation failed: ${stockValidation.errors.join(', ')}`);
       }
 

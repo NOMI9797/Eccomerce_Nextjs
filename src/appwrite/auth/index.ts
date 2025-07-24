@@ -27,6 +27,10 @@ export async function registerUser(username: string, email: string, password: st
     // Get fresh user data with correct labels from server
     const freshUser = await getCurrentUser();
     
+    if (!freshUser) {
+      throw new Error('Failed to get user details after registration');
+    }
+    
     // Store user data in localStorage
     localStorage.setItem("user", JSON.stringify(freshUser));
     localStorage.setItem("userId", freshUser.$id);
@@ -94,6 +98,10 @@ export const signIn = async (email: string, password: string): Promise<{
     // Get user details including roles
     const user = await getCurrentUser();
     
+    if (!user) {
+      throw new Error('Failed to get user details after login');
+    }
+    
     // Store session and user data
     localStorage.setItem("authToken", session.$id);
     localStorage.setItem("userId", session.userId);
@@ -138,14 +146,29 @@ export const signOutUser = async (): Promise<void> => {
   }
 };
 
-export const getCurrentUser = async (): Promise<UserWithRole> => {
+export const getCurrentUser = async (): Promise<UserWithRole | null> => {
   try {
     const user = await account.get() as UserWithRole;
     // Ensure labels array exists and is properly typed
     user.labels = Array.isArray(user.labels) ? user.labels : [];
     return user;
   } catch (error) {
-    throw error;
+    console.warn('Failed to get current user from Appwrite:', error);
+    
+    // Try to get user data from localStorage as fallback
+    try {
+      const storedUser = localStorage.getItem("user");
+      if (storedUser) {
+        const parsedUser = JSON.parse(storedUser) as UserWithRole;
+        console.log('Using cached user data from localStorage');
+        return parsedUser;
+      }
+    } catch (localStorageError) {
+      console.warn('Failed to get user from localStorage:', localStorageError);
+    }
+    
+    // Return null instead of throwing to prevent app crashes
+    return null;
   }
 };
 
@@ -153,7 +176,21 @@ export const checkAuth = async (): Promise<boolean> => {
   try {
     await account.get();
     return true;
-  } catch {
+  } catch (error) {
+    console.warn('Appwrite auth check failed:', error);
+    
+    // Check if we have cached user data as fallback
+    try {
+      const storedUser = localStorage.getItem("user");
+      const authToken = localStorage.getItem("authToken");
+      if (storedUser && authToken) {
+        console.log('Using cached authentication data');
+        return true;
+      }
+    } catch (localStorageError) {
+      console.warn('Failed to check localStorage:', localStorageError);
+    }
+    
     return false;
   }
 };
@@ -189,4 +226,29 @@ export const isAdmin = (user: UserWithRole | null): boolean => {
   
   // Strict check for admin role
   return Array.isArray(user.labels) && user.labels.includes(ROLES.ADMIN);
+};
+
+// Function to refresh user data without failing authentication
+export const refreshUserData = async (): Promise<UserWithRole | null> => {
+  try {
+    const user = await account.get() as UserWithRole;
+    user.labels = Array.isArray(user.labels) ? user.labels : [];
+    
+    // Update localStorage with fresh data
+    localStorage.setItem("user", JSON.stringify(user));
+    
+    return user;
+  } catch (error) {
+    console.warn('Failed to refresh user data:', error);
+    // Return cached data instead of null
+    try {
+      const storedUser = localStorage.getItem("user");
+      if (storedUser) {
+        return JSON.parse(storedUser) as UserWithRole;
+      }
+    } catch {
+      // Ignore localStorage errors
+    }
+    return null;
+  }
 };

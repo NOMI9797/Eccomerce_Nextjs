@@ -11,6 +11,7 @@ import ViewProductModal from './components/ViewProductModal';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Product, getStockStatus, getStockBadgeColor } from './types/product';
 import { getStorageFileUrl } from '@/lib/appwrite-utils';
+import Image from 'next/image';
 import { 
   FiPlus, 
   FiSearch, 
@@ -258,7 +259,7 @@ const ListProducts: React.FC = () => {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Total Value</p>
-              <p className="text-2xl font-bold text-gray-900 dark:text-white mt-1">${stats.totalValue.toFixed(2)}</p>
+                              <p className="text-2xl font-bold text-gray-900 dark:text-white mt-1">Rs {stats.totalValue.toFixed(2)}</p>
             </div>
             <div className="w-12 h-12 bg-green-100 dark:bg-green-900/50 rounded-lg flex items-center justify-center">
               <FiDollarSign className="w-6 h-6 text-green-600 dark:text-green-400" />
@@ -350,11 +351,12 @@ const ListProducts: React.FC = () => {
                     >
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center">
-                          <div className="w-12 h-12 bg-gray-100 dark:bg-gray-600 rounded-lg overflow-hidden flex-shrink-0">
-                            <img
+                          <div className="w-12 h-12 bg-gray-100 dark:bg-gray-600 rounded-lg overflow-hidden flex-shrink-0 relative">
+                            <Image
                               src={getStorageFileUrl(product.MainImage)}
                               alt={product.Name}
-                              className="w-full h-full object-cover"
+                              fill
+                              className="object-cover"
                             />
                           </div>
                           <div className="ml-4">
@@ -368,7 +370,7 @@ const ListProducts: React.FC = () => {
                         </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">
-                        ${product.Price.toFixed(2)}
+                        Rs {product.Price.toFixed(2)}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
                         {product.TrackStock ? (

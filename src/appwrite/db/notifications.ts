@@ -345,7 +345,7 @@ export const notificationService = {
         ]
       );
       
-      const count = response.total;
+      const count = response.documents.length;
       
       // Cache the result
       notificationCache.setUnreadCount(count, userId);
@@ -375,7 +375,7 @@ export const notificationService = {
         ]
       );
       
-      const count = response.total;
+      const count = response.documents.length;
       
       // Cache the result
       notificationCache.setUnreadCount(count);
