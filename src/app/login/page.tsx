@@ -15,7 +15,7 @@ const LoginPage = () => {
           className="object-cover"
           priority
         />
-        <div className="absolute inset-0 bg-gradient-to-br from-amber-900/80 via-orange-900/70 to-amber-800/80"></div>
+                  <div className="absolute inset-0 bg-gradient-to-br from-gray-900/60 via-gray-800/50 to-gray-700/60"></div>
       </div>
       
       {/* Content */}
