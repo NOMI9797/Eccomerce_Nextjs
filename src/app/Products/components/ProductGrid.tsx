@@ -83,7 +83,7 @@ export default function ProductGrid({
     addToCart(cartItem);
   };
 
-  const cardVariants = {
+  const cardAnimationVariants = {
     hidden: { opacity: 0, y: 20 },
     visible: {
       opacity: 1,
@@ -95,18 +95,54 @@ export default function ProductGrid({
     }
   };
 
-  const hoverVariants = {
+  const cardVariants = {
     rest: {
       scale: 1,
+      rotateX: 0,
       rotateY: 0,
+      y: 0,
       boxShadow: "0 0 20px rgba(0, 255, 255, 0.2)"
     },
     hover: {
       scale: 1.05,
-      rotateY: 5,
-      boxShadow: "0 0 40px rgba(0, 255, 255, 0.4), 0 0 80px rgba(147, 51, 234, 0.2)",
+      rotateX: -8,
+      rotateY: 12,
+      y: -15,
+      boxShadow: "0 0 50px rgba(0, 255, 255, 0.5), 0 0 100px rgba(147, 51, 234, 0.3), 0 25px 50px rgba(0, 0, 0, 0.4)",
       transition: {
-        duration: 0.3,
+        duration: 0.5,
+        ease: [0.25, 0.46, 0.45, 0.94]
+      }
+    },
+    float: {
+      y: [-15, 15, -15],
+      transition: {
+        duration: 3,
+        repeat: Infinity,
+        ease: "easeInOut"
+      }
+    }
+  };
+
+  const imageHoverVariants = {
+    rest: { scale: 1, filter: "brightness(1)" },
+    hover: { 
+      scale: 1.15, 
+      filter: "brightness(1.1)",
+      transition: {
+        duration: 0.4,
+        ease: "easeOut"
+      }
+    }
+  };
+
+  const buttonHoverVariants = {
+    rest: { scale: 1, y: 0 },
+    hover: { 
+      scale: 1.05, 
+      y: -2,
+      transition: {
+        duration: 0.2,
         ease: "easeOut"
       }
     }
@@ -118,19 +154,21 @@ export default function ProductGrid({
         {productsWithRatings.map((product, index) => (
           <motion.div
             key={product.$id}
-            variants={cardVariants}
+            variants={cardAnimationVariants}
             initial="hidden"
             animate="visible"
             transition={{ delay: index * 0.1 }}
-            className="group relative"
+            className="group relative perspective-1000"
           >
             <motion.div
-              variants={hoverVariants}
+              variants={cardVariants}
               initial="rest"
               whileHover="hover"
-              className="bg-black/60 backdrop-blur-sm border border-cyan-400/30 rounded-xl overflow-hidden hover:border-cyan-400 transition-all duration-300 group-hover:border-purple-400/50"
+              animate="float"
+              className="bg-black/60 backdrop-blur-sm border border-cyan-400/30 rounded-xl overflow-hidden hover:border-cyan-400 transition-all duration-300 group-hover:border-purple-400/50 transform-gpu"
               style={{
-                background: 'linear-gradient(145deg, rgba(0,0,0,0.8), rgba(30,30,30,0.8))'
+                background: 'linear-gradient(145deg, rgba(0,0,0,0.8), rgba(30,30,30,0.8))',
+                transformStyle: 'preserve-3d'
               }}
             >
               <Link href={`/Products/${product.$id}`}>
@@ -144,14 +182,37 @@ export default function ProductGrid({
                     onError={(e) => {
                       e.currentTarget.src = "/images/pexels-shattha-pilabut-38930-135620.jpg";
                     }}
-                    whileHover={{ scale: 1.1 }}
-                    transition={{ duration: 0.4, ease: "easeOut" }}
+                    variants={imageHoverVariants}
+                    initial="rest"
+                    whileHover="hover"
                   />
-                  {/* Neon overlay on image hover */}
-                  <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/0 via-purple-500/0 to-pink-500/0 group-hover:from-cyan-500/20 group-hover:via-purple-500/10 group-hover:to-pink-500/20 transition-all duration-500" />
+                  {/* Enhanced neon overlay on image hover */}
+                  <motion.div 
+                    className="absolute inset-0 bg-gradient-to-br from-cyan-500/0 via-purple-500/0 to-pink-500/0 group-hover:from-cyan-500/30 group-hover:via-purple-500/20 group-hover:to-pink-500/30 transition-all duration-700"
+                    initial={{ opacity: 0 }}
+                    whileHover={{ opacity: 1 }}
+                    transition={{ duration: 0.5 }}
+                  />
                   
-                  {/* Glowing border effect */}
-                  <div className="absolute inset-0 border-2 border-transparent group-hover:border-cyan-400/50 transition-all duration-300" />
+                  {/* Enhanced glowing border effect */}
+                  <motion.div 
+                    className="absolute inset-0 border-2 border-transparent group-hover:border-cyan-400/70 transition-all duration-500"
+                    whileHover={{
+                      boxShadow: "inset 0 0 20px rgba(0, 255, 255, 0.3)"
+                    }}
+                  />
+                  
+                  {/* Floating particles effect */}
+                  <motion.div
+                    className="absolute inset-0 pointer-events-none"
+                    variants={cardVariants}
+                    initial="rest"
+                    whileHover="float"
+                  >
+                    <div className="absolute top-4 right-4 w-2 h-2 bg-cyan-400 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                    <div className="absolute bottom-4 left-4 w-1.5 h-1.5 bg-purple-400 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-500 delay-100" />
+                    <div className="absolute top-1/2 left-1/2 w-1 h-1 bg-pink-400 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-500 delay-200" />
+                  </motion.div>
                 </div>
                 
                 <div className="p-4">
@@ -161,8 +222,10 @@ export default function ProductGrid({
                       textShadow: 'none'
                     }}
                     whileHover={{
-                      textShadow: '0 0 10px rgba(0, 255, 255, 0.8)'
+                      textShadow: '0 0 10px rgba(0, 255, 255, 0.8)',
+                      y: -2
                     }}
+                    transition={{ duration: 0.3 }}
                   >
                     {product.Name}
                   </motion.h3>
@@ -208,8 +271,10 @@ export default function ProductGrid({
               
               <div className="px-4 pb-4">
                 <motion.div
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
+                  variants={buttonHoverVariants}
+                  initial="rest"
+                  whileHover="hover"
+                  whileTap={{ scale: 0.95 }}
                 >
                   <Button
                     onClick={(e) => {
@@ -233,8 +298,27 @@ export default function ProductGrid({
               </div>
             </motion.div>
 
-            {/* Floating glow effect around card */}
-            <div className="absolute -inset-1 bg-gradient-to-r from-cyan-500/20 via-purple-500/20 to-pink-500/20 rounded-xl blur-lg opacity-0 group-hover:opacity-100 transition-opacity duration-500 -z-10" />
+            {/* Enhanced floating glow effect around card */}
+            <motion.div 
+              className="absolute -inset-2 bg-gradient-to-r from-cyan-500/30 via-purple-500/30 to-pink-500/30 rounded-xl blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-700 -z-10"
+              initial={{ scale: 0.8 }}
+              whileHover={{ scale: 1.2 }}
+              transition={{ duration: 0.5 }}
+            />
+            
+            {/* Additional floating elements */}
+            <motion.div
+              className="absolute -top-2 -right-2 w-4 h-4 bg-cyan-400/50 rounded-full blur-sm opacity-0 group-hover:opacity-100 transition-opacity duration-500"
+              variants={cardVariants}
+              initial="rest"
+              whileHover="float"
+            />
+            <motion.div
+              className="absolute -bottom-2 -left-2 w-3 h-3 bg-purple-400/50 rounded-full blur-sm opacity-0 group-hover:opacity-100 transition-opacity duration-500 delay-200"
+              variants={cardVariants}
+              initial="rest"
+              whileHover="float"
+            />
           </motion.div>
         ))}
       </div>

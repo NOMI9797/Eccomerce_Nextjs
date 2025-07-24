@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from 'react';
-import { motion } from 'framer-motion';
+import { useState, useEffect } from 'react';
+import { motion, useScroll, useTransform, useSpring } from 'framer-motion';
 import Link from 'next/link';
 import { useProducts } from '@/app/hooks/useProducts';
 import { useCategories } from '@/app/hooks/useCategories';
@@ -9,7 +9,7 @@ import { useCart } from '@/session/CartContext';
 import { Button } from '@/components/ui/button';
 import { CartItem } from '@/appwrite/db/cart';
 import Header from '@/components/Header';
-import { FiShoppingCart, FiStar, FiArrowRight, FiChevronLeft, FiChevronRight, FiMail, FiPhone, FiMapPin, FiFacebook, FiTwitter, FiInstagram, FiYoutube } from 'react-icons/fi';
+import { FiShoppingCart, FiStar, FiArrowRight, FiChevronLeft, FiChevronRight, FiMail, FiPhone, FiMapPin, FiFacebook, FiTwitter, FiInstagram, FiYoutube, FiZap } from 'react-icons/fi';
 import { Product, getStockStatus } from '@/app/Dashboard/ListProduct/types/product';
 import { getStorageFileUrl } from '@/lib/appwrite-utils';
 import Image from 'next/image';
@@ -19,7 +19,54 @@ export default function ProductsPage() {
   const { data: categories = [] } = useCategories();
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [showAllProducts, setShowAllProducts] = useState<boolean>(false);
+  const [isPageVisible, setIsPageVisible] = useState<boolean>(false);
   const { addToCart } = useCart();
+
+  // Trigger animations when page becomes visible
+  useEffect(() => {
+    setIsPageVisible(true);
+    
+    // Reset animations on page visit
+    const timer = setTimeout(() => {
+      setIsPageVisible(false);
+      setTimeout(() => setIsPageVisible(true), 100);
+    }, 100);
+
+    return () => clearTimeout(timer);
+  }, []);
+  
+  // Scroll animations
+  const { scrollY } = useScroll();
+  const y = useTransform(scrollY, [0, 1000], [0, -100]);
+  const springY = useSpring(y, { stiffness: 300, damping: 30 });
+  
+  // Floating animation variants
+  const floatingVariants = {
+    initial: { y: 0 },
+    float: {
+      y: [-10, 10, -10],
+      transition: {
+        duration: 3,
+        repeat: Infinity,
+        ease: "easeInOut"
+      }
+    }
+  };
+  
+  const staggerContainer = {
+    hidden: { opacity: 0 },
+    show: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1
+      }
+    }
+  };
+  
+  const itemVariants = {
+    hidden: { opacity: 0, y: 20 },
+    show: { opacity: 1, y: 0 }
+  };
 
   // Ensure products is an array before filtering
   const productArray = Array.isArray(products) ? products as Product[] : [];
@@ -74,56 +121,119 @@ export default function ProductsPage() {
     : categories.find(cat => cat.$id === selectedCategory)?.CategoryName || "Products";
 
   return (
-    <div className="bg-gray-50 dark:bg-gray-900">
+    <div className="bg-gray-50 dark:bg-gray-900 relative overflow-hidden">
+      {/* Floating background elements */}
+      <motion.div
+        className="absolute top-20 left-10 w-20 h-20 bg-gradient-to-r from-blue-400/20 to-purple-400/20 rounded-full blur-xl"
+        variants={floatingVariants}
+        initial="initial"
+        animate="float"
+        style={{ animationDelay: "0s" }}
+      />
+      <motion.div
+        className="absolute top-40 right-20 w-32 h-32 bg-gradient-to-r from-amber-400/20 to-orange-400/20 rounded-full blur-xl"
+        variants={floatingVariants}
+        initial="initial"
+        animate="float"
+        style={{ animationDelay: "1s" }}
+      />
+      <motion.div
+        className="absolute top-80 left-1/4 w-16 h-16 bg-gradient-to-r from-green-400/20 to-teal-400/20 rounded-full blur-xl"
+        variants={floatingVariants}
+        initial="initial"
+        animate="float"
+        style={{ animationDelay: "2s" }}
+      />
+      
       <Header />
       
       {/* Top Categories Navigation */}
-      <div className="bg-white dark:bg-gray-800 border-b border-gray-100 dark:border-gray-700 sticky top-16 z-10">
+      <motion.div 
+        className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-md border-b border-gray-100 dark:border-gray-700 sticky top-16 z-10"
+        style={{ y: springY }}
+      >
         <div className="max-w-7xl mx-auto px-4 py-3">
-          <div className="flex items-center justify-center space-x-8 overflow-x-auto">
-            <button
+          <motion.div 
+            className="flex items-center justify-center space-x-8 overflow-x-auto"
+            variants={staggerContainer}
+            initial="hidden"
+            animate={isPageVisible ? "show" : "hidden"}
+          >
+            <motion.button
+              variants={itemVariants}
               onClick={() => {
                 setSelectedCategory("all");
                 setShowAllProducts(false);
                 window.scrollTo({ top: 0, behavior: 'smooth' });
               }}
-              className={`px-4 py-2 text-sm font-medium rounded-full transition-colors whitespace-nowrap ${
+              className={`px-4 py-2 text-sm font-medium rounded-full transition-all duration-300 whitespace-nowrap hover:scale-105 ${
                 selectedCategory === "all" 
-                  ? "bg-blue-600 text-white" 
+                  ? "bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg" 
                   : "text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-50 dark:hover:bg-gray-700"
               }`}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
             >
               All Products
-            </button>
+            </motion.button>
             {categories.map((category) => (
-              <button
+              <motion.button
                 key={category.$id}
+                variants={itemVariants}
                 onClick={() => scrollToCategory(category.$id)}
-                className={`px-4 py-2 text-sm font-medium rounded-full transition-colors whitespace-nowrap ${
+                className={`px-4 py-2 text-sm font-medium rounded-full transition-all duration-300 whitespace-nowrap hover:scale-105 ${
                   selectedCategory === category.$id 
-                    ? "bg-blue-600 text-white" 
+                    ? "bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg" 
                     : "text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-50 dark:hover:bg-gray-700"
                 }`}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
               >
                 {category.CategoryName}
-              </button>
+              </motion.button>
             ))}
-          </div>
+          </motion.div>
         </div>
-      </div>
+      </motion.div>
 
       {/* Main Content Area */}
       <div className="flex-1">
-        {/* Simple Page Title */}
-        <div className="max-w-7xl mx-auto px-4 py-4">
-          <motion.h1 
-            className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white text-center"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
+        {/* Enhanced Page Title */}
+        <div className="max-w-7xl mx-auto px-4 py-8">
+          <motion.div
+            className="text-center"
+            initial={{ opacity: 0, y: 30 }}
+            animate={isPageVisible ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
+            transition={{ duration: 0.8, ease: "easeOut" }}
           >
-            {showAllProducts ? selectedCategoryName : "Our Products"}
-          </motion.h1>
+            <motion.div
+              className="inline-flex items-center gap-2 mb-4 px-4 py-2 bg-gradient-to-r from-amber-400/20 to-orange-400/20 rounded-full border border-amber-200/50"
+              initial={{ scale: 0 }}
+              animate={isPageVisible ? { scale: 1 } : { scale: 0 }}
+              transition={{ delay: 0.3, type: "spring", stiffness: 200 }}
+            >
+              <FiZap className="w-4 h-4 text-amber-500" />
+              <span className="text-sm font-medium text-amber-700 dark:text-amber-300">
+                Premium Collection
+              </span>
+            </motion.div>
+            <motion.h1 
+              className="text-4xl md:text-6xl font-bold bg-gradient-to-r from-gray-900 via-blue-900 to-purple-900 dark:from-white dark:via-blue-100 dark:to-purple-100 bg-clip-text text-transparent mb-4"
+              initial={{ opacity: 0, y: 20 }}
+              animate={isPageVisible ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
+              transition={{ duration: 0.8, delay: 0.2 }}
+            >
+              {showAllProducts ? selectedCategoryName : "Our Products"}
+            </motion.h1>
+            <motion.p
+              className="text-lg text-gray-600 dark:text-gray-400 max-w-2xl mx-auto"
+              initial={{ opacity: 0, y: 20 }}
+              animate={isPageVisible ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
+              transition={{ duration: 0.8, delay: 0.4 }}
+            >
+              Discover our curated collection of premium fashion items, designed to elevate your style and enhance your aura.
+            </motion.p>
+          </motion.div>
         </div>
 
         {/* Category Sections or All Products */}
@@ -245,27 +355,64 @@ export default function ProductsPage() {
               id={`category-${categoryId}`}
               className="mb-16"
               initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
+              animate={isPageVisible ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
               transition={{ duration: 0.6, delay: index * 0.1 }}
             >
-            {/* Category Header */}
-            <div className="flex items-center justify-between mb-8">
+            {/* Enhanced Category Header */}
+            <motion.div 
+              className="flex items-center justify-between mb-12"
+              initial={{ opacity: 0, x: -50 }}
+              animate={isPageVisible ? { opacity: 1, x: 0 } : { opacity: 0, x: -50 }}
+              transition={{ duration: 0.6 }}
+            >
               <div>
-                <h2 className="text-4xl font-extrabold text-gray-900 dark:text-white mb-3">{category.CategoryName}</h2>
-                <p className="text-gray-600 dark:text-gray-400 text-lg">Explore our {category.CategoryName.toLowerCase()} collection</p>
+                <motion.h2 
+                  className="text-4xl md:text-5xl font-extrabold bg-gradient-to-r from-gray-900 via-blue-900 to-purple-900 dark:from-white dark:via-blue-100 dark:to-purple-100 bg-clip-text text-transparent mb-4"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={isPageVisible ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
+                  transition={{ duration: 0.6, delay: 0.1 }}
+                >
+                  {category.CategoryName}
+                </motion.h2>
+                <motion.p 
+                  className="text-gray-600 dark:text-gray-400 text-lg"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={isPageVisible ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
+                  transition={{ duration: 0.6, delay: 0.2 }}
+                >
+                  Explore our {category.CategoryName.toLowerCase()} collection
+                </motion.p>
               </div>
-              <div className="flex items-center space-x-2">
-                <button className="p-2 rounded-full border border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+              <motion.div 
+                className="flex items-center space-x-3"
+                initial={{ opacity: 0, x: 50 }}
+                animate={isPageVisible ? { opacity: 1, x: 0 } : { opacity: 0, x: 50 }}
+                transition={{ duration: 0.6, delay: 0.3 }}
+              >
+                <motion.button 
+                  className="p-3 rounded-full border border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 transition-all duration-300 hover:scale-110 hover:shadow-lg"
+                  whileHover={{ scale: 1.1 }}
+                  whileTap={{ scale: 0.9 }}
+                >
                   <FiChevronLeft className="w-5 h-5 text-gray-600 dark:text-gray-400" />
-                </button>
-                <button className="p-2 rounded-full border border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                </motion.button>
+                <motion.button 
+                  className="p-3 rounded-full border border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 transition-all duration-300 hover:scale-110 hover:shadow-lg"
+                  whileHover={{ scale: 1.1 }}
+                  whileTap={{ scale: 0.9 }}
+                >
                   <FiChevronRight className="w-5 h-5 text-gray-600 dark:text-gray-400" />
-                </button>
-              </div>
-            </div>
+                </motion.button>
+              </motion.div>
+            </motion.div>
 
-            {/* Products Grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {/* Enhanced Products Grid */}
+            <motion.div 
+              className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8"
+              variants={staggerContainer}
+              initial="hidden"
+              animate={isPageVisible ? "show" : "hidden"}
+            >
               {products.slice(0, 4).map((product, productIndex) => {
                 const stockStatus = product.TrackStock ? getStockStatus(product.Stock || 0, product.MinStock || 5) : 'not_tracked';
                 const isOutOfStock = product.TrackStock && (product.Stock || 0) <= 0;
@@ -371,43 +518,63 @@ export default function ProductsPage() {
                   </motion.div>
                 );
               })}
-            </div>
+            </motion.div>
 
-                                      {/* View All Button */}
-             <div className="text-center mt-8">
-               <Button 
-                 variant="outline" 
-                 className="border-blue-600 text-blue-600 hover:bg-blue-50 dark:border-blue-400 dark:text-blue-400 dark:hover:bg-blue-900/20"
-                 onClick={() => {
-                   setSelectedCategory(category.$id);
-                   setShowAllProducts(true);
-                 }}
+                         {/* Enhanced View All Button */}
+             <motion.div 
+               className="text-center mt-12"
+               initial={{ opacity: 0, y: 20 }}
+               animate={isPageVisible ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
+               transition={{ duration: 0.6, delay: 0.4 }}
+             >
+               <motion.div
+                 whileHover={{ scale: 1.05 }}
+                 whileTap={{ scale: 0.95 }}
                >
-                 View All {category.CategoryName}
-                 <FiArrowRight className="w-4 h-4 ml-2" />
-               </Button>
-             </div>
+                 <Button 
+                   variant="outline" 
+                   className="border-blue-600 text-blue-600 hover:bg-blue-50 dark:border-blue-400 dark:text-blue-400 dark:hover:bg-blue-900/20 px-8 py-3 text-lg font-semibold shadow-lg hover:shadow-xl transition-all duration-300"
+                   onClick={() => {
+                     setSelectedCategory(category.$id);
+                     setShowAllProducts(true);
+                   }}
+                 >
+                   View All {category.CategoryName}
+                   <FiArrowRight className="w-5 h-5 ml-3 transition-transform group-hover:translate-x-1" />
+                 </Button>
+               </motion.div>
+             </motion.div>
            </motion.section>
          ))
         )}
       </div>
       
-      {/* Back to Categories Button */}
+      {/* Enhanced Back to Categories Button */}
       {showAllProducts && (
-        <div className="max-w-7xl mx-auto px-4 pb-8">
+        <motion.div 
+          className="max-w-7xl mx-auto px-4 pb-8"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6 }}
+        >
           <div className="text-center">
-            <Button 
-              variant="outline" 
-              className="border-gray-600 text-gray-600 hover:bg-gray-50 dark:border-gray-400 dark:text-gray-400 dark:hover:bg-gray-900/20"
-              onClick={() => {
-                setShowAllProducts(false);
-                setSelectedCategory("all");
-              }}
+            <motion.div
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
             >
-              ← Back to Categories
-            </Button>
+              <Button 
+                variant="outline" 
+                className="border-gray-600 text-gray-600 hover:bg-gray-50 dark:border-gray-400 dark:text-gray-400 dark:hover:bg-gray-900/20 px-8 py-3 text-lg font-semibold shadow-lg hover:shadow-xl transition-all duration-300"
+                onClick={() => {
+                  setShowAllProducts(false);
+                  setSelectedCategory("all");
+                }}
+              >
+                ← Back to Categories
+              </Button>
+            </motion.div>
           </div>
-        </div>
+        </motion.div>
       )}
       </div>
 
